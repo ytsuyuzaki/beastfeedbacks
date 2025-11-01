@@ -1,4 +1,5 @@
 <?php
+
 /**
  * 公開用設定
  *
@@ -12,7 +13,8 @@
 /**
  * 公開用設定
  */
-class BeastFeedbacks_Public {
+class BeastFeedbacks_Public
+{
 
 	/**
 	 * Self class
@@ -26,8 +28,9 @@ class BeastFeedbacks_Public {
 	 *
 	 * @return self
 	 */
-	public static function get_instance() {
-		if ( null === self::$instance ) {
+	public static function get_instance()
+	{
+		if (null === self::$instance) {
 			self::$instance = new self();
 		}
 		return self::$instance;
@@ -36,25 +39,38 @@ class BeastFeedbacks_Public {
 	/**
 	 * Init
 	 */
-	public function init() {
+	public function init()
+	{
 		$form_action = 'register_beastfeedbacks_form';
-		add_action( 'wp_ajax_' . $form_action, array( $this, 'register_beastfeedbacks_form' ) );
-		add_action( 'wp_ajax_nopriv_' . $form_action, array( $this, 'register_beastfeedbacks_form' ) );
+		add_action('wp_ajax_' . $form_action, array($this, 'register_beastfeedbacks_form'));
+		add_action('wp_ajax_nopriv_' . $form_action, array($this, 'register_beastfeedbacks_form'));
 	}
 
 	/**
 	 * アンケートフォームの受け取り処理
 	 */
-	public function register_beastfeedbacks_form() {
-		check_ajax_referer( 'register_beastfeedbacks_form' );
+	public function register_beastfeedbacks_form()
+	{
+		check_ajax_referer('register_beastfeedbacks_form');
 
-		$id         = esc_attr( sanitize_text_field( $_POST['id'] ) );
-		$type       = esc_attr( sanitize_text_field( $_POST['beastfeedbacks_type'] ) );
-		$post       = get_post( $id );
-		$post_id    = $post ? (int) $post->ID : 0; // 存在しているか確認.
+		// POSTデータの存在確認と適切なサニタイズ
+		if (! isset($_POST['id']) || ! isset($_POST['beastfeedbacks_type'])) {
+			wp_send_json_error(array('message' => __('Invalid request', 'beastfeedbacks')));
+		}
+
+		$id   = sanitize_text_field(wp_unslash($_POST['id']));
+		$type = sanitize_text_field(wp_unslash($_POST['beastfeedbacks_type']));
+
+		$post    = get_post($id);
+		$post_id = $post ? (int) $post->ID : 0;
+
+		if (! $post_id) {
+			wp_send_json_error(array('message' => __('Invalid post ID', 'beastfeedbacks')));
+		}
+
 		$ip_address = $this->get_ip_address();
 		$user_agent = $this->get_user_agent();
-		$time       = current_time( 'mysql' );
+		$time       = current_time('mysql');
 		$title      = "{$ip_address} - {$time}";
 
 		$post_params = array();
@@ -65,12 +81,17 @@ class BeastFeedbacks_Public {
 			'_wp_http_referer',
 			'_wpnonce',
 		);
-		foreach ( array_keys( $_POST ) as $post_key ) {
-			if ( in_array( $post_key, $ignore_keys ) ) {
+
+		// POSTデータの安全な処理
+		foreach (array_keys($_POST) as $post_key) {
+			if (in_array($post_key, $ignore_keys, true)) {
 				continue;
 			}
-			$post_params[ $post_key ] = esc_attr( sanitize_text_field( $_POST[ $post_key ] ) );
+			if (isset($_POST[$post_key])) {
+				$post_params[$post_key] = sanitize_text_field(wp_unslash($_POST[$post_key]));
+			}
 		}
+
 		$content = addslashes(
 			wp_kses(
 				wp_json_encode(
@@ -92,8 +113,8 @@ class BeastFeedbacks_Public {
 				'post_type'    => 'beastfeedbacks',
 				'post_status'  => 'publish',
 				'post_parent'  => $post_id,
-				'post_title'   => addslashes( wp_kses( $title, array() ) ),
-				'post_name'    => md5( $title ),
+				'post_title'   => addslashes(wp_kses($title, array())),
+				'post_name'    => md5($title),
 				'post_content' => $content,
 				'meta_input'   => array(
 					'beastfeedbacks_type' => $type,
@@ -101,11 +122,11 @@ class BeastFeedbacks_Public {
 			)
 		);
 
-		$message = ( 'survey' === $type )
-			? __( 'Thank you for your responses to the questionnaire. ', 'beastfeedbacks' )
-			: __( 'Thank you for the vote. ', 'beastfeedbacks' );
-		$count   = ( 'like' === $type )
-			? BeastFeedbacks::get_instance()->get_like_count( $post_id )
+		$message = ('survey' === $type)
+			? __('Thank you for your responses to the questionnaire. ', 'beastfeedbacks')
+			: __('Thank you for the vote. ', 'beastfeedbacks');
+		$count   = ('like' === $type)
+			? BeastFeedbacks::get_instance()->get_like_count($post_id)
 			: 1;
 
 		$response_data = array(
@@ -114,7 +135,7 @@ class BeastFeedbacks_Public {
 			'count'   => $count,
 		);
 
-		wp_send_json( $response_data );
+		wp_send_json($response_data);
 		wp_die();
 	}
 
@@ -123,9 +144,10 @@ class BeastFeedbacks_Public {
 	 *
 	 * @return string
 	 */
-	public function get_user_agent() {
-		return isset( $_SERVER['HTTP_USER_AGENT'] )
-			? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) )
+	public function get_user_agent()
+	{
+		return isset($_SERVER['HTTP_USER_AGENT'])
+			? sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT']))
 			: ''; // @codingStandardsIgnoreLine
 	}
 
@@ -134,9 +156,10 @@ class BeastFeedbacks_Public {
 	 *
 	 * @return string
 	 */
-	public function get_ip_address() {
-		return isset( $_SERVER['REMOTE_ADDR'] )
-			? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) )
+	public function get_ip_address()
+	{
+		return isset($_SERVER['REMOTE_ADDR'])
+			? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR']))
 			: '';
 	}
 }

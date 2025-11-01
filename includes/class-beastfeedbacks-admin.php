@@ -328,12 +328,12 @@ class BeastFeedbacks_Admin {
 		<select name="beastfeedbacks_type">
 			<option value=""><?php esc_html_e( 'All Types', 'beastfeedbacks' ); ?></option>
 			<?php foreach ( BeastFeedbacks_Block::TYPES as $select_type ) : ?>
-				<option value="<?php printf(esc_html__( '%s', 'beastfeedbacks' ), esc_html( $select_type )); ?>"
+				<option value="<?php echo esc_html( $select_type ); ?>"
 					<?php if ( $selected_type === $select_type ) : ?>
 						selected
 					<?php endif; ?>
 				>
-					<?php printf(esc_html__( '%s', 'beastfeedbacks' ), esc_html( $select_type )); ?>
+					<?php echo esc_html( $select_type ); ?>
 				</option>
 			<?php endforeach; ?>
 		</select>
@@ -374,12 +374,12 @@ class BeastFeedbacks_Admin {
 					$parsed_url    = wp_parse_url( $parent_url );
 					$select_source = esc_html( $parsed_url['path'] );
 				?>
-				<option value="<?php printf(esc_html__( '%s', 'beastfeedbacks' ), esc_html( $parent_id )); ?>"
+				<option value="<?php echo esc_html( $parent_id ); ?>"
 				<?php if ( $selected_parent_id === $parent_id ) : ?>
 					selected
 				<?php endif; ?>
 				>
-				<?php printf(esc_html__( '%s', 'beastfeedbacks' ), esc_html( $select_source )); ?>
+				<?php echo esc_html( $select_source ); ?>
 				</option>
 			<?php endforeach; ?>
 		</select>
