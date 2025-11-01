@@ -11,8 +11,8 @@
  * Plugin Name:       BeastFeedbacks
  * Plugin URL:        https://beastfeedbacks.com
  * Description:       Provides a block-editor form for receiving powerful user feedback.
- * Requires at least: 6.4
- * Requires PHP:      7.4
+ * Requires at least: 6.8.3
+ * Requires PHP:      8.3
  * Version:           0.1.0
  * Author:            ytsuyuzaki
  * Author URI:        https://muchuu.net

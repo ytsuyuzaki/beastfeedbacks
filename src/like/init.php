@@ -11,11 +11,30 @@
  * @param array  $attributes Block attributes.
  * @param string $content    Block default content.
  *
- * @return string Returns the next or previous post link that is adjacent to the current post.
+ * @return string
  */
 function beastfeedbacks_block_like_render_callback( $attributes, $content ) {
-	$html = <<<END
-<div %s >
+	// ブロックの wrapper 属性（className など）を正しく組み立てる
+	$wrapper_attrs = get_block_wrapper_attributes();
+
+	// 非表示で nonce を“出力せずに”取得
+	$nonce_field = wp_nonce_field(
+		'register_beastfeedbacks_form',
+		'_wpnonce',
+		true,   // referer hidden も出力
+		false   // echo せず、文字列で返す
+	);
+
+	$action_url = esc_url( admin_url( 'admin-ajax.php' ) );
+
+	$post_id = get_the_ID();
+	$post_id_attr = esc_attr( absint( $post_id ) );
+
+	$like_count = BeastFeedbacks::get_instance()->get_like_count( $post_id );
+	$like_count_text = esc_html( $like_count );
+
+	$html = <<<HTML
+<div %s>
 	<form action="%s" name="beastfeedbacks_like_form" method="POST">
 		<div class="beastfeedbacks-like_balloon">
 			<p class="like-count">%s</p>
@@ -27,19 +46,16 @@ function beastfeedbacks_block_like_render_callback( $attributes, $content ) {
 		%s
 	</form>
 </div>
-END;
-
-	$beastfeedbacks_post_id    = get_the_ID();
-	$beastfeedbacks_like_count = BeastFeedbacks::get_instance()->get_like_count( $beastfeedbacks_post_id );
+HTML;
 
 	return sprintf(
 		$html,
-		$attributes,
-		esc_url( admin_url( 'admin-ajax.php' ) ),
-		esc_html( $beastfeedbacks_like_count ),
-		wp_nonce_field( 'register_beastfeedbacks_form' ),
-		esc_attr( $beastfeedbacks_post_id ),
-		$content,
+		$wrapper_attrs,
+		$action_url,
+		$like_count_text,
+		$nonce_field,
+		$post_id_attr,
+		$content
 	);
 }
 

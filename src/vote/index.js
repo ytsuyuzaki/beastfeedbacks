@@ -44,6 +44,18 @@ const TEMPLATE = [
  * 投票ボタン
  */
 registerBlockType( metadata.name, {
+
+	save: () => {
+		const blockProps = useBlockProps.save();
+
+		return (
+			<div {...blockProps}>
+				<InnerBlocks.Content />
+			</div>
+		);
+	},
+
+
 	edit: () => {
 		const blockProps = useBlockProps();
 

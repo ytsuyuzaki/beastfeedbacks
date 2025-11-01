@@ -14,8 +14,20 @@
  * @return string Returns the next or previous post link that is adjacent to the current post.
  */
 function beastfeedbacks_block_survey_form_render_callback( $attributes, $content ) {
-	$html = <<<END
-<div %s >
+	$wrapper_attrs = get_block_wrapper_attributes();
+
+	$nonce_field = wp_nonce_field(
+		'register_beastfeedbacks_form',
+		'_wpnonce',
+		true,
+		false
+	);
+
+	$action_url = esc_url( admin_url( 'admin-ajax.php' ) );
+	$post_id    = esc_attr( absint( get_the_ID() ) );
+
+	$html = <<<HTML
+<div %s>
 	<form action="%s" name="beastfeedbacks_survey_form" method="POST">
 		%s
 		<input type="hidden" name="action" value="register_beastfeedbacks_form" />
@@ -24,15 +36,15 @@ function beastfeedbacks_block_survey_form_render_callback( $attributes, $content
 		%s
 	</form>
 </div>
-END;
+HTML;
 
 	return sprintf(
 		$html,
-		$attributes,
-		esc_url( admin_url( 'admin-ajax.php' ) ),
-		wp_nonce_field( 'register_beastfeedbacks_form' ),
-		esc_attr( get_the_ID() ),
-		$content,
+		$wrapper_attrs,
+		$action_url,
+		$nonce_field,
+		$post_id,
+		$content
 	);
 }
 
