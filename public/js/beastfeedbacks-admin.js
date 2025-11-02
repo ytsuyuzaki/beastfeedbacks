@@ -11,7 +11,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
 				$.post(
 					endpoint,
 					{
-						action: action,
+						action,
 						_wpnonce: nonce,
 					},
 					function ( response, status, xhr ) {
@@ -22,7 +22,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
 						const a = document.createElement( 'a' );
 						a.href = window.URL.createObjectURL( blob );
 
-						var contentDispositionHeader = xhr.getResponseHeader(
+						const contentDispositionHeader = xhr.getResponseHeader(
 							'content-disposition'
 						);
 						a.download =
