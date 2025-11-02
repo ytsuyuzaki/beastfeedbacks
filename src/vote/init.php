@@ -6,7 +6,9 @@
  * @package BeastFeedbacks
  */
 
-if ( ! defined( 'ABSPATH' ) ) exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 /**
  * Renders the `beastfeedbacks/vote` block on the server.
@@ -16,8 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  *
  * @return string
  */
-function beastfeedbacks_block_vote_render_callback($attributes, $content)
-{
+function beastfeedbacks_block_vote_render_callback( $attributes, $content ) {
 	$wrapper_attrs = get_block_wrapper_attributes();
 
 	$nonce_field = wp_nonce_field(
@@ -27,8 +28,8 @@ function beastfeedbacks_block_vote_render_callback($attributes, $content)
 		false
 	);
 
-	$action_url = esc_url(admin_url('admin-ajax.php'));
-	$post_id    = esc_attr(absint(get_the_ID()));
+	$action_url = esc_url( admin_url( 'admin-ajax.php' ) );
+	$post_id    = esc_attr( absint( get_the_ID() ) );
 
 	$html = '<div ' . $wrapper_attrs . '>' .
 		'<form action="' . $action_url . '" name="beastfeedbacks_vote_form" method="POST">' .
@@ -46,8 +47,7 @@ function beastfeedbacks_block_vote_render_callback($attributes, $content)
 /**
  * ブロック登録
  */
-function beastfeedbacks_block_vote_init()
-{
+function beastfeedbacks_block_vote_init() {
 
 	$type = register_block_type(
 		__DIR__,

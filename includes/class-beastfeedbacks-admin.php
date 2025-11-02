@@ -1,4 +1,5 @@
 <?php
+
 /**
  * 管理画面
  *
@@ -14,6 +15,7 @@
  */
 class BeastFeedbacks_Admin {
 
+
 	/**
 	 * Self class
 	 *
@@ -27,6 +29,8 @@ class BeastFeedbacks_Admin {
 	 * @var string ポストタイプ.
 	 */
 	public $post_type = 'beastfeedbacks';
+
+	public $export_action_name = 'beastfeedbacks_export';
 
 	/**
 	 * Instance
@@ -59,26 +63,39 @@ class BeastFeedbacks_Admin {
 
 		add_action( 'restrict_manage_posts', array( $this, 'add_type_filter' ) );
 		add_action( 'restrict_manage_posts', array( $this, 'add_source_filter' ) );
+		add_action( 'restrict_manage_posts', array( $this, 'add_export_button' ) );
+
 		add_action( 'pre_get_posts', array( $this, 'type_filter_result' ) );
 		add_action( 'pre_get_posts', array( $this, 'source_filter_result' ) );
 
-		add_action( 'admin_print_scripts', array( $this, 'print_export_button' ) );
-		$action = 'beastfeedbacks_export';
-		add_action( "wp_ajax_{$action}", array( $this, 'download_csv' ) );
+		add_action( "wp_ajax_{$this->export_action_name}", array( $this, 'download_csv' ) );
 	}
 
 	/**
 	 * 静的ファイルのcssやjsを読み込む
 	 */
 	public function admin_enqueue_scripts() {
+		$screen = get_current_screen();
+		if ( 'edit-beastfeedbacks' !== $screen->id ) {
+			return;
+		}
+
+		wp_enqueue_script(
+			BEASTFEEDBACKS_DOMAIN,
+			BEASTFEEDBACKS_URL . 'public/js/beastfeedbacks-admin.js',
+			array(),
+			BEASTFEEDBACKS_VERSION,
+			true
+		);
+
 		wp_enqueue_style(
 			BEASTFEEDBACKS_DOMAIN,
 			BEASTFEEDBACKS_URL . 'public/css/beastfeedbacks-admin.css',
 			array(),
-			BEASTFEEDBACKS_VERSION,
-			'all'
+			BEASTFEEDBACKS_VERSION
 		);
 	}
+
 
 	/**
 	 * メニューページの登録
@@ -330,9 +347,8 @@ class BeastFeedbacks_Admin {
 			<?php foreach ( BeastFeedbacks_Block::TYPES as $select_type ) : ?>
 				<option value="<?php echo esc_html( $select_type ); ?>"
 					<?php if ( $selected_type === $select_type ) : ?>
-						selected
-					<?php endif; ?>
-				>
+					selected
+					<?php endif; ?>>
 					<?php echo esc_html( $select_type ); ?>
 				</option>
 			<?php endforeach; ?>
@@ -370,16 +386,15 @@ class BeastFeedbacks_Admin {
 			<option value=""><?php esc_html_e( 'All Sources', 'beastfeedbacks' ); ?></option>
 			<?php foreach ( $parent_ids as $parent_id ) : ?>
 				<?php
-					$parent_url    = get_permalink( $parent_id );
-					$parsed_url    = wp_parse_url( $parent_url );
-					$select_source = esc_html( $parsed_url['path'] );
+				$parent_url    = get_permalink( $parent_id );
+				$parsed_url    = wp_parse_url( $parent_url );
+				$select_source = esc_html( $parsed_url['path'] );
 				?>
 				<option value="<?php echo esc_html( $parent_id ); ?>"
-				<?php if ( $selected_parent_id === $parent_id ) : ?>
+					<?php if ( $selected_parent_id === $parent_id ) : ?>
 					selected
-				<?php endif; ?>
-				>
-				<?php echo esc_html( $select_source ); ?>
+					<?php endif; ?>>
+					<?php echo esc_html( $select_source ); ?>
 				</option>
 			<?php endforeach; ?>
 		</select>
@@ -436,56 +451,25 @@ class BeastFeedbacks_Admin {
 		$query->query_vars['post_parent'] = $selected_parent_id;
 	}
 
-	/**
-	 * データダウンロードのボタン
-	 */
-	public function print_export_button() {
+	public function add_export_button() {
 		$screen = get_current_screen();
 		if ( 'edit-beastfeedbacks' !== $screen->id ) {
 			return;
 		}
 
-		$button = sprintf( "<button type='button' class='button button-primary' onclick='exportSubmit(this)'>%s</button>", esc_html__( 'Export', 'beastfeedbacks' ) );
+		$action = $this->export_action_name;
+		$nonce  = wp_create_nonce( 'beastfeedbacks_csv_export' );
+		$url    = admin_url( 'admin-ajax.php' );
 
 		?>
-		<script type="text/javascript">
-			addLoadEvent(function () {
-				jQuery(function($) {
-					$('#posts-filter #post-query-submit')
-						.after(<?php echo wp_json_encode( $button ); ?>);
-				});
-
-				const exportSubmit = () => {
-					jQuery(function($) {
-						$.post("<?php echo esc_js( admin_url( 'admin-ajax.php' ) ); ?>", {
-								action: 'beastfeedbacks_export',
-								// year: date ? date[ 2 ].substr( 0, 4 ) : '',
-								// month: date ? date[ 2 ].substr( 4, 2 ) : '',
-								// post: post ? parseInt( post[ 2 ], 10 ) : 'all',
-								// selected: selected,
-								_wpnonce: '<?php echo esc_js( wp_create_nonce( 'beastfeedbacks_csv_export' ) ); ?>',
-							},
-							function(response, status, xhr) {
-								const blob = new Blob([response], {
-									type: 'application/octetstream'
-								});
-
-								const a = document.createElement('a');
-								a.href = window.URL.createObjectURL(blob);
-
-								var contentDispositionHeader = xhr.getResponseHeader('content-disposition');
-								a.download =
-									contentDispositionHeader.split('filename=')[1] || 'Beastfeedbacks-Export.csv';
-
-								document.body.appendChild(a);
-								a.click();
-								document.body.removeChild(a);
-								window.URL.revokeObjectURL(a.href);
-							});
-					});
-				}
-			});
-		</script>
+		<button
+			type="button"
+			class="button button-primary beastfeedbacks-export-btn"
+			data-endpoint="<?php echo esc_attr( $url ); ?>"
+			data-action="<?php echo esc_attr( $action ); ?>"
+			data-nonce="<?php echo esc_attr( $nonce ); ?>">
+			<?php echo esc_html__( 'Export', 'beastfeedbacks' ); ?>
+		</button>
 		<?php
 	}
 

@@ -18,3 +18,20 @@
 .widefat .column-beastfeedbacks_response {
 	width: 100%;
 }
+
+/* 一覧上部のフィルター行 */
+.tablenav.top .actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+}
+
+/* 絞り込みボタンの右に配置 */
+.beastfeedbacks-export-btn {
+	margin-left: auto;
+	order: 99;
+}
+
+.beastfeedbacks-export-btn.button {
+	margin-right: 8px;
+}

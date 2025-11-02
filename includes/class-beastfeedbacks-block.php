@@ -17,7 +17,7 @@ class BeastFeedbacks_Block {
 	/**
 	 * ブロックで提供するタイプリスト
 	 *
-	 * @var array[string]
+	 * @var array
 	 */
 	public const TYPES = array(
 		'like',
