@@ -5,6 +5,8 @@
  * @package BeastFeedbacks
  */
 
+if ( ! defined( 'ABSPATH' ) ) exit;
+
 /**
  * ブロック登録
  */

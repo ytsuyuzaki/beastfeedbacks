@@ -6,6 +6,8 @@
  * @package BeastFeedbacks
  */
 
+if ( ! defined( 'ABSPATH' ) ) exit;
+
 /**
  * Renders the `beastfeedbacks/like` block on the server.
  *
