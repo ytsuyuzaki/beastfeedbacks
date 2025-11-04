@@ -76,3 +76,5 @@ vendor/
 artifacts/
 .phpunit.result.cache
 .phpunit.cache
+
+tests/e2e/__snapshots__/
