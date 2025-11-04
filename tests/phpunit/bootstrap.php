@@ -10,7 +10,7 @@ $GLOBALS['wp_tests_options'] = array(
 	'active_plugins' => array( 'beastfeedbacks/beastfeedbacks.php' ),
 );
 
-require_once dirname( __DIR__ ) . '/vendor/yoast/wp-test-utils/src/WPIntegration/bootstrap-functions.php';
+require_once dirname( __DIR__ ) . './../vendor/yoast/wp-test-utils/src/WPIntegration/bootstrap-functions.php';
 
 /*
  * Bootstrap WordPress. This will also load the Composer autoload file, the PHPUnit Polyfills
