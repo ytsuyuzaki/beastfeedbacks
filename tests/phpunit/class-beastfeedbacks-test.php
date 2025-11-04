@@ -5,7 +5,7 @@ use Yoast\WPTestUtils\BrainMonkey\TestCase;
 class BeastFeedbacks_Test extends TestCase {
 
 	/** @var int[] 作成した投稿のIDを記録して後始末 */
-	private $created_ids = [];
+	private $created_ids = array();
 
 	public function set_up(): void {
 		parent::set_up();
@@ -18,49 +18,59 @@ class BeastFeedbacks_Test extends TestCase {
 				wp_delete_post( $pid, true );
 			}
 		}
-		$this->created_ids = [];
+		$this->created_ids = array();
 
 		parent::tear_down();
 	}
 
 	/** @test */
 	public function get_like_count_returns_zero_when_no_likes(): void {
-		$parent_id = $this->create_post( [
-			'post_type'   => 'post',
-			'post_status' => 'publish',
-			'post_title'  => 'parent',
-		] );
+		$parent_id = $this->create_post(
+			array(
+				'post_type'   => 'post',
+				'post_status' => 'publish',
+				'post_title'  => 'parent',
+			)
+		);
 
 		// ノイズ1: publish でない
-		$draft_like = $this->create_post( [
-			'post_type'   => 'beastfeedbacks',
-			'post_status' => 'draft',
-			'post_parent' => $parent_id,
-			'post_title'  => 'noise-draft-like',
-		] );
+		$draft_like = $this->create_post(
+			array(
+				'post_type'   => 'beastfeedbacks',
+				'post_status' => 'draft',
+				'post_parent' => $parent_id,
+				'post_title'  => 'noise-draft-like',
+			)
+		);
 		add_post_meta( $draft_like, 'beastfeedbacks_type', 'like' );
 
 		// ノイズ2: 親が違う
-		$other_parent = $this->create_post( [
-			'post_type'   => 'post',
-			'post_status' => 'publish',
-			'post_title'  => 'other-parent',
-		] );
-		$other_like = $this->create_post( [
-			'post_type'   => 'beastfeedbacks',
-			'post_status' => 'publish',
-			'post_parent' => $other_parent,
-			'post_title'  => 'noise-other-parent-like',
-		] );
+		$other_parent = $this->create_post(
+			array(
+				'post_type'   => 'post',
+				'post_status' => 'publish',
+				'post_title'  => 'other-parent',
+			)
+		);
+		$other_like   = $this->create_post(
+			array(
+				'post_type'   => 'beastfeedbacks',
+				'post_status' => 'publish',
+				'post_parent' => $other_parent,
+				'post_title'  => 'noise-other-parent-like',
+			)
+		);
 		add_post_meta( $other_like, 'beastfeedbacks_type', 'like' );
 
 		// ノイズ3: meta が like ではない
-		$vote_noise = $this->create_post( [
-			'post_type'   => 'beastfeedbacks',
-			'post_status' => 'publish',
-			'post_parent' => $parent_id,
-			'post_title'  => 'noise-vote',
-		] );
+		$vote_noise = $this->create_post(
+			array(
+				'post_type'   => 'beastfeedbacks',
+				'post_status' => 'publish',
+				'post_parent' => $parent_id,
+				'post_title'  => 'noise-vote',
+			)
+		);
 		add_post_meta( $vote_noise, 'beastfeedbacks_type', 'vote' );
 
 		$count = \BeastFeedbacks::get_instance()->get_like_count( $parent_id );
@@ -69,30 +79,36 @@ class BeastFeedbacks_Test extends TestCase {
 
 	/** @test */
 	public function get_like_count_returns_positive_number_when_likes_exist(): void {
-		$parent_id = $this->create_post( [
-			'post_type'   => 'post',
-			'post_status' => 'publish',
-			'post_title'  => 'parent',
-		] );
+		$parent_id = $this->create_post(
+			array(
+				'post_type'   => 'post',
+				'post_status' => 'publish',
+				'post_title'  => 'parent',
+			)
+		);
 
 		// 条件に合う like を3件
 		for ( $i = 0; $i < 3; $i++ ) {
-			$like_id = $this->create_post( [
-				'post_type'   => 'beastfeedbacks',
-				'post_status' => 'publish',
-				'post_parent' => $parent_id,
-				'post_title'  => 'like-' . $i,
-			] );
+			$like_id = $this->create_post(
+				array(
+					'post_type'   => 'beastfeedbacks',
+					'post_status' => 'publish',
+					'post_parent' => $parent_id,
+					'post_title'  => 'like-' . $i,
+				)
+			);
 			add_post_meta( $like_id, 'beastfeedbacks_type', 'like' );
 		}
 
 		// ノイズ: type が vote
-		$vote_noise = $this->create_post( [
-			'post_type'   => 'beastfeedbacks',
-			'post_status' => 'publish',
-			'post_parent' => $parent_id,
-			'post_title'  => 'vote-noise',
-		] );
+		$vote_noise = $this->create_post(
+			array(
+				'post_type'   => 'beastfeedbacks',
+				'post_status' => 'publish',
+				'post_parent' => $parent_id,
+				'post_title'  => 'vote-noise',
+			)
+		);
 		add_post_meta( $vote_noise, 'beastfeedbacks_type', 'vote' );
 
 		$count = \BeastFeedbacks::get_instance()->get_like_count( $parent_id );
@@ -106,7 +122,7 @@ class BeastFeedbacks_Test extends TestCase {
 	 * @return int 作成した投稿ID
 	 */
 	private function create_post( array $args ): int {
-		$pid = wp_insert_post( $args );
+		$pid                 = wp_insert_post( $args );
 		$this->created_ids[] = $pid;
 		return $pid;
 	}
