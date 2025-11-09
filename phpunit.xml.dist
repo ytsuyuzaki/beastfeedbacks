@@ -8,6 +8,22 @@
 	convertWarningsToExceptions="true"
 	>
 
+    <coverage processUncoveredFiles="true">
+        <include>
+            <!-- カバレッジ対象の本体コードの場所を列挙 -->
+            <directory suffix=".php">./includes</directory>
+            <directory suffix=".php">./public</directory>
+        </include>
+        <exclude>
+            <!-- 除外（任意） -->
+            <directory>./tests</directory>
+            <directory>./vendor</directory>
+            <directory>./node_modules</directory>
+            <!-- オートローダやエントリポイントを除外したい場合は以下も -->
+            <!-- <file>beastfeedbacks.php</file> -->
+        </exclude>
+    </coverage>
+
 	<testsuites>
 		<testsuite name="testing">
 			<directory suffix="-test.php">./tests/phpunit/</directory>
