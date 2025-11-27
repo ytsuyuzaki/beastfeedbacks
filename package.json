@@ -28,7 +28,7 @@
 		"@wordpress/components": "^25.13.0",
 		"@wordpress/data": "^9.17.0",
 		"@wordpress/e2e-test-utils": "^10.19.0",
-		"@wordpress/env": "^8.13.0",
+		"@wordpress/env": "^10.36.0",
 		"@wordpress/icons": "^9.38.0",
 		"@wordpress/scripts": "^26.18.0",
 		"lodash": "^4.17.21"

@@ -10,8 +10,8 @@
  * @wordpress-plugin
  * Plugin Name:       BeastFeedbacks
  * Description:       Provides a block-editor form for receiving powerful user feedback.
- * Requires at least: 6.8.3
- * Requires PHP:      8.3
+ * Requires at least: 6.8
+ * Requires PHP:      8.1
  * Version:           0.1.0
  * Author:            ytsuyuzaki
  * License:           GPL-2.0-or-later
