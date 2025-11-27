@@ -25,10 +25,6 @@ msgstr "強力なユーザーフィードバックを受け取るためのブロ
 msgid "ytsuyuzaki"
 msgstr "ytsuyuzaki"
 
-#. Author URI of the plugin
-msgid "https://muchuu.net"
-msgstr "https://muchuu.net"
-
 #: includes/class-beastfeedbacks-admin.php:163
 msgid "Source"
 msgstr "ソース"
