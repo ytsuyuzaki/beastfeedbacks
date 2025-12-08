@@ -1,6 +1,8 @@
 document.addEventListener( 'DOMContentLoaded', () => {
 	const btn = document.querySelector( '.beastfeedbacks-export-btn' );
-	if ( ! btn ) return;
+	if ( ! btn ) {
+		return;
+	}
 
 	const { endpoint, action, nonce } = btn.dataset;
 
