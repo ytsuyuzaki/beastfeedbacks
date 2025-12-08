@@ -1,4 +1,4 @@
-# Copyright (C) 2023 ytsuyuzaki
+# Copyright (C) 2025 ytsuyuzaki
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
@@ -9,60 +9,71 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2023-12-09T11:42:47+00:00\n"
+"POT-Creation-Date: 2025-12-08T08:11:10+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"X-Generator: WP-CLI 2.7.1\n"
+"X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: beastfeedbacks\n"
 
 #. Plugin Name of the plugin
+#: beastfeedbacks.php
 msgid "BeastFeedbacks"
 msgstr ""
 
 #. Description of the plugin
+#: beastfeedbacks.php
 msgid "Provides a block-editor form for receiving powerful user feedback."
 msgstr ""
 
 #. Author of the plugin
+#: beastfeedbacks.php
 msgid "ytsuyuzaki"
 msgstr ""
 
-#: includes/class-beastfeedbacks-admin.php:163
+#: includes/class-beastfeedbacks-admin.php:179
 msgid "Source"
 msgstr ""
 
-#: includes/class-beastfeedbacks-admin.php:164
+#: includes/class-beastfeedbacks-admin.php:180
 msgid "Type"
 msgstr ""
 
-#: includes/class-beastfeedbacks-admin.php:165
+#: includes/class-beastfeedbacks-admin.php:181
 msgid "Date"
 msgstr ""
 
-#: includes/class-beastfeedbacks-admin.php:166
+#: includes/class-beastfeedbacks-admin.php:182
 msgid "Response Data"
 msgstr ""
 
-#: includes/class-beastfeedbacks-admin.php:210
+#: includes/class-beastfeedbacks-admin.php:226
 msgid "Select"
 msgstr ""
 
-#: includes/class-beastfeedbacks-admin.php:343
+#: includes/class-beastfeedbacks-admin.php:346
 msgid "All Types"
 msgstr ""
 
-#: includes/class-beastfeedbacks-admin.php:392
+#: includes/class-beastfeedbacks-admin.php:386
 msgid "All Sources"
 msgstr ""
 
-#: includes/class-beastfeedbacks-admin.php:459
+#: includes/class-beastfeedbacks-admin.php:471
 msgid "Export"
 msgstr ""
 
-#: includes/class-beastfeedbacks-public.php:95
+#: includes/class-beastfeedbacks-public.php:55
+msgid "Invalid request"
+msgstr ""
+
+#: includes/class-beastfeedbacks-public.php:65
+msgid "Invalid post ID"
+msgstr ""
+
+#: includes/class-beastfeedbacks-public.php:123
 msgid "Thank you for your responses to the questionnaire. "
 msgstr ""
 
-#: includes/class-beastfeedbacks-public.php:96
+#: includes/class-beastfeedbacks-public.php:124
 msgid "Thank you for the vote. "
 msgstr ""
 
@@ -360,13 +371,13 @@ msgid "Please rate the product"
 msgstr ""
 
 #: build/survey-form/index.js:1
-#: src/survey-form/index.js:51
+#: src/survey-form/index.js:61
 #: src/survey-form/variations.js:167
 msgid "Very satisfied"
 msgstr ""
 
 #: build/survey-form/index.js:1
-#: src/survey-form/index.js:52
+#: src/survey-form/index.js:62
 #: src/survey-form/variations.js:168
 msgid "Satisfaction"
 msgstr ""
@@ -377,13 +388,13 @@ msgid "Usually"
 msgstr ""
 
 #: build/survey-form/index.js:1
-#: src/survey-form/index.js:54
+#: src/survey-form/index.js:64
 #: src/survey-form/variations.js:170
 msgid "Dissatisfaction"
 msgstr ""
 
 #: build/survey-form/index.js:1
-#: src/survey-form/index.js:55
+#: src/survey-form/index.js:65
 #: src/survey-form/variations.js:171
 msgid "Very dissatisfied"
 msgstr ""
@@ -394,28 +405,28 @@ msgid "If you have any final thoughts, please write them down."
 msgstr ""
 
 #: build/survey-form/index.js:1
-#: src/survey-form/index.js:69
+#: src/survey-form/index.js:79
 #: src/survey-form/variations.js:189
 msgid "Submit"
 msgstr ""
 
 #: build/survey-form/index.js:1
-#: src/survey-form/index.js:35
+#: src/survey-form/index.js:45
 msgid "Please tell us what your customers have to say"
 msgstr ""
 
 #: build/survey-form/index.js:1
-#: src/survey-form/index.js:44
+#: src/survey-form/index.js:54
 msgid "Satisfaction with this site"
 msgstr ""
 
 #: build/survey-form/index.js:1
-#: src/survey-form/index.js:53
+#: src/survey-form/index.js:63
 msgid "Normal"
 msgstr ""
 
 #: build/survey-form/index.js:1
-#: src/survey-form/index.js:62
+#: src/survey-form/index.js:72
 msgid "Description"
 msgstr ""
 

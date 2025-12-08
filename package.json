@@ -9,6 +9,7 @@
 		"wp-env": "wp-env",
 		"build": "wp-scripts build --webpack-copy-php",
 		"format": "wp-scripts format",
+		"make-pot": "wp i18n make-pot . languages/beastfeedbacks.pot --exclude=node_modules,dist,tests,e2e-tests",
 		"lint:css": "wp-scripts lint-style",
 		"lint:js": "wp-scripts lint-js",
 		"lint:js:fix": "wp-scripts lint-js --fix",
