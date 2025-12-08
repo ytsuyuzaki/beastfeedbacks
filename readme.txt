@@ -1,10 +1,13 @@
 === BeastFeedbacks ===
 Contributors:      ytsuyuzaki
 Tags:              block, feedback, form
+Requires PHP:      8.1
+Requires at least: 6.8
 Tested up to:      6.8
 Stable tag:        0.1.0
 License:           GPL-2.0-or-later
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
+Donate link:       https://buy.stripe.com/dRm6oHc9Fcl196Q6Ik2B201
 
 Provides a block-editor form for receiving powerful user feedback.
 
@@ -20,6 +23,11 @@ These features are visible in the block editor.
 The executed content can be checked on the WordPress management screen, and is saved along with the URL, date and time, IP address, etc.
 Registration contents can be exported as csv, so you can tally them up as you like.
 
+== Source Code ==
+Development takes place on GitHub.
+You can view the repository here:
+https://github.com/ytsuyuzaki/beastfeedbacks
+
 == Installation ==
 
 This section describes how to install the plugin and get it working.
@@ -31,39 +39,18 @@ e.g.
 
 If you are a developer, you can create a plugin zip file from a git repository.
 
-```
-git clone git@github.com:soramugi/beastfeedbacks.git
-cd beastfeedbacks
-npm install
-npm run plugin-zip
-```
+	git clone git@github.com:ytsuyuzaki/beastfeedbacks.git
+	cd beastfeedbacks
+	npm install
+	npm run build
+	npm run plugin-zip
 
 == Frequently Asked Questions ==
 
-Q1.
-I want to update the translation file
+= I want to update the translation file =
 
-A1.
 You can help translate WordPress to your language by logging in to the translation platform with your WordPress.org account and suggesting translations (more details).
 https://make.wordpress.org/polyglots/handbook/translating/how-to-translate/
-
-Alternatively, you can include the translation files in a git repository.
-
-```
-git clone git@github.com:soramugi/beastfeedbacks.git
-cd beastfeedbacks
-cd languages
-cp beastfeedbacks.pot beastfeedbacks-{locale}.po # Describe the translation content
-wp i18n make-mo .
-wp i18n make-json beastfeedbacks-{locale}.po --no-purge
-```
-
-Please commit your artifacts and submit a pull request.
-The following documents are available for creating translation files.
-
-https://developer.wordpress.org/cli/commands/i18n/make-mo/
-https://developer.wordpress.org/block-editor/how-to-guides/internationalization/
-
 
 = What does this plugin solve? =
 
@@ -78,11 +65,13 @@ It is saved along with the page and date and time on which the survey was conduc
 
 == Screenshots ==
 
-1. This screen shot description corresponds to screenshot-1.(png|jpg|jpeg|gif). Note that the screenshot is taken from
-the /assets directory or the directory that contains the stable readme.txt (tags or trunk). Screenshots in the /assets
-directory take precedence. For example, `/assets/screenshot-1.png` would win over `/tags/4.3/screenshot-1.png`
-(or jpg, jpeg, gif).
-2. This is the second screen shot
+1. Screenshot description for screenshot-1.(png|jpg|jpeg|gif)
+2. The second screenshot description
+
+== Upgrade Notice ==
+
+= 0.1.0 =
+Initial release.
 
 == Changelog ==
 
