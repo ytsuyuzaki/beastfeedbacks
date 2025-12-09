@@ -35,6 +35,9 @@ jobs:
       - name: Install npm dependencies
         run: npm ci
 
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --no-progress
+
       - name: Generate .wp-env.json for matrix
         run: |
           sed -e "s/__PHP_VERSION__/${{ matrix.php }}/" \
