@@ -11,6 +11,7 @@
 		"plugin-zip": "wp-scripts plugin-zip",
 		"wp-env": "wp-env",
 		"wp-env:start": "wp-env start --xdebug=coverage",
+		"wp-env:stop": "wp-env stop", 
 		"wp-env:test": "wp-env run tests-cli --env-cwd='wp-content/plugins/beastfeedbacks/' vendor/bin/phpunit",
 		"wp-env:test:coverage": "wp-env run tests-cli --env-cwd='wp-content/plugins/beastfeedbacks/' sh -lc \"XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-html tests/coverage --colors=always\"",
 		"format": "wp-scripts format",
