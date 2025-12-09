@@ -4,7 +4,7 @@ Tags:              block, feedback, form
 Requires PHP:      8.1
 Requires at least: 6.8
 Tested up to:      6.9
-Stable tag:        0.1.0
+Stable tag:        0.1.1
 License:           GPL-2.0-or-later
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
 Donate link:       https://buy.stripe.com/dRm6oHc9Fcl196Q6Ik2B201
@@ -74,6 +74,11 @@ It is saved along with the page and date and time on which the survey was conduc
 Initial release.
 
 == Changelog ==
+
+= 0.1.1 =
+* Updated plugin page assets and readme formatting.
+* Added additional PHPUnit test coverage.
+* Updated development dependencies and build tools.
 
 = 0.1.0 =
 * Release
