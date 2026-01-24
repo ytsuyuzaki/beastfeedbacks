@@ -36,6 +36,6 @@
 		"@wordpress/env": "^10.34.0",
 		"@wordpress/icons": "^11.1.0",
 		"@wordpress/scripts": "^31.1.0",
-		"lodash": "^4.17.21"
+		"lodash": "^4.17.23"
 	}
 }
