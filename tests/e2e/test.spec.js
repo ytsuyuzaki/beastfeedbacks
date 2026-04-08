@@ -11,11 +11,14 @@ async function insertPublishAndVisit( { editor, page } ) {
 	await editor.insertBlock( { name: 'beastfeedbacks/survey-form' } );
 	await editor.publishPost();
 
+	// 公開パネルが開いた状態で "View Post" リンクの href を取得して直接遷移する
+	// （パネルヘッダーがリンクをブロックするためクリックではなく goto を使用）
 	const viewPostLink = page
 		.getByRole( 'link', { name: /view post/i } )
 		.first();
 	await expect( viewPostLink ).toBeVisible();
-	await viewPostLink.click();
+	const href = await viewPostLink.getAttribute( 'href' );
+	await page.goto( href );
 
 	await page.waitForLoadState( 'domcontentloaded' );
 }
@@ -31,9 +34,10 @@ test.describe( 'Survey Form Block', () => {
 		page,
 	} ) => {
 		// エディタ上にフォームブロックが表示されていることを確認
+		// ブロックエディタのコンテンツは iframe 内にあるため editor.canvas を使用
 		await editor.insertBlock( { name: 'beastfeedbacks/survey-form' } );
 		await expect(
-			page.locator( '[data-type="beastfeedbacks/survey-form"]' )
+			editor.canvas.locator( '[data-type="beastfeedbacks/survey-form"]' )
 		).toBeVisible();
 
 		// 投稿を公開してフロントエンドページへ移動する
@@ -42,7 +46,8 @@ test.describe( 'Survey Form Block', () => {
 			.getByRole( 'link', { name: /view post/i } )
 			.first();
 		await expect( viewPostLink ).toBeVisible();
-		await viewPostLink.click();
+		const href = await viewPostLink.getAttribute( 'href' );
+		await page.goto( href );
 		await page.waitForLoadState( 'domcontentloaded' );
 
 		// フロントエンドにアンケートフォームが表示されていることを確認する
