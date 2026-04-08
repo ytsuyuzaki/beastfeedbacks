@@ -59,6 +59,16 @@ jobs:
       - name: Run e2e tests (Playwright)
         run: npm run test:e2e
 
+      - name: Upload Playwright test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-php${{ matrix.php }}-wp${{ matrix.wp }}
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
+
       - name: Stop wp-env
         if: always()
         run: npm run wp-env:stop
