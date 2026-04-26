@@ -1,0 +1,56 @@
+name: Deploy to WordPress.org
+
+on:
+    push:
+        tags:
+            - 'v*'
+
+jobs:
+    build-and-release:
+        name: Build, Release & Deploy to SVN
+
+        runs-on: ubuntu-latest
+
+        permissions:
+            contents: write
+
+        env:
+            NODE_VERSION: '24'
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v5
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v5
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+                  cache: 'npm'
+
+            - name: Install npm dependencies
+              run: npm ci
+
+            - name: Build blocks
+              run: npm run build
+
+            - name: Create plugin zip
+              run: npm run plugin-zip
+
+            - name: Get tag name
+              id: tag
+              run: echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+
+            - name: Create GitHub Release
+              uses: softprops/action-gh-release@v2
+              with:
+                  tag_name: ${{ steps.tag.outputs.tag }}
+                  name: ${{ steps.tag.outputs.tag }}
+                  generate_release_notes: true
+                  files: '*.zip'
+
+            - name: Deploy to WordPress.org SVN
+              uses: 10up/action-wordpress-plugin-deploy@stable
+              env:
+                  SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+                  SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+                  SLUG: beastfeedbacks
