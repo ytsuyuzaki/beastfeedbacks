@@ -4,7 +4,35 @@
 	"description": "Provides a block-editor form for receiving powerful user feedback.",
 	"author": "ytsuyuzaki",
 	"license": "GPL-2.0-or-later",
+	"keywords": [
+		"wordpress",
+		"wordpress-plugin",
+		"block",
+		"feedback",
+		"form"
+	],
+	"homepage": "https://github.com/ytsuyuzaki/beastfeedbacks#readme",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/ytsuyuzaki/beastfeedbacks.git"
+	},
+	"bugs": {
+		"url": "https://github.com/ytsuyuzaki/beastfeedbacks/issues"
+	},
 	"main": "block/",
+	"devDependencies": {
+		"@playwright/test": "^1.59.1",
+		"@wordpress/api-fetch": "^7.34.0",
+		"@wordpress/components": "^30.7.0",
+		"@wordpress/data": "^10.34.0",
+		"@wordpress/e2e-test-utils-playwright": "^1.44.0",
+		"@wordpress/element": "^6.44.0",
+		"@wordpress/env": "^10.34.0",
+		"@wordpress/i18n": "^6.17.0",
+		"@wordpress/icons": "^11.1.0",
+		"@wordpress/scripts": "^32.0.0",
+		"lodash": "^4.18.1"
+	},
 	"scripts": {
 		"start": "wp-scripts start",
 		"build": "wp-scripts build --webpack-copy-php",
@@ -29,13 +57,19 @@
 		"test:e2e": "wp-scripts test-playwright",
 		"test:e2e:debug": "wp-scripts test-playwright --debug"
 	},
-	"devDependencies": {
-		"@wordpress/api-fetch": "^7.34.0",
-		"@wordpress/components": "^30.7.0",
-		"@wordpress/data": "^10.34.0",
-		"@wordpress/env": "^10.34.0",
-		"@wordpress/icons": "^11.1.0",
-		"@wordpress/scripts": "^31.6.0",
-		"lodash": "^4.18.1"
+	"overrides": {
+		"serialize-javascript": "^7.0.5",
+		"markdownlint-cli": "^0.48.0",
+		"webpack-dev-server": "^5.2.3",
+		"uuid": "^14.0.0",
+		"@wp-playground/blueprints": {
+			"ajv": "^8.20.0"
+		},
+		"@wp-playground/cli": {
+			"ajv": "^8.20.0"
+		},
+		"@wp-playground/tools": {
+			"ajv": "^8.20.0"
+		}
 	}
 }

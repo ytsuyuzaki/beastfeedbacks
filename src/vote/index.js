@@ -40,6 +40,18 @@ const TEMPLATE = [
 	],
 ];
 
+function Edit() {
+	const blockProps = useBlockProps();
+
+	return (
+		<div { ...blockProps }>
+			<form name="beastfeedbacks_vote_form">
+				<InnerBlocks template={ TEMPLATE } templateLock={ false } />
+			</form>
+		</div>
+	);
+}
+
 /**
  * 投票ボタン
  */
@@ -54,15 +66,5 @@ registerBlockType( metadata.name, {
 		);
 	},
 
-	edit: () => {
-		const blockProps = useBlockProps();
-
-		return (
-			<div { ...blockProps }>
-				<form name="beastfeedbacks_vote_form">
-					<InnerBlocks template={ TEMPLATE } templateLock={ false } />
-				</form>
-			</div>
-		);
-	},
+	edit: Edit,
 } );

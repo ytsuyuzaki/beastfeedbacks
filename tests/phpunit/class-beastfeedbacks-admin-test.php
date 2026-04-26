@@ -51,12 +51,15 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 	/** @test */
 	public function admin_bulk_actions_unsets_edit_only_on_target_screen(): void {
 		$GLOBALS['current_screen'] = (object) array( 'id' => 'edit-post' );
-		$in  = array( 'edit' => '編集', 'trash' => 'ゴミ箱' );
-		$out = \BeastFeedbacks_Admin::get_instance()->admin_bulk_actions( $in );
+		$in                        = array(
+			'edit'  => '編集',
+			'trash' => 'ゴミ箱',
+		);
+		$out                       = \BeastFeedbacks_Admin::get_instance()->admin_bulk_actions( $in );
 		$this->assertSame( $in, $out );
 
 		$GLOBALS['current_screen'] = (object) array( 'id' => 'edit-beastfeedbacks' );
-		$out2 = \BeastFeedbacks_Admin::get_instance()->admin_bulk_actions( $in );
+		$out2                      = \BeastFeedbacks_Admin::get_instance()->admin_bulk_actions( $in );
 		$this->assertArrayNotHasKey( 'edit', $out2 );
 		$this->assertArrayHasKey( 'trash', $out2 );
 	}
@@ -64,11 +67,14 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 	/** @test */
 	public function admin_view_tabs_unsets_publish_on_target_screen(): void {
 		$GLOBALS['current_screen'] = (object) array( 'id' => 'edit-post' );
-		$views = array( 'all' => 'All', 'publish' => 'Published' );
+		$views                     = array(
+			'all'     => 'All',
+			'publish' => 'Published',
+		);
 		$this->assertSame( $views, \BeastFeedbacks_Admin::get_instance()->admin_view_tabs( $views ) );
 
 		$GLOBALS['current_screen'] = (object) array( 'id' => 'edit-beastfeedbacks' );
-		$out = \BeastFeedbacks_Admin::get_instance()->admin_view_tabs( $views );
+		$out                       = \BeastFeedbacks_Admin::get_instance()->admin_view_tabs( $views );
 		$this->assertArrayNotHasKey( 'publish', $out );
 		$this->assertArrayHasKey( 'all', $out );
 	}
@@ -79,8 +85,12 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 			'post_type'   => 'beastfeedbacks',
 			'post_status' => 'publish',
 		);
-		$in  = array( 'edit' => 'Edit', 'inline hide-if-no-js' => 'Quick Edit', 'view' => 'View' );
-		$out = \BeastFeedbacks_Admin::get_instance()->manage_post_row_actions( $in );
+		$in              = array(
+			'edit'                 => 'Edit',
+			'inline hide-if-no-js' => 'Quick Edit',
+			'view'                 => 'View',
+		);
+		$out             = \BeastFeedbacks_Admin::get_instance()->manage_post_row_actions( $in );
 
 		$this->assertArrayNotHasKey( 'edit', $out );
 		$this->assertArrayNotHasKey( 'inline hide-if-no-js', $out );
@@ -91,16 +101,19 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 	private function fakeQuery( array $vars = array() ) {
 		return new class( $vars ) {
 			public $query_vars = array();
-			public function __construct( $vars ) { $this->query_vars = $vars; }
-			public function get( $k ) { return $this->query_vars[ $k ] ?? null; }
-			public function set( $k, $v ) { $this->query_vars[ $k ] = $v; }
+			public function __construct( $vars ) {
+				$this->query_vars = $vars; }
+			public function get( $k ) {
+				return $this->query_vars[ $k ] ?? null; }
+			public function set( $k, $v ) {
+				$this->query_vars[ $k ] = $v; }
 		};
 	}
 
 	/** @test */
 	public function type_filter_result_sets_meta_query_when_param_present(): void {
 		$_GET['beastfeedbacks_type'] = 'survey'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$q = $this->fakeQuery( array( 'post_type' => 'beastfeedbacks' ) );
+		$q                           = $this->fakeQuery( array( 'post_type' => 'beastfeedbacks' ) );
 
 		\BeastFeedbacks_Admin::get_instance()->type_filter_result( $q );
 
@@ -113,7 +126,7 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 	/** @test */
 	public function type_filter_result_ignores_when_other_post_type(): void {
 		$_GET['beastfeedbacks_type'] = 'survey';
-		$q = $this->fakeQuery( array( 'post_type' => 'post' ) );
+		$q                           = $this->fakeQuery( array( 'post_type' => 'post' ) );
 
 		\BeastFeedbacks_Admin::get_instance()->type_filter_result( $q );
 		$this->assertArrayNotHasKey( 'meta_query', $q->query_vars );
@@ -122,7 +135,12 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 	/** @test */
 	public function source_filter_result_sets_post_parent_when_param_present(): void {
 		$_GET['beastfeedbacks_parent_id'] = '55';
-		$q = $this->fakeQuery( array( 'post_type' => 'beastfeedbacks', 'fields' => '' ) );
+		$q                                = $this->fakeQuery(
+			array(
+				'post_type' => 'beastfeedbacks',
+				'fields'    => '',
+			)
+		);
 
 		\BeastFeedbacks_Admin::get_instance()->source_filter_result( $q );
 
@@ -132,7 +150,12 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 	/** @test */
 	public function source_filter_result_ignores_when_fields_is_id_parent(): void {
 		$_GET['beastfeedbacks_parent_id'] = '55';
-		$q = $this->fakeQuery( array( 'post_type' => 'beastfeedbacks', 'fields' => 'id=>parent' ) );
+		$q                                = $this->fakeQuery(
+			array(
+				'post_type' => 'beastfeedbacks',
+				'fields'    => 'id=>parent',
+			)
+		);
 
 		\BeastFeedbacks_Admin::get_instance()->source_filter_result( $q );
 
@@ -171,11 +194,11 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 		$admin = \BeastFeedbacks_Admin::get_instance();
 
 		$this->assertSame( "'=SUM(A1:A2)", $admin->esc_csv( '=SUM(A1:A2)' ) );
-		$this->assertSame( "'+1+2",        $admin->esc_csv( '+1+2' ) );
-		$this->assertSame( "'-1",          $admin->esc_csv( '-1' ) );
-		$this->assertSame( "'@cmd",        $admin->esc_csv( '@cmd' ) );
+		$this->assertSame( "'+1+2", $admin->esc_csv( '+1+2' ) );
+		$this->assertSame( "'-1", $admin->esc_csv( '-1' ) );
+		$this->assertSame( "'@cmd", $admin->esc_csv( '@cmd' ) );
 
-		$this->assertSame( 'safe',         $admin->esc_csv( 'safe' ) );
-		$this->assertSame( '  space',      $admin->esc_csv( '  space' ) ); // 先頭がスペースならそのまま
+		$this->assertSame( 'safe', $admin->esc_csv( 'safe' ) );
+		$this->assertSame( '  space', $admin->esc_csv( '  space' ) ); // 先頭がスペースならそのまま
 	}
 }

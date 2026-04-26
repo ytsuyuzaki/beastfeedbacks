@@ -63,11 +63,15 @@ class BeastFeedbacks_Block_Test extends TestCase {
 	public function block_categories_all_adds_category_when_context_has_post(): void {
 		$instance = \BeastFeedbacks_Block::get_instance();
 
-		$cats_in  = array(
-			array( 'slug' => 'text', 'title' => 'Text', 'icon' => null ),
+		$cats_in       = array(
+			array(
+				'slug'  => 'text',
+				'title' => 'Text',
+				'icon'  => null,
+			),
 		);
-		$context           = new stdClass();
-		$context->post     = (object) array( 'ID' => 123 ); // ポストあり
+		$context       = new stdClass();
+		$context->post = (object) array( 'ID' => 123 ); // ポストあり
 
 		$cats_out = $instance->block_categories_all( $cats_in, $context );
 
@@ -83,14 +87,17 @@ class BeastFeedbacks_Block_Test extends TestCase {
 	public function block_categories_all_does_not_add_when_no_post_in_context(): void {
 		$instance = \BeastFeedbacks_Block::get_instance();
 
-		$cats_in  = array(
-			array( 'slug' => 'text', 'title' => 'Text', 'icon' => null ),
+		$cats_in = array(
+			array(
+				'slug'  => 'text',
+				'title' => 'Text',
+				'icon'  => null,
+			),
 		);
-		$context  = new stdClass(); // post 無し
+		$context = new stdClass(); // post 無し
 
 		$cats_out = $instance->block_categories_all( $cats_in, $context );
 
 		$this->assertSame( $cats_in, $cats_out, 'Context without post must not add category' );
 	}
-
 }

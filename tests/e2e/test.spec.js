@@ -3,7 +3,7 @@ import { test, expect } from '@wordpress/e2e-test-utils-playwright';
 /**
  * アンケートフォームブロックを挿入・公開し、フロントエンドページへ遷移するヘルパー
  *
- * @param {Object} fixtures - テストフィクスチャ
+ * @param {Object} fixtures        - テストフィクスチャ
  * @param {Object} fixtures.editor - エディタユーティリティ
  * @param {Object} fixtures.page   - Playwright ページオブジェクト
  */
@@ -53,7 +53,9 @@ test.describe( 'Survey Form Block', () => {
 		// フロントエンドにアンケートフォームが表示されていることを確認する
 		const form = page.locator( 'form[name="beastfeedbacks_survey_form"]' );
 		await expect( form ).toBeVisible();
-		await expect( form.locator( 'input[type="radio"]' ).first() ).toBeVisible();
+		await expect(
+			form.locator( 'input[type="radio"]' ).first()
+		).toBeVisible();
 		await expect( form.locator( 'textarea' ) ).toBeVisible();
 		await expect( form.locator( 'button[type="submit"]' ) ).toBeVisible();
 	} );
@@ -76,14 +78,18 @@ test.describe( 'Survey Form Block', () => {
 		// テキストエリアに入力する
 		const textarea = form.locator( 'textarea' );
 		await textarea.fill( 'テストフィードバックメッセージ' );
-		await expect( textarea ).toHaveValue( 'テストフィードバックメッセージ' );
+		await expect( textarea ).toHaveValue(
+			'テストフィードバックメッセージ'
+		);
 
 		// フォームを送信する
 		await form.locator( 'button[type="submit"]' ).click();
 
 		// 送信完了メッセージ（データ書き込み成功）を確認する
 		await expect(
-			page.getByText( /Thank you for your responses to the questionnaire/i )
+			page.getByText(
+				/Thank you for your responses to the questionnaire/i
+			)
 		).toBeVisible();
 	} );
 } );

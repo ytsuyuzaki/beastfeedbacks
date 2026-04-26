@@ -1,3 +1,5 @@
+/* global addLoadEvent, jQuery */
+
 document.addEventListener( 'DOMContentLoaded', () => {
 	const btn = document.querySelector( '.beastfeedbacks-export-btn' );
 	if ( ! btn ) {
