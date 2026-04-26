@@ -1,16 +1,14 @@
 {
-  "core": "WordPress/WordPress#__WP_VERSION__",
-  "phpVersion": "__PHP_VERSION__",
+	"core": "WordPress/WordPress#__WP_VERSION__",
+	"phpVersion": "__PHP_VERSION__",
 
-  "plugins": [
-    "./"
-  ],
-  "mappings": {
-    "wp-content/plugins/beastfeedbacks": "."
-  },
-  "config": {
-    "WP_DEBUG": true,
-    "SCRIPT_DEBUG": true
-  },
-  "testsPort": 8889
+	"plugins": [ "./" ],
+	"mappings": {
+		"wp-content/plugins/beastfeedbacks": "."
+	},
+	"config": {
+		"WP_DEBUG": true,
+		"SCRIPT_DEBUG": true
+	},
+	"testsPort": 8889
 }
