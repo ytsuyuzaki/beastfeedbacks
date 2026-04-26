@@ -10,6 +10,69 @@ import variations from './variations';
 import metadata from './block.json';
 import './style.scss';
 
+function Edit() {
+	const blockProps = useBlockProps();
+	const innerBlocksProps = useInnerBlocksProps(
+		{},
+		{
+			// デフォルトの入れ子ブロック、variationsで上書きされる
+			template: [
+				[
+					'core/heading',
+					{
+						level: 3,
+						content: __(
+							'Please tell us what your customers have to say',
+							'beastfeedbacks'
+						),
+					},
+				],
+				[
+					'beastfeedbacks/survey-choice',
+					{
+						label: __(
+							'Satisfaction with this site',
+							'beastfeedbacks'
+						),
+						tagType: 'radio',
+						required: true,
+						items: [
+							__( 'Very satisfied', 'beastfeedbacks' ),
+							__( 'Satisfaction', 'beastfeedbacks' ),
+							__( 'Normal', 'beastfeedbacks' ),
+							__( 'Dissatisfaction', 'beastfeedbacks' ),
+							__( 'Very dissatisfied', 'beastfeedbacks' ),
+						],
+					},
+				],
+				[
+					'beastfeedbacks/survey-input',
+					{
+						label: __( 'Description', 'beastfeedbacks' ),
+						tagType: 'textarea',
+					},
+				],
+				[
+					'core/button',
+					{
+						text: __( 'Submit', 'beastfeedbacks' ),
+						tagName: 'button',
+						type: 'submit',
+					},
+				],
+			],
+		}
+	);
+
+	return (
+		<div { ...blockProps }>
+			<form name="beastfeedbacks_survey_form">
+				<div { ...innerBlocksProps } />
+			</form>
+		</div>
+	);
+}
+
 /**
  * アンケートフォーム
  */
@@ -31,66 +94,5 @@ registerBlockType( metadata.name, {
 		);
 	},
 
-	edit: () => {
-		const blockProps = useBlockProps();
-		const innerBlocksProps = useInnerBlocksProps(
-			{},
-			{
-				// デフォルトの入れ子ブロック、variationsで上書きされる
-				template: [
-					[
-						'core/heading',
-						{
-							level: 3,
-							content: __(
-								'Please tell us what your customers have to say',
-								'beastfeedbacks'
-							),
-						},
-					],
-					[
-						'beastfeedbacks/survey-choice',
-						{
-							label: __(
-								'Satisfaction with this site',
-								'beastfeedbacks'
-							),
-							tagType: 'radio',
-							required: true,
-							items: [
-								__( 'Very satisfied', 'beastfeedbacks' ),
-								__( 'Satisfaction', 'beastfeedbacks' ),
-								__( 'Normal', 'beastfeedbacks' ),
-								__( 'Dissatisfaction', 'beastfeedbacks' ),
-								__( 'Very dissatisfied', 'beastfeedbacks' ),
-							],
-						},
-					],
-					[
-						'beastfeedbacks/survey-input',
-						{
-							label: __( 'Description', 'beastfeedbacks' ),
-							tagType: 'textarea',
-						},
-					],
-					[
-						'core/button',
-						{
-							text: __( 'Submit', 'beastfeedbacks' ),
-							tagName: 'button',
-							type: 'submit',
-						},
-					],
-				],
-			}
-		);
-
-		return (
-			<div { ...blockProps }>
-				<form name="beastfeedbacks_survey_form">
-					<div { ...innerBlocksProps } />
-				</form>
-			</div>
-		);
-	},
+	edit: Edit,
 } );

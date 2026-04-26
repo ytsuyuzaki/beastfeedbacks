@@ -27,6 +27,47 @@ function GenerateStyle( { layout } ) {
 	return style;
 }
 
+function Edit( { attributes, setAttributes, isSelected } ) {
+	const { width } = attributes;
+	const blockProps = useBlockProps();
+	const childStyle = GenerateStyle( attributes );
+
+	return (
+		<>
+			<div
+				{ ...blockProps }
+				style={ { width: width ? width + '%' : null } }
+			>
+				<div className="beastfeedbacks-survey-choice_label">
+					<RichText
+						tagName="label"
+						onChange={ ( value ) => {
+							setAttributes( { label: value } );
+						} }
+						value={ attributes.label }
+					/>
+					{ attributes.required && (
+						<span className="beastfeedbacks-survey-choice_label_required">
+							({ __( 'Required', 'beastfeedbacks' ) })
+						</span>
+					) }
+				</div>
+
+				<EditListBlock
+					style={ childStyle }
+					isSelected={ isSelected }
+					attributes={ attributes }
+					setAttributes={ setAttributes }
+				/>
+			</div>
+			<FieldControls
+				attributes={ attributes }
+				setAttributes={ setAttributes }
+			/>
+		</>
+	);
+}
+
 /**
  * アンケートフォームの選択肢
  */
@@ -58,46 +99,7 @@ registerBlockType( metadata.name, {
 		},
 	},
 
-	edit: ( { attributes, setAttributes, isSelected } ) => {
-		const { width } = attributes;
-		const blockProps = useBlockProps();
-		const childStyle = GenerateStyle( attributes );
-
-		return (
-			<>
-				<div
-					{ ...blockProps }
-					style={ { width: width ? width + '%' : null } }
-				>
-					<div className="beastfeedbacks-survey-choice_label">
-						<RichText
-							tagName="label"
-							onChange={ ( value ) => {
-								setAttributes( { label: value } );
-							} }
-							value={ attributes.label }
-						/>
-						{ attributes.required && (
-							<span className="beastfeedbacks-survey-choice_label_required">
-								({ __( 'Required', 'beastfeedbacks' ) })
-							</span>
-						) }
-					</div>
-
-					<EditListBlock
-						style={ childStyle }
-						isSelected={ isSelected }
-						attributes={ attributes }
-						setAttributes={ setAttributes }
-					/>
-				</div>
-				<FieldControls
-					attributes={ attributes }
-					setAttributes={ setAttributes }
-				/>
-			</>
-		);
-	},
+	edit: Edit,
 	save: ( { attributes } ) => {
 		const { label, items, required, tagType, width } = attributes;
 		const childStyle = GenerateStyle( attributes );
