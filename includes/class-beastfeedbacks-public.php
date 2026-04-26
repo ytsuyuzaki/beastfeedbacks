@@ -85,7 +85,12 @@ class BeastFeedbacks_Public {
 				continue;
 			}
 			if ( isset( $_POST[ $post_key ] ) ) {
-				$post_params[ $post_key ] = sanitize_text_field( wp_unslash( $_POST[ $post_key ] ) );
+				$post_value = wp_unslash( $_POST[ $post_key ] );
+				if ( is_array( $post_value ) ) {
+					$post_params[ $post_key ] = array_map( 'sanitize_text_field', $post_value );
+					continue;
+				}
+				$post_params[ $post_key ] = sanitize_text_field( $post_value );
 			}
 		}
 
