@@ -12,14 +12,14 @@ jobs:
         runs-on: ubuntu-latest
 
         env:
-            NODE_VERSION: '20'
+            NODE_VERSION: '24'
 
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
 
             - name: Setup Node.js
-              uses: actions/setup-node@v4
+              uses: actions/setup-node@v5
               with:
                   node-version: ${{ env.NODE_VERSION }}
                   cache: 'npm'
@@ -64,14 +64,14 @@ jobs:
 
         env:
             # 後で使う用
-            NODE_VERSION: '20'
+            NODE_VERSION: '24'
 
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
 
             - name: Setup Node.js
-              uses: actions/setup-node@v4
+              uses: actions/setup-node@v5
               with:
                   node-version: ${{ env.NODE_VERSION }}
                   cache: 'npm'
@@ -105,7 +105,7 @@ jobs:
 
             - name: Upload Playwright test results
               if: always()
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@v5
               with:
                   name: playwright-report-php${{ matrix.php }}-wp${{ matrix.wp }}
                   path: |
