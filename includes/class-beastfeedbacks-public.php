@@ -1,5 +1,4 @@
 <?php
-
 /**
  * 公開用設定
  *
@@ -14,6 +13,7 @@
  * 公開用設定
  */
 class BeastFeedbacks_Public {
+
 
 
 	/**
@@ -50,7 +50,7 @@ class BeastFeedbacks_Public {
 	public function register_beastfeedbacks_form() {
 		check_ajax_referer( 'register_beastfeedbacks_form' );
 
-		// POSTデータの存在確認と適切なサニタイズ
+		// POSTデータの存在確認と適切なサニタイズ.
 		if ( ! isset( $_POST['id'] ) || ! isset( $_POST['beastfeedbacks_type'] ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid request', 'beastfeedbacks' ) ) );
 		}
@@ -79,7 +79,7 @@ class BeastFeedbacks_Public {
 			'_wpnonce',
 		);
 
-		// POSTデータの安全な処理
+		// POSTデータの安全な処理.
 		foreach ( array_keys( $_POST ) as $post_key ) {
 			if ( in_array( $post_key, $ignore_keys, true ) ) {
 				continue;
