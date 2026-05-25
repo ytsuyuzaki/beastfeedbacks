@@ -1,5 +1,4 @@
 <?php
-
 /**
  * 管理画面
  *
@@ -16,6 +15,8 @@
 class BeastFeedbacks_Admin {
 
 
+
+
 	/**
 	 * Self class
 	 *
@@ -29,6 +30,12 @@ class BeastFeedbacks_Admin {
 	 * @var string ポストタイプ.
 	 */
 	public $post_type = 'beastfeedbacks';
+
+	/**
+	 * CSVエクスポート用のアクション名.
+	 *
+	 * @var string
+	 */
 
 	public $export_action_name = 'beastfeedbacks_export';
 
@@ -335,7 +342,7 @@ class BeastFeedbacks_Admin {
 	public function add_type_filter() {
 		$screen = get_current_screen();
 
-		if ( 'edit-beastfeedbacks' !== $screen->id ) {
+		if ( ! $screen || ! isset( $screen->id ) || 'edit-beastfeedbacks' !== $screen->id ) {
 			return;
 		}
 
@@ -364,7 +371,7 @@ class BeastFeedbacks_Admin {
 	public function add_source_filter() {
 		$screen = get_current_screen();
 
-		if ( 'edit-beastfeedbacks' !== $screen->id ) {
+		if ( ! $screen || ! isset( $screen->id ) || 'edit-beastfeedbacks' !== $screen->id ) {
 			return;
 		}
 
@@ -451,9 +458,14 @@ class BeastFeedbacks_Admin {
 		$query->query_vars['post_parent'] = $selected_parent_id;
 	}
 
+	/**
+	 * Add export button for the response list screen.
+	 *
+	 * @return void
+	 */
 	public function add_export_button() {
 		$screen = get_current_screen();
-		if ( 'edit-beastfeedbacks' !== $screen->id ) {
+		if ( ! $screen || ! isset( $screen->id ) || 'edit-beastfeedbacks' !== $screen->id ) {
 			return;
 		}
 

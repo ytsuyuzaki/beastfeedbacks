@@ -10,7 +10,10 @@
 	#############################################################################
 	-->
 
-	<file>.</file>
+	<file>beastfeedbacks.php</file>
+	<file>uninstall.php</file>
+	<file>includes</file>
+	<file>public</file>
 
 	<!-- Exclude WP Core folders and files from being checked. -->
 	<exclude-pattern>/docroot/wp-admin/*</exclude-pattern>
@@ -37,6 +40,9 @@
 
 	<!-- Strip the filepaths down to the relevant bit. -->
 	<arg name="basepath" value="."/>
+
+	<!-- Only lint PHP files. -->
+	<arg name="extensions" value="php"/>
 
 	<!-- Check up to 8 files simultaneously. -->
 	<arg name="parallel" value="8"/>
