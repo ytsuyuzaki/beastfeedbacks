@@ -54,6 +54,7 @@
 		"lint:pkg-json": "wp-scripts lint-pkg-json",
 		"lint:php": "vendor/bin/phpcs",
 		"lint:php:fix": "vendor/bin/phpcbf",
+		"lint": "sh -c 'npm run format -- --check && npm run lint:pkg-json && npm run lint:js && npm run lint:css && npm run lint:md:docs && npm run lint:php && npm run check-engines && npm run check-licenses'",
 		"test": "sh -c 'npm run build && npm run wp-env:start && npm run wp-env:test && npm run test:e2e; status=$?; npm run wp-env:stop; exit $status'",
 		"test:e2e": "wp-scripts test-playwright",
 		"test:e2e:debug": "wp-scripts test-playwright --debug"
