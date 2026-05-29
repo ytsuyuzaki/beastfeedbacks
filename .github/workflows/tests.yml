@@ -128,7 +128,7 @@ jobs:
                   cat .wp-env.json
 
             - name: Download Playwright browsers
-              uses: actions/download-artifact@v4
+              uses: actions/download-artifact@v5
               with:
                   name: playwright-browsers
                   path: ~/.cache/ms-playwright
