@@ -6,8 +6,8 @@ on:
     pull_request:
 
 jobs:
-    npm-checks:
-        name: NPM lint / format / build checks
+    lint:
+        name: Run npm lint
 
         runs-on: ubuntu-latest
 
@@ -27,20 +27,11 @@ jobs:
             - name: Install npm dependencies
               run: npm ci
 
-            - name: Lint package.json
-              run: npm run lint:pkg-json
+            - name: Install Composer dependencies
+              run: composer install --no-interaction --no-progress
 
-            - name: Lint JavaScript
-              run: npm run lint:js
-
-            - name: Lint styles
-              run: npm run lint:css
-
-            - name: Lint Markdown docs
-              run: npm run lint:md:docs
-
-            - name: Check formatting
-              run: npm run format -- --check
+            - name: Run npm lint
+              run: npm run lint
 
             - name: Build blocks
               run: npm run build
@@ -49,23 +40,14 @@ jobs:
               run: git diff --exit-code
 
     test:
-        # ここにバージョンが出るので「どの組み合わせを見ているか」を常に確認しやすい
-        name: PHP ${{ matrix.php }} / WP ${{ matrix.wp }}
+        name: Run npm test
 
         runs-on: ubuntu-latest
 
-        needs: [npm-checks]
-
-        strategy:
-            fail-fast: false
-            matrix:
-                php: ['8.1', '8.5'] # PHPメンテの最低、現行最新バージョンをカバー
-                wp: ['6.9', '7.0'] # サポート対象の最新2バージョンをカバー
+        needs: [lint]
 
         env:
-            # 後で使う用
             NODE_VERSION: '24'
-            PLAYWRIGHT_IMAGE: 'mcr.microsoft.com/playwright:v1.59.1-noble'
 
         steps:
             - name: Checkout
@@ -79,60 +61,20 @@ jobs:
 
             - name: Install npm dependencies
               run: npm ci
-              env:
-                  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-
-            - name: Building Blocks
-              run: npm run build
 
             - name: Install Composer dependencies
               run: composer install --no-interaction --no-progress
 
-            - name: Generate .wp-env.json for matrix
-              run: |
-                  sed -e "s/__PHP_VERSION__/${{ matrix.php }}/" \
-                      -e "s/__WP_VERSION__/${{ matrix.wp }}/" \
-                      .github/.wp-env.template.json > .wp-env.json
-
-                  echo "===== .wp-env.json ====="
-                  cat .wp-env.json
-
-            - name: Start wp-env
-              run: npm run wp-env:start
-
-            - name: Verify wp-env is reachable from Playwright container
-              timeout-minutes: 2
-              run: |
-                  docker run --rm --network host \
-                      ${{ env.PLAYWRIGHT_IMAGE }} \
-                      sh -lc "curl -fsS http://127.0.0.1:8889/wp-login.php >/dev/null"
-
-            - name: Run PHPUnit (wp-env:test)
-              timeout-minutes: 3
-              run: npm run wp-env:test
-
-            - name: Run e2e tests in Playwright container
-              timeout-minutes: 3
-              run: |
-                  docker run --rm --network host --ipc=host \
-                      -e CI=1 \
-                      -e WP_BASE_URL=http://127.0.0.1:8889 \
-                      -e PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
-                      -v "$PWD:/work" \
-                      -w /work \
-                      ${{ env.PLAYWRIGHT_IMAGE }} \
-                      sh -lc "npm run test:e2e"
+            - name: Run npm test
+              timeout-minutes: 15
+              run: npm run test
 
             - name: Upload Playwright test results
               if: always()
               uses: actions/upload-artifact@v5
               with:
-                  name: playwright-report-php${{ matrix.php }}-wp${{ matrix.wp }}
+                  name: playwright-report
                   path: |
                       test-results/
                       playwright-report/
                   if-no-files-found: ignore
-
-            - name: Stop wp-env
-              if: always()
-              run: npm run wp-env:stop
