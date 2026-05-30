@@ -114,7 +114,7 @@ jobs:
             - name: Run e2e tests in Playwright container
               timeout-minutes: 3
               run: |
-                docker run --rm --network host --ipc=host \
+                  docker run --rm --network host --ipc=host \
                       -e CI=1 \
                       -e WP_BASE_URL=http://127.0.0.1:8889 \
                       -e PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
