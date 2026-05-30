@@ -21,7 +21,7 @@
 	},
 	"main": "block/",
 	"devDependencies": {
-		"@playwright/test": "^1.59.1",
+		"@playwright/test": "^1.60.0",
 		"@wordpress/api-fetch": "^7.34.0",
 		"@wordpress/components": "^30.7.0",
 		"@wordpress/data": "^10.34.0",
