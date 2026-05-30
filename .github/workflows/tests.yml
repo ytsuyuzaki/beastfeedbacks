@@ -49,43 +49,27 @@ jobs:
               run: git diff --exit-code
 
     setup-playwright:
-        name: Download Playwright browsers
+        name: Prepare Playwright browsers artifact
 
         runs-on: ubuntu-latest
+
+        container:
+            image: mcr.microsoft.com/playwright:v1.59.1-noble
 
         env:
             NODE_VERSION: '24'
 
         steps:
-            - name: Checkout
-              uses: actions/checkout@v5
-
-            - name: Setup Node.js
-              uses: actions/setup-node@v5
-              with:
-                  node-version: ${{ env.NODE_VERSION }}
-                  cache: 'npm'
-
-            - name: Install npm dependencies
-              run: npm ci
-
-            - name: Restore Playwright browsers cache
-              id: playwright-cache
-              uses: actions/cache@v4
-              with:
-                  path: ~/.cache/ms-playwright
-                  key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
-
-            - name: Install Playwright browsers
-              if: steps.playwright-cache.outputs.cache-hit != 'true'
-              timeout-minutes: 5
-              run: DEBUG=pw:install,pw:download npx --no-install playwright install chromium
+            - name: Copy preinstalled Playwright browsers from container
+              run: |
+                  mkdir -p /github/workspace/.ci-ms-playwright
+                  cp -a /ms-playwright/. /github/workspace/.ci-ms-playwright/
 
             - name: Upload Playwright browsers
               uses: actions/upload-artifact@v5
               with:
                   name: playwright-browsers
-                  path: ~/.cache/ms-playwright
+                  path: .ci-ms-playwright
                   retention-days: 1
 
     test:
