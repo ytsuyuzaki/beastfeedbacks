@@ -24,10 +24,26 @@ jobs:
                   node-version: ${{ env.NODE_VERSION }}
                   cache: 'npm'
 
+            - name: Cache npm dependencies
+              id: npm-cache
+              uses: actions/cache@v4
+              with:
+                  path: node_modules/
+                  key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-npm-${{ hashFiles('package-lock.json') }}
+
             - name: Install npm dependencies
+              if: steps.npm-cache.outputs.cache-hit != 'true'
               run: npm ci
 
+            - name: Cache Composer dependencies
+              id: composer-cache
+              uses: actions/cache@v4
+              with:
+                  path: vendor/
+                  key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
+
             - name: Install Composer dependencies
+              if: steps.composer-cache.outputs.cache-hit != 'true'
               run: composer install --no-interaction --no-progress
 
             - name: Run npm lint
@@ -45,6 +61,8 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 1
 
+        needs: [lint]
+
         env:
             NODE_VERSION: '24'
 
@@ -58,7 +76,15 @@ jobs:
                   node-version: ${{ env.NODE_VERSION }}
                   cache: 'npm'
 
+            - name: Restore npm dependencies
+              id: npm-cache
+              uses: actions/cache/restore@v4
+              with:
+                  path: node_modules/
+                  key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-npm-${{ hashFiles('package-lock.json') }}
+
             - name: Install npm dependencies
+              if: steps.npm-cache.outputs.cache-hit != 'true'
               run: npm ci
 
             - name: Cache Playwright browsers
@@ -76,7 +102,7 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 5
 
-        needs: [lint, playwright]
+        needs: [playwright]
 
         strategy:
             fail-fast: false
@@ -97,10 +123,26 @@ jobs:
                   node-version: ${{ env.NODE_VERSION }}
                   cache: 'npm'
 
+            - name: Restore npm dependencies
+              id: npm-cache
+              uses: actions/cache/restore@v4
+              with:
+                  path: node_modules/
+                  key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-npm-${{ hashFiles('package-lock.json') }}
+
             - name: Install npm dependencies
+              if: steps.npm-cache.outputs.cache-hit != 'true'
               run: npm ci
 
+            - name: Restore Composer dependencies
+              id: composer-cache
+              uses: actions/cache/restore@v4
+              with:
+                  path: vendor/
+                  key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
+
             - name: Install Composer dependencies
+              if: steps.composer-cache.outputs.cache-hit != 'true'
               run: composer install --no-interaction --no-progress
 
             - name: Generate .wp-env.json for matrix
