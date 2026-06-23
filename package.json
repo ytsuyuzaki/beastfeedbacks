@@ -27,7 +27,7 @@
 		"@wordpress/data": "^10.47.0",
 		"@wordpress/e2e-test-utils-playwright": "1.46.0",
 		"@wordpress/element": "^7.0.0",
-		"@wordpress/env": "^11.7.0",
+		"@wordpress/env": "^11.8.1",
 		"@wordpress/i18n": "^6.20.0",
 		"@wordpress/icons": "^13.2.0",
 		"@wordpress/scripts": "^32.3.0",
@@ -63,6 +63,14 @@
 		"test:e2e:debug": "playwright test --debug"
 	},
 	"overrides": {
+		"@babel/core": "^7.29.7",
+		"@sentry/node": "^10.59.0",
+		"@opentelemetry/core": "^2.8.0",
+		"@opentelemetry/resources": "^2.8.0",
+		"@opentelemetry/sdk-trace-base": "^2.8.0",
+		"@opentelemetry/sql-common": "^0.42.0",
+		"js-yaml": "^4.2.0",
+		"markdown-it": "^14.2.0",
 		"serialize-javascript": "^7.0.5",
 		"markdownlint-cli": "^0.48.0",
 		"webpack-dev-server": "^5.2.3",
