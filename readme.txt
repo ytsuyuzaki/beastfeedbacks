@@ -75,19 +75,5 @@ Initial release.
 
 == Changelog ==
 
-= 0.1.3 =
-* Updated version to 0.1.3.
-* Declared compatibility with WordPress 7.0.
-
-= 0.1.2 =
-* Updated version to 0.1.2.
-* Added GitHub Actions workflow for automated SVN deployment and GitHub Release on tag push.
-
-= 0.1.1 =
-* Updated plugin page assets and readme formatting.
-* Added additional PHPUnit test coverage.
-* Updated development dependencies and build tools.
-
-= 0.1.0 =
-* Release
-
+For the full changelog, see the
+[GitHub Releases page](https://github.com/ytsuyuzaki/beastfeedbacks/releases).
