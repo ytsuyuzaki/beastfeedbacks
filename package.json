@@ -63,6 +63,7 @@
 		"test:e2e:debug": "playwright test --debug"
 	},
 	"overrides": {
+		"adm-zip": "^0.6.0",
 		"@babel/core": "^7.29.7",
 		"@sentry/node": "^10.59.0",
 		"@opentelemetry/core": "^2.8.0",
