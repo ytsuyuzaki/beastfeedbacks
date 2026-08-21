@@ -109,7 +109,7 @@ Stop it when finished:
 npm run wp-env:stop
 ```
 
-The default `.wp-env.json` uses WordPress 7.0, PHP 8.5, and port 8889 for the
+The default `.wp-env.json` uses WordPress 7.1, PHP 8.5, and port 8889 for the
 test environment.
 
 ## Linting and tests

@@ -106,7 +106,7 @@ npm run wp-env:start
 npm run wp-env:stop
 ```
 
-既定の `.wp-env.json` は WordPress 7.0、PHP 8.5、テスト用ポート 8889 を使用します。
+既定の `.wp-env.json` は WordPress 7.1、PHP 8.5、テスト用ポート 8889 を使用します。
 
 ## 品質チェックとテスト
 
