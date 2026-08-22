@@ -491,9 +491,9 @@ class BeastFeedbacks_Admin {
 	public function download_csv() {
 		check_admin_referer( 'beastfeedbacks_csv_export' );
 
-		// NOTE: POST情報にフィルター設定を載せて検索する.
-		$args = array(
-			'posts_per_page'   => -1,
+		$batch_size = 500;
+		$base_args  = array(
+			'posts_per_page'   => $batch_size, // phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page
 			'post_type'        => 'beastfeedbacks',
 			'post_status'      => array( 'publish' ),
 			'order'            => 'ASC',
@@ -501,61 +501,43 @@ class BeastFeedbacks_Admin {
 			'date_query'       => array(),
 		);
 
-		$posts      = get_posts( $args );
-		$post_datas = array();
-		foreach ( $posts as $post ) {
-			$id = $post->ID;
+		// Pass 1: Collect all dynamic field headers across batches.
+		$fields     = array( 'source', 'date', 'type', 'ip_address', 'user_agent' );
+		$fields_set = array_flip( $fields );
 
-			$source = '';
-			if ( $post->post_parent ) {
-				$form_url   = get_permalink( $post->post_parent );
-				$parsed_url = wp_parse_url( $form_url );
-				$source     = esc_html( $parsed_url['path'] );
+		$paged = 1;
+		while ( true ) {
+			$args          = $base_args;
+			$args['paged'] = $paged;
+			$posts         = get_posts( $args );
+
+			if ( empty( $posts ) ) {
+				break;
 			}
 
-			$content = json_decode( $post->post_content, true );
-			if ( ! is_array( $content ) ) {
-				$content = array();
-			}
-
-			$type        = isset( $content['type'] )
-				? $content['type']
-				: '';
-			$post_params = isset( $content['post_params'] )
-				? $content['post_params']
-				: array();
-
-			$ip_address = isset( $content['ip_address'] ) ? $content['ip_address'] : '';
-			$user_agent = isset( $content['user_agent'] ) ? $content['user_agent'] : '';
-
-			$add_data = array(
-				'source'     => $source,
-				'date'       => $post->post_date,
-				'type'       => $type,
-				'ip_address' => $ip_address,
-				'user_agent' => $user_agent,
-			);
-
-			$add_data = array_merge( $add_data, $post_params );
-
-			foreach ( $add_data as $key => $value ) {
-				$data = $value;
-				if ( is_array( $value ) ) {
-					$data = implode( ',', $value );
+			foreach ( $posts as $post ) {
+				$content = json_decode( $post->post_content, true );
+				if ( is_array( $content ) && isset( $content['post_params'] ) && is_array( $content['post_params'] ) ) {
+					foreach ( array_keys( $content['post_params'] ) as $key ) {
+						if ( ! isset( $fields_set[ $key ] ) ) {
+							$fields_set[ $key ] = true;
+							$fields[]           = $key;
+						}
+					}
 				}
-				if ( ! isset( $post_datas[ $key ] ) ) {
-					$post_datas[ $key ] = array();
-				}
-				$post_datas[ $key ][ $id ] = $data;
 			}
+
+			if ( count( $posts ) < $batch_size ) {
+				break;
+			}
+
+			++$paged;
 		}
 
 		$filename = sprintf(
 			'beastfeedbacks-%s.csv',
 			gmdate( 'Y-m-d_H:i' )
 		);
-
-		$fields = array_keys( $post_datas );
 
 		header( 'Content-Disposition: attachment; filename=' . $filename );
 		header( 'Pragma: no-cache' );
@@ -565,15 +547,66 @@ class BeastFeedbacks_Admin {
 		$output = fopen( 'php://output', 'w' );
 
 		fputcsv( $output, $fields );
-		foreach ( $posts as $post ) {
-			$current_row = array();
 
-			foreach ( $fields as $single_field_name ) {
-				$current_row[] = $this->esc_csv(
-					$post_datas[ $single_field_name ][ $post->ID ]
-				);
+		// Pass 2: Stream CSV rows in batches.
+		$paged = 1;
+		while ( true ) {
+			$args          = $base_args;
+			$args['paged'] = $paged;
+			$posts         = get_posts( $args );
+
+			if ( empty( $posts ) ) {
+				break;
 			}
-			fputcsv( $output, $current_row );
+
+			foreach ( $posts as $post ) {
+				$source = '';
+				if ( $post->post_parent ) {
+					$form_url   = get_permalink( $post->post_parent );
+					$parsed_url = wp_parse_url( $form_url );
+					$source     = esc_html( $parsed_url['path'] );
+				}
+
+				$content = json_decode( $post->post_content, true );
+				if ( ! is_array( $content ) ) {
+					$content = array();
+				}
+
+				$type        = isset( $content['type'] ) ? $content['type'] : '';
+				$post_params = isset( $content['post_params'] ) ? $content['post_params'] : array();
+
+				$ip_address = isset( $content['ip_address'] ) ? $content['ip_address'] : '';
+				$user_agent = isset( $content['user_agent'] ) ? $content['user_agent'] : '';
+
+				$add_data = array(
+					'source'     => $source,
+					'date'       => $post->post_date,
+					'type'       => $type,
+					'ip_address' => $ip_address,
+					'user_agent' => $user_agent,
+				);
+
+				if ( is_array( $post_params ) ) {
+					$add_data = array_merge( $add_data, $post_params );
+				}
+
+				$current_row = array();
+				foreach ( $fields as $single_field_name ) {
+					$val = isset( $add_data[ $single_field_name ] ) ? $add_data[ $single_field_name ] : '';
+					if ( is_array( $val ) ) {
+						$val = implode( ',', $val );
+					}
+					$current_row[] = $this->esc_csv( (string) $val );
+				}
+
+				fputcsv( $output, $current_row );
+			}
+
+			if ( count( $posts ) < $batch_size ) {
+				break;
+			}
+
+			++$paged;
 		}
 
 		fclose( $output ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
