@@ -1,6 +1,8 @@
 <?php
 
 use Yoast\WPTestUtils\BrainMonkey\TestCase;
+use function Brain\Monkey\Functions\expect;
+use function Brain\Monkey\Actions\has;
 
 class BeastFeedbacks_Test extends TestCase {
 
@@ -9,6 +11,10 @@ class BeastFeedbacks_Test extends TestCase {
 
 	public function set_up(): void {
 		parent::set_up();
+
+		if ( ! defined( 'BEASTFEEDBACKS_DIR' ) ) {
+			define( 'BEASTFEEDBACKS_DIR', dirname( __DIR__, 2 ) . '/' );
+		}
 	}
 
 	public function tear_down(): void {
@@ -113,6 +119,40 @@ class BeastFeedbacks_Test extends TestCase {
 
 		$count = \BeastFeedbacks::get_instance()->get_like_count( $parent_id );
 		$this->assertSame( 3, $count, 'like が3件なら 3 を返すべき' );
+	}
+
+	/**
+	 * Verify init loads dependencies and registers admin, public, and block hooks when is_admin returns true.
+	 *
+	 * @test
+	 */
+	public function init_registers_admin_public_and_block_hooks_when_is_admin_is_true(): void {
+		expect( 'is_admin' )
+			->once()
+			->andReturn( true );
+
+		\BeastFeedbacks::get_instance()->init();
+
+		$this->assertTrue( has( 'admin_enqueue_scripts' ) );
+		$this->assertTrue( has( 'wp_ajax_register_beastfeedbacks_form' ) );
+		$this->assertTrue( has( 'init' ) );
+	}
+
+	/**
+	 * Verify init registers public and block hooks but skips admin initialization when is_admin returns false.
+	 *
+	 * @test
+	 */
+	public function init_registers_public_and_block_hooks_but_not_admin_when_is_admin_is_false(): void {
+		expect( 'is_admin' )
+			->once()
+			->andReturn( false );
+
+		\BeastFeedbacks::get_instance()->init();
+
+		$this->assertFalse( has( 'admin_enqueue_scripts' ) );
+		$this->assertTrue( has( 'wp_ajax_register_beastfeedbacks_form' ) );
+		$this->assertTrue( has( 'init' ) );
 	}
 
 	/**
