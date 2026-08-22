@@ -119,7 +119,18 @@ class BeastFeedbacks_Block_Test extends TestCase {
 		$attributes = array();
 		$content    = '<button type="submit" class="like-button">Like</button>';
 
+		if ( class_exists( 'WP_Block_Supports' ) ) {
+			WP_Block_Supports::$block_to_render = array(
+				'blockName' => 'beastfeedbacks/like',
+				'attrs'     => $attributes,
+			);
+		}
+
 		$html = beastfeedbacks_block_like_render_callback( $attributes, $content );
+
+		if ( class_exists( 'WP_Block_Supports' ) ) {
+			WP_Block_Supports::$block_to_render = null;
+		}
 
 		$this->assertStringContainsString( 'name="beastfeedbacks_like_form"', $html );
 		$this->assertStringContainsString( 'value="register_beastfeedbacks_form"', $html );
@@ -167,7 +178,18 @@ class BeastFeedbacks_Block_Test extends TestCase {
 		$GLOBALS['post'] = get_post( $post_id );
 		setup_postdata( $GLOBALS['post'] );
 
+		if ( class_exists( 'WP_Block_Supports' ) ) {
+			WP_Block_Supports::$block_to_render = array(
+				'blockName' => 'beastfeedbacks/like',
+				'attrs'     => array(),
+			);
+		}
+
 		$html = beastfeedbacks_block_like_render_callback( array(), '' );
+
+		if ( class_exists( 'WP_Block_Supports' ) ) {
+			WP_Block_Supports::$block_to_render = null;
+		}
 
 		$this->assertStringContainsString( '<p class="like-count">2</p>', $html );
 
