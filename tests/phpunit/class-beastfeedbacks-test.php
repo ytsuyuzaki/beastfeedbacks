@@ -125,7 +125,11 @@ class BeastFeedbacks_Test extends TestCase {
 	 * @test
 	 */
 	public function init_registers_admin_public_and_block_hooks_when_is_admin_is_true(): void {
-		set_current_screen( 'dashboard' );
+		$GLOBALS['current_screen'] = new class() {
+			public function in_admin() {
+				return true;
+			}
+		};
 
 		\BeastFeedbacks::get_instance()->init();
 
@@ -146,7 +150,11 @@ class BeastFeedbacks_Test extends TestCase {
 	 * @test
 	 */
 	public function init_registers_public_and_block_hooks_but_not_admin_when_is_admin_is_false(): void {
-		set_current_screen( 'front' );
+		$GLOBALS['current_screen'] = new class() {
+			public function in_admin() {
+				return false;
+			}
+		};
 
 		// Clean up any actions added in previous tests/runs.
 		remove_all_actions( 'admin_enqueue_scripts' );
