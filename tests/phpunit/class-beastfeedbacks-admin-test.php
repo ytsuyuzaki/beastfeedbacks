@@ -21,6 +21,7 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 
 	protected function tear_down(): void {
 		unset( $GLOBALS['current_screen'], $GLOBALS['post'] );
+		wp_set_current_user( 0 );
 		parent::tear_down();
 	}
 
@@ -203,7 +204,54 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 	}
 
 	/** @test */
+	public function download_csv_fails_without_edit_pages_capability(): void {
+		$subscriber_id = wp_insert_user(
+			array(
+				'user_login' => 'test_subscriber_' . uniqid(),
+				'user_pass'  => 'password',
+				'role'       => 'subscriber',
+			)
+		);
+		wp_set_current_user( $subscriber_id );
+
+		$nonce                = wp_create_nonce( 'beastfeedbacks_csv_export' );
+		$_REQUEST['_wpnonce'] = $nonce;
+		$_GET['_wpnonce']     = $nonce;
+
+		$die_handler = static function () {
+			return static function ( $message = '', $title = '', $args = array() ) {
+				$code = is_array( $args ) && isset( $args['response'] ) ? $args['response'] : 500;
+				throw new RuntimeException( 'wp_die_permission_denied_' . $code );
+			};
+		};
+
+		add_filter( 'wp_die_ajax_handler', $die_handler );
+		add_filter( 'wp_die_handler', $die_handler );
+
+		try {
+			\BeastFeedbacks_Admin::get_instance()->download_csv();
+			$this->fail( 'download_csv did not die when user lacked edit_pages capability' );
+		} catch ( RuntimeException $e ) {
+			$this->assertSame( 'wp_die_permission_denied_403', $e->getMessage() );
+		} finally {
+			remove_filter( 'wp_die_ajax_handler', $die_handler );
+			remove_filter( 'wp_die_handler', $die_handler );
+			wp_delete_user( $subscriber_id );
+			wp_set_current_user( 0 );
+		}
+	}
+
+	/** @test */
 	public function download_csv_fails_without_valid_nonce(): void {
+		$admin_id = wp_insert_user(
+			array(
+				'user_login' => 'test_admin_' . uniqid(),
+				'user_pass'  => 'password',
+				'role'       => 'administrator',
+			)
+		);
+		wp_set_current_user( $admin_id );
+
 		$_REQUEST = array();
 		$_GET     = array();
 		$_POST    = array();
@@ -230,6 +278,15 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 
 	/** @test */
 	public function download_csv_outputs_csv_with_feedback_data(): void {
+		$admin_id = wp_insert_user(
+			array(
+				'user_login' => 'test_admin_' . uniqid(),
+				'user_pass'  => 'password',
+				'role'       => 'administrator',
+			)
+		);
+		wp_set_current_user( $admin_id );
+
 		// Parent post for permalink source
 		$parent_id = wp_insert_post(
 			array(
@@ -341,6 +398,15 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 
 	/** @test */
 	public function download_csv_handles_no_posts(): void {
+		$admin_id = wp_insert_user(
+			array(
+				'user_login' => 'test_admin_' . uniqid(),
+				'user_pass'  => 'password',
+				'role'       => 'administrator',
+			)
+		);
+		wp_set_current_user( $admin_id );
+
 		// Delete any existing beastfeedbacks posts to ensure empty list
 		$existing = get_posts(
 			array(
@@ -382,6 +448,15 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 
 	/** @test */
 	public function download_csv_handles_invalid_json_content(): void {
+		$admin_id = wp_insert_user(
+			array(
+				'user_login' => 'test_admin_' . uniqid(),
+				'user_pass'  => 'password',
+				'role'       => 'administrator',
+			)
+		);
+		wp_set_current_user( $admin_id );
+
 		$post_id = wp_insert_post(
 			array(
 				'post_type'    => 'beastfeedbacks',
