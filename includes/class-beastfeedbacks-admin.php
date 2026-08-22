@@ -501,16 +501,21 @@ class BeastFeedbacks_Admin {
 			'date_query'       => array(),
 		);
 
-		$posts      = get_posts( $args );
-		$post_datas = array();
+		$posts           = get_posts( $args );
+		$post_datas      = array();
+		$permalink_cache = array();
 		foreach ( $posts as $post ) {
 			$id = $post->ID;
 
 			$source = '';
 			if ( $post->post_parent ) {
-				$form_url   = get_permalink( $post->post_parent );
-				$parsed_url = wp_parse_url( $form_url );
-				$source     = esc_html( $parsed_url['path'] );
+				$parent_id = $post->post_parent;
+				if ( ! isset( $permalink_cache[ $parent_id ] ) ) {
+					$form_url                      = get_permalink( $parent_id );
+					$parsed_url                    = wp_parse_url( $form_url );
+					$permalink_cache[ $parent_id ] = esc_html( isset( $parsed_url['path'] ) ? $parsed_url['path'] : '' );
+				}
+				$source = $permalink_cache[ $parent_id ];
 			}
 
 			$content = json_decode( $post->post_content, true );
