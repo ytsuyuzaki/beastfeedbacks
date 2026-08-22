@@ -5,7 +5,7 @@
  * 実行例:
  * wp-env run tests-cli --env-cwd='wp-content/plugins/beastfeedbacks/' vendor/bin/phpunit
  */
-use BrainMonkey\Functions;
+use function BrainMonkey\Functions\expect;
 use Yoast\WPTestUtils\BrainMonkey\TestCase;
 
 class BeastFeedbacks_Block_Test extends TestCase {
@@ -115,12 +115,12 @@ class BeastFeedbacks_Block_Test extends TestCase {
 		$dummy_type                = new stdClass();
 		$dummy_type->editor_script = 'beastfeedbacks-survey-input-script';
 
-		Functions\expect( 'register_block_type' )
+		expect( 'register_block_type' )
 			->once()
 			->with( \BrainMonkey\Expectation\MD::type( 'string' ) )
 			->andReturn( $dummy_type );
 
-		Functions\expect( 'wp_set_script_translations' )
+		expect( 'wp_set_script_translations' )
 			->once()
 			->with(
 				'beastfeedbacks-survey-input-script',
@@ -139,12 +139,12 @@ class BeastFeedbacks_Block_Test extends TestCase {
 		$dummy_type                = new stdClass();
 		$dummy_type->editor_script = 'beastfeedbacks-survey-choice-script';
 
-		Functions\expect( 'register_block_type' )
+		expect( 'register_block_type' )
 			->once()
 			->with( \BrainMonkey\Expectation\MD::type( 'string' ) )
 			->andReturn( $dummy_type );
 
-		Functions\expect( 'wp_set_script_translations' )
+		expect( 'wp_set_script_translations' )
 			->once()
 			->with(
 				'beastfeedbacks-survey-choice-script',
@@ -163,7 +163,7 @@ class BeastFeedbacks_Block_Test extends TestCase {
 		$dummy_type                = new stdClass();
 		$dummy_type->editor_script = 'beastfeedbacks-survey-form-script';
 
-		Functions\expect( 'register_block_type' )
+		expect( 'register_block_type' )
 			->once()
 			->with(
 				\BrainMonkey\Expectation\MD::type( 'string' ),
@@ -173,7 +173,7 @@ class BeastFeedbacks_Block_Test extends TestCase {
 			)
 			->andReturn( $dummy_type );
 
-		Functions\expect( 'wp_set_script_translations' )
+		expect( 'wp_set_script_translations' )
 			->once()
 			->with(
 				'beastfeedbacks-survey-form-script',
@@ -192,7 +192,7 @@ class BeastFeedbacks_Block_Test extends TestCase {
 		$dummy_type                = new stdClass();
 		$dummy_type->editor_script = 'beastfeedbacks-vote-script';
 
-		Functions\expect( 'register_block_type' )
+		expect( 'register_block_type' )
 			->once()
 			->with(
 				\BrainMonkey\Expectation\MD::type( 'string' ),
@@ -202,7 +202,7 @@ class BeastFeedbacks_Block_Test extends TestCase {
 			)
 			->andReturn( $dummy_type );
 
-		Functions\expect( 'wp_set_script_translations' )
+		expect( 'wp_set_script_translations' )
 			->once()
 			->with(
 				'beastfeedbacks-vote-script',
@@ -221,7 +221,7 @@ class BeastFeedbacks_Block_Test extends TestCase {
 		$dummy_type                = new stdClass();
 		$dummy_type->editor_script = 'beastfeedbacks-like-script';
 
-		Functions\expect( 'register_block_type' )
+		expect( 'register_block_type' )
 			->once()
 			->with(
 				\BrainMonkey\Expectation\MD::type( 'string' ),
@@ -231,7 +231,7 @@ class BeastFeedbacks_Block_Test extends TestCase {
 			)
 			->andReturn( $dummy_type );
 
-		Functions\expect( 'wp_set_script_translations' )
+		expect( 'wp_set_script_translations' )
 			->once()
 			->with(
 				'beastfeedbacks-like-script',
