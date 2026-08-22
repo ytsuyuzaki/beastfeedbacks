@@ -6,11 +6,23 @@
  * wp-env run tests-cli --env-cwd='wp-content/plugins/beastfeedbacks/' vendor/bin/phpunit
  */
 use Yoast\WPTestUtils\BrainMonkey\TestCase;
+use Brain\Monkey\Functions;
 
 class BeastFeedbacks_Block_Test extends TestCase {
 
 	protected function set_up(): void {
 		parent::set_up();
+
+		if ( ! defined( 'ABSPATH' ) ) {
+			define( 'ABSPATH', true );
+		}
+		if ( ! defined( 'BEASTFEEDBACKS_DOMAIN' ) ) {
+			define( 'BEASTFEEDBACKS_DOMAIN', 'beastfeedbacks' );
+		}
+		if ( ! defined( 'BEASTFEEDBACKS_DIR' ) ) {
+			define( 'BEASTFEEDBACKS_DIR', '/dummy/path/' );
+		}
+
 		// 念のため該当フックをリセット（他テストからの影響排除）
 		remove_all_filters( 'block_categories_all' );
 		remove_all_actions( 'init' );
@@ -99,5 +111,32 @@ class BeastFeedbacks_Block_Test extends TestCase {
 		$cats_out = $instance->block_categories_all( $cats_in, $context );
 
 		$this->assertSame( $cats_in, $cats_out, 'Context without post must not add category' );
+	}
+
+	/** @test */
+	public function survey_choice_init_registers_block_and_sets_script_translations(): void {
+		$dummy_type                = new stdClass();
+		$dummy_type->editor_script = 'survey-choice-editor-script';
+
+		$expected_dir = dirname( dirname( __DIR__ ) ) . '/src/survey-choice';
+
+		Functions\expect( 'register_block_type' )
+			->once()
+			->with( $expected_dir )
+			->andReturn( $dummy_type );
+
+		Functions\expect( 'wp_set_script_translations' )
+			->once()
+			->with(
+				'survey-choice-editor-script',
+				BEASTFEEDBACKS_DOMAIN,
+				BEASTFEEDBACKS_DIR . 'languages'
+			);
+
+		if ( ! function_exists( 'beastfeedbacks_block_survey_choice_init' ) ) {
+			require_once $expected_dir . '/init.php';
+		} else {
+			beastfeedbacks_block_survey_choice_init();
+		}
 	}
 }
