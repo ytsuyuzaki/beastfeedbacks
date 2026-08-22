@@ -65,16 +65,21 @@ class BeastFeedbacks {
 	 * @param integer $post_id Like登録に使用したpostを渡す.
 	 */
 	public function get_like_count( $post_id ) {
+		// Performance optimization: We only need found_posts count, so fetch only 1 ID and skip term/meta caching.
 		$args  = array(
-			'post_type'   => 'beastfeedbacks',
-			'post_parent' => $post_id,
-			'meta_query'  => array( // NOTE: クエリ効率化.
+			'post_type'              => 'beastfeedbacks',
+			'post_parent'            => $post_id,
+			'meta_query'             => array( // NOTE: クエリ効率化.
 				array(
 					'key'   => 'beastfeedbacks_type',
 					'value' => 'like',
 				),
 			),
-			'post_status' => 'publish',
+			'post_status'            => 'publish',
+			'posts_per_page'         => 1,
+			'fields'                 => 'ids',
+			'update_post_term_cache' => false,
+			'update_post_meta_cache' => false,
 		);
 		$query = new WP_Query( $args );
 		return $query->found_posts;
