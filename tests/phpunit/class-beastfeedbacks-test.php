@@ -140,7 +140,7 @@ class BeastFeedbacks_Test extends TestCase {
 			has_action( 'wp_ajax_register_beastfeedbacks_form', array( \BeastFeedbacks_Public::get_instance(), 'register_beastfeedbacks_form' ) )
 		);
 		$this->assertNotFalse(
-			has_action( 'init', array( \BeastFeedbacks_Block::get_instance(), 'register_blocks' ) )
+			has_action( 'init', array( \BeastFeedbacks_Block::get_instance(), 'init_blocks' ) )
 		);
 	}
 
@@ -170,7 +170,7 @@ class BeastFeedbacks_Test extends TestCase {
 			has_action( 'wp_ajax_register_beastfeedbacks_form', array( \BeastFeedbacks_Public::get_instance(), 'register_beastfeedbacks_form' ) )
 		);
 		$this->assertNotFalse(
-			has_action( 'init', array( \BeastFeedbacks_Block::get_instance(), 'register_blocks' ) )
+			has_action( 'init', array( \BeastFeedbacks_Block::get_instance(), 'init_blocks' ) )
 		);
 	}
 
