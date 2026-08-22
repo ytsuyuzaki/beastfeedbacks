@@ -208,13 +208,18 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 	 * @test
 	 */
 	public function untrash_beastfeedbacks_status_handler_returns_previous_status_when_beastfeedbacks_and_previous_status_is_publish(): void {
-		Brain\Monkey\Functions\expect( 'get_post' )
-			->once()
-			->with( 1 )
-			->andReturn( (object) array( 'post_type' => 'beastfeedbacks' ) );
+		$post_id = wp_insert_post(
+			array(
+				'post_type'   => 'beastfeedbacks',
+				'post_status' => 'trash',
+				'post_title'  => 'Test BeastFeedback',
+			)
+		);
 
-		$result = \BeastFeedbacks_Admin::get_instance()->untrash_beastfeedbacks_status_handler( 'draft', 1, 'publish' );
+		$result = \BeastFeedbacks_Admin::get_instance()->untrash_beastfeedbacks_status_handler( 'draft', $post_id, 'publish' );
 		$this->assertSame( 'publish', $result );
+
+		wp_delete_post( $post_id, true );
 	}
 
 	/**
@@ -223,13 +228,18 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 	 * @test
 	 */
 	public function untrash_beastfeedbacks_status_handler_returns_publish_when_beastfeedbacks_and_previous_status_is_not_publish(): void {
-		Brain\Monkey\Functions\expect( 'get_post' )
-			->once()
-			->with( 2 )
-			->andReturn( (object) array( 'post_type' => 'beastfeedbacks' ) );
+		$post_id = wp_insert_post(
+			array(
+				'post_type'   => 'beastfeedbacks',
+				'post_status' => 'trash',
+				'post_title'  => 'Test BeastFeedback',
+			)
+		);
 
-		$result = \BeastFeedbacks_Admin::get_instance()->untrash_beastfeedbacks_status_handler( 'draft', 2, 'draft' );
+		$result = \BeastFeedbacks_Admin::get_instance()->untrash_beastfeedbacks_status_handler( 'draft', $post_id, 'draft' );
 		$this->assertSame( 'publish', $result );
+
+		wp_delete_post( $post_id, true );
 	}
 
 	/**
@@ -238,12 +248,17 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 	 * @test
 	 */
 	public function untrash_beastfeedbacks_status_handler_returns_current_status_when_not_beastfeedbacks(): void {
-		Brain\Monkey\Functions\expect( 'get_post' )
-			->once()
-			->with( 3 )
-			->andReturn( (object) array( 'post_type' => 'post' ) );
+		$post_id = wp_insert_post(
+			array(
+				'post_type'   => 'post',
+				'post_status' => 'trash',
+				'post_title'  => 'Test Standard Post',
+			)
+		);
 
-		$result = \BeastFeedbacks_Admin::get_instance()->untrash_beastfeedbacks_status_handler( 'draft', 3, 'draft' );
+		$result = \BeastFeedbacks_Admin::get_instance()->untrash_beastfeedbacks_status_handler( 'draft', $post_id, 'draft' );
 		$this->assertSame( 'draft', $result );
+
+		wp_delete_post( $post_id, true );
 	}
 }
