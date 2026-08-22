@@ -111,9 +111,10 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 	}
 
 	/** @test */
-	public function type_filter_result_sets_meta_query_when_param_present(): void {
-		$_GET['beastfeedbacks_type'] = 'survey'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$q                           = $this->fakeQuery( array( 'post_type' => 'beastfeedbacks' ) );
+	public function type_filter_result_sets_meta_query_when_param_and_valid_nonce_present(): void {
+		$_GET['beastfeedbacks_type']         = 'survey';
+		$_GET['beastfeedbacks_filter_nonce'] = wp_create_nonce( 'beastfeedbacks_filter' );
+		$q                                   = $this->fakeQuery( array( 'post_type' => 'beastfeedbacks' ) );
 
 		\BeastFeedbacks_Admin::get_instance()->type_filter_result( $q );
 
@@ -124,18 +125,33 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 	}
 
 	/** @test */
+	public function type_filter_result_ignores_when_nonce_missing_or_invalid(): void {
+		$_GET['beastfeedbacks_type']         = 'survey';
+		$_GET['beastfeedbacks_filter_nonce'] = 'invalid_nonce';
+		$q                                   = $this->fakeQuery( array( 'post_type' => 'beastfeedbacks' ) );
+
+		$GLOBALS['wp_verify_nonce_return'] = false;
+		\BeastFeedbacks_Admin::get_instance()->type_filter_result( $q );
+		unset( $GLOBALS['wp_verify_nonce_return'] );
+
+		$this->assertArrayNotHasKey( 'meta_query', $q->query_vars );
+	}
+
+	/** @test */
 	public function type_filter_result_ignores_when_other_post_type(): void {
-		$_GET['beastfeedbacks_type'] = 'survey';
-		$q                           = $this->fakeQuery( array( 'post_type' => 'post' ) );
+		$_GET['beastfeedbacks_type']         = 'survey';
+		$_GET['beastfeedbacks_filter_nonce'] = wp_create_nonce( 'beastfeedbacks_filter' );
+		$q                                   = $this->fakeQuery( array( 'post_type' => 'post' ) );
 
 		\BeastFeedbacks_Admin::get_instance()->type_filter_result( $q );
 		$this->assertArrayNotHasKey( 'meta_query', $q->query_vars );
 	}
 
 	/** @test */
-	public function source_filter_result_sets_post_parent_when_param_present(): void {
-		$_GET['beastfeedbacks_parent_id'] = '55';
-		$q                                = $this->fakeQuery(
+	public function source_filter_result_sets_post_parent_when_param_and_valid_nonce_present(): void {
+		$_GET['beastfeedbacks_parent_id']    = '55';
+		$_GET['beastfeedbacks_filter_nonce'] = wp_create_nonce( 'beastfeedbacks_filter' );
+		$q                                   = $this->fakeQuery(
 			array(
 				'post_type' => 'beastfeedbacks',
 				'fields'    => '',
@@ -148,9 +164,28 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 	}
 
 	/** @test */
+	public function source_filter_result_ignores_when_nonce_missing_or_invalid(): void {
+		$_GET['beastfeedbacks_parent_id']    = '55';
+		$_GET['beastfeedbacks_filter_nonce'] = 'invalid_nonce';
+		$q                                   = $this->fakeQuery(
+			array(
+				'post_type' => 'beastfeedbacks',
+				'fields'    => '',
+			)
+		);
+
+		$GLOBALS['wp_verify_nonce_return'] = false;
+		\BeastFeedbacks_Admin::get_instance()->source_filter_result( $q );
+		unset( $GLOBALS['wp_verify_nonce_return'] );
+
+		$this->assertArrayNotHasKey( 'post_parent', $q->query_vars );
+	}
+
+	/** @test */
 	public function source_filter_result_ignores_when_fields_is_id_parent(): void {
-		$_GET['beastfeedbacks_parent_id'] = '55';
-		$q                                = $this->fakeQuery(
+		$_GET['beastfeedbacks_parent_id']    = '55';
+		$_GET['beastfeedbacks_filter_nonce'] = wp_create_nonce( 'beastfeedbacks_filter' );
+		$q                                   = $this->fakeQuery(
 			array(
 				'post_type' => 'beastfeedbacks',
 				'fields'    => 'id=>parent',
