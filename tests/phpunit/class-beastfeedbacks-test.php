@@ -1,8 +1,6 @@
 <?php
 
 use Yoast\WPTestUtils\BrainMonkey\TestCase;
-use function Brain\Monkey\Functions\expect;
-use function Brain\Monkey\Actions\has;
 
 class BeastFeedbacks_Test extends TestCase {
 
@@ -127,15 +125,19 @@ class BeastFeedbacks_Test extends TestCase {
 	 * @test
 	 */
 	public function init_registers_admin_public_and_block_hooks_when_is_admin_is_true(): void {
-		expect( 'is_admin' )
-			->once()
-			->andReturn( true );
+		set_current_screen( 'dashboard' );
 
 		\BeastFeedbacks::get_instance()->init();
 
-		$this->assertTrue( has( 'admin_enqueue_scripts' ) );
-		$this->assertTrue( has( 'wp_ajax_register_beastfeedbacks_form' ) );
-		$this->assertTrue( has( 'init' ) );
+		$this->assertNotFalse(
+			has_action( 'admin_enqueue_scripts', array( \BeastFeedbacks_Admin::get_instance(), 'admin_enqueue_scripts' ) )
+		);
+		$this->assertNotFalse(
+			has_action( 'wp_ajax_register_beastfeedbacks_form', array( \BeastFeedbacks_Public::get_instance(), 'register_beastfeedbacks_form' ) )
+		);
+		$this->assertNotFalse(
+			has_action( 'init', array( \BeastFeedbacks_Block::get_instance(), 'register_blocks' ) )
+		);
 	}
 
 	/**
@@ -144,15 +146,24 @@ class BeastFeedbacks_Test extends TestCase {
 	 * @test
 	 */
 	public function init_registers_public_and_block_hooks_but_not_admin_when_is_admin_is_false(): void {
-		expect( 'is_admin' )
-			->once()
-			->andReturn( false );
+		set_current_screen( 'front' );
+
+		// Clean up any actions added in previous tests/runs.
+		remove_all_actions( 'admin_enqueue_scripts' );
+		remove_all_actions( 'wp_ajax_register_beastfeedbacks_form' );
+		remove_all_actions( 'init' );
 
 		\BeastFeedbacks::get_instance()->init();
 
-		$this->assertFalse( has( 'admin_enqueue_scripts' ) );
-		$this->assertTrue( has( 'wp_ajax_register_beastfeedbacks_form' ) );
-		$this->assertTrue( has( 'init' ) );
+		$this->assertFalse(
+			has_action( 'admin_enqueue_scripts', array( \BeastFeedbacks_Admin::get_instance(), 'admin_enqueue_scripts' ) )
+		);
+		$this->assertNotFalse(
+			has_action( 'wp_ajax_register_beastfeedbacks_form', array( \BeastFeedbacks_Public::get_instance(), 'register_beastfeedbacks_form' ) )
+		);
+		$this->assertNotFalse(
+			has_action( 'init', array( \BeastFeedbacks_Block::get_instance(), 'register_blocks' ) )
+		);
 	}
 
 	/**
