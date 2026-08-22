@@ -5,12 +5,21 @@
  * 実行例:
  * wp-env run tests-cli --env-cwd='wp-content/plugins/beastfeedbacks/' vendor/bin/phpunit
  */
+use BrainMonkey\Functions;
 use Yoast\WPTestUtils\BrainMonkey\TestCase;
 
 class BeastFeedbacks_Block_Test extends TestCase {
 
 	protected function set_up(): void {
 		parent::set_up();
+
+		if ( ! defined( 'BEASTFEEDBACKS_DOMAIN' ) ) {
+			define( 'BEASTFEEDBACKS_DOMAIN', 'beastfeedbacks' );
+		}
+		if ( ! defined( 'BEASTFEEDBACKS_DIR' ) ) {
+			define( 'BEASTFEEDBACKS_DIR', dirname( __DIR__, 2 ) . '/' );
+		}
+
 		// 念のため該当フックをリセット（他テストからの影響排除）
 		remove_all_filters( 'block_categories_all' );
 		remove_all_actions( 'init' );
@@ -99,5 +108,140 @@ class BeastFeedbacks_Block_Test extends TestCase {
 		$cats_out = $instance->block_categories_all( $cats_in, $context );
 
 		$this->assertSame( $cats_in, $cats_out, 'Context without post must not add category' );
+	}
+
+	/** @test */
+	public function survey_input_init_registers_block_type_and_translations(): void {
+		$dummy_type                = new stdClass();
+		$dummy_type->editor_script = 'beastfeedbacks-survey-input-script';
+
+		Functions\expect( 'register_block_type' )
+			->once()
+			->with( \BrainMonkey\Expectation\MD::type( 'string' ) )
+			->andReturn( $dummy_type );
+
+		Functions\expect( 'wp_set_script_translations' )
+			->once()
+			->with(
+				'beastfeedbacks-survey-input-script',
+				BEASTFEEDBACKS_DOMAIN,
+				BEASTFEEDBACKS_DIR . 'languages'
+			);
+
+		if ( ! function_exists( 'beastfeedbacks_block_survey_input_init' ) ) {
+			require_once BEASTFEEDBACKS_DIR . 'src/survey-input/init.php';
+		}
+		beastfeedbacks_block_survey_input_init();
+	}
+
+	/** @test */
+	public function survey_choice_init_registers_block_type_and_translations(): void {
+		$dummy_type                = new stdClass();
+		$dummy_type->editor_script = 'beastfeedbacks-survey-choice-script';
+
+		Functions\expect( 'register_block_type' )
+			->once()
+			->with( \BrainMonkey\Expectation\MD::type( 'string' ) )
+			->andReturn( $dummy_type );
+
+		Functions\expect( 'wp_set_script_translations' )
+			->once()
+			->with(
+				'beastfeedbacks-survey-choice-script',
+				BEASTFEEDBACKS_DOMAIN,
+				BEASTFEEDBACKS_DIR . 'languages'
+			);
+
+		if ( ! function_exists( 'beastfeedbacks_block_survey_choice_init' ) ) {
+			require_once BEASTFEEDBACKS_DIR . 'src/survey-choice/init.php';
+		}
+		beastfeedbacks_block_survey_choice_init();
+	}
+
+	/** @test */
+	public function survey_form_init_registers_block_type_and_translations(): void {
+		$dummy_type                = new stdClass();
+		$dummy_type->editor_script = 'beastfeedbacks-survey-form-script';
+
+		Functions\expect( 'register_block_type' )
+			->once()
+			->with(
+				\BrainMonkey\Expectation\MD::type( 'string' ),
+				array(
+					'render_callback' => 'beastfeedbacks_block_survey_form_render_callback',
+				)
+			)
+			->andReturn( $dummy_type );
+
+		Functions\expect( 'wp_set_script_translations' )
+			->once()
+			->with(
+				'beastfeedbacks-survey-form-script',
+				BEASTFEEDBACKS_DOMAIN,
+				BEASTFEEDBACKS_DIR . 'languages'
+			);
+
+		if ( ! function_exists( 'beastfeedbacks_block_survey_form_init' ) ) {
+			require_once BEASTFEEDBACKS_DIR . 'src/survey-form/init.php';
+		}
+		beastfeedbacks_block_survey_form_init();
+	}
+
+	/** @test */
+	public function vote_init_registers_block_type_and_translations(): void {
+		$dummy_type                = new stdClass();
+		$dummy_type->editor_script = 'beastfeedbacks-vote-script';
+
+		Functions\expect( 'register_block_type' )
+			->once()
+			->with(
+				\BrainMonkey\Expectation\MD::type( 'string' ),
+				array(
+					'render_callback' => 'beastfeedbacks_block_vote_render_callback',
+				)
+			)
+			->andReturn( $dummy_type );
+
+		Functions\expect( 'wp_set_script_translations' )
+			->once()
+			->with(
+				'beastfeedbacks-vote-script',
+				BEASTFEEDBACKS_DOMAIN,
+				BEASTFEEDBACKS_DIR . 'languages'
+			);
+
+		if ( ! function_exists( 'beastfeedbacks_block_vote_init' ) ) {
+			require_once BEASTFEEDBACKS_DIR . 'src/vote/init.php';
+		}
+		beastfeedbacks_block_vote_init();
+	}
+
+	/** @test */
+	public function like_init_registers_block_type_and_translations(): void {
+		$dummy_type                = new stdClass();
+		$dummy_type->editor_script = 'beastfeedbacks-like-script';
+
+		Functions\expect( 'register_block_type' )
+			->once()
+			->with(
+				\BrainMonkey\Expectation\MD::type( 'string' ),
+				array(
+					'render_callback' => 'beastfeedbacks_block_like_render_callback',
+				)
+			)
+			->andReturn( $dummy_type );
+
+		Functions\expect( 'wp_set_script_translations' )
+			->once()
+			->with(
+				'beastfeedbacks-like-script',
+				BEASTFEEDBACKS_DOMAIN,
+				BEASTFEEDBACKS_DIR . 'languages'
+			);
+
+		if ( ! function_exists( 'beastfeedbacks_block_like_init' ) ) {
+			require_once BEASTFEEDBACKS_DIR . 'src/like/init.php';
+		}
+		beastfeedbacks_block_like_init();
 	}
 }
