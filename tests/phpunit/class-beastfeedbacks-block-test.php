@@ -5,7 +5,7 @@
  * 実行例:
  * wp-env run tests-cli --env-cwd='wp-content/plugins/beastfeedbacks/' vendor/bin/phpunit
  */
-use function BrainMonkey\Functions\expect;
+use function Brain\Monkey\Functions\expect;
 use Yoast\WPTestUtils\BrainMonkey\TestCase;
 
 class BeastFeedbacks_Block_Test extends TestCase {
