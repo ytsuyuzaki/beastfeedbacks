@@ -173,7 +173,12 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 
 	/** @test */
 	public function add_source_filter_renders_options_on_target_screen(): void {
-		$GLOBALS['current_screen'] = (object) array( 'id' => 'edit-beastfeedbacks' );
+		$GLOBALS['current_screen'] = new class {
+			public $id = 'edit-beastfeedbacks';
+			public function in_admin( $admin = null ) {
+				return true;
+			}
+		};
 
 		$parent_id = wp_insert_post(
 			array(
