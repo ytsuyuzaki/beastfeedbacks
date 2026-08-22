@@ -173,13 +173,6 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 
 	/** @test */
 	public function add_source_filter_renders_options_on_target_screen(): void {
-		$GLOBALS['current_screen'] = new class {
-			public $id = 'edit-beastfeedbacks';
-			public function in_admin( $admin = null ) {
-				return true;
-			}
-		};
-
 		$parent_id = wp_insert_post(
 			array(
 				'post_title'  => 'Test Parent Page',
@@ -196,6 +189,8 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 				'post_parent' => $parent_id,
 			)
 		);
+
+		set_current_screen( 'edit-beastfeedbacks' );
 
 		ob_start();
 		\BeastFeedbacks_Admin::get_instance()->add_source_filter();
