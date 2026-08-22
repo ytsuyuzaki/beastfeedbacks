@@ -557,10 +557,12 @@ class BeastFeedbacks_Admin {
 
 		$fields = array_keys( $post_datas );
 
-		header( 'Content-Disposition: attachment; filename=' . $filename );
-		header( 'Pragma: no-cache' );
-		header( 'Expires: 0' );
-		header( 'Content-Type: text/csv; charset=utf-8' );
+		if ( ! headers_sent() ) {
+			header( 'Content-Disposition: attachment; filename=' . $filename );
+			header( 'Pragma: no-cache' );
+			header( 'Expires: 0' );
+			header( 'Content-Type: text/csv; charset=utf-8' );
+		}
 
 		$output = fopen( 'php://output', 'w' );
 
@@ -569,15 +571,16 @@ class BeastFeedbacks_Admin {
 			$current_row = array();
 
 			foreach ( $fields as $single_field_name ) {
-				$current_row[] = $this->esc_csv(
-					$post_datas[ $single_field_name ][ $post->ID ]
-				);
+				$value         = isset( $post_datas[ $single_field_name ][ $post->ID ] )
+					? $post_datas[ $single_field_name ][ $post->ID ]
+					: '';
+				$current_row[] = $this->esc_csv( $value );
 			}
 			fputcsv( $output, $current_row );
 		}
 
 		fclose( $output ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
-		exit();
+		wp_die();
 	}
 
 	/**
