@@ -179,7 +179,11 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 
 	/** @test */
 	public function add_type_filter_has_no_output_on_other_screen(): void {
-		$GLOBALS['current_screen'] = (object) array( 'id' => 'edit-post' );
+		if ( function_exists( 'set_current_screen' ) ) {
+			set_current_screen( 'edit-post' );
+		} else {
+			$GLOBALS['current_screen'] = (object) array( 'id' => 'edit-post' );
+		}
 		ob_start();
 		\BeastFeedbacks_Admin::get_instance()->add_type_filter();
 		$html = ob_get_clean();
@@ -188,7 +192,11 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 
 	/** @test */
 	public function add_type_filter_renders_nonce_field_and_select_on_target_screen(): void {
-		$GLOBALS['current_screen'] = (object) array( 'id' => 'edit-beastfeedbacks' );
+		if ( function_exists( 'set_current_screen' ) ) {
+			set_current_screen( 'edit-beastfeedbacks' );
+		} else {
+			$GLOBALS['current_screen'] = (object) array( 'id' => 'edit-beastfeedbacks' );
+		}
 
 		ob_start();
 		\BeastFeedbacks_Admin::get_instance()->add_type_filter();
