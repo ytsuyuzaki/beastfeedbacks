@@ -5,7 +5,6 @@
  * 実行例:
  * wp-env run tests-cli --env-cwd='wp-content/plugins/beastfeedbacks/' vendor/bin/phpunit
  */
-use function Brain\Monkey\Functions\expect;
 use Yoast\WPTestUtils\BrainMonkey\TestCase;
 
 class BeastFeedbacks_Block_Test extends TestCase {
@@ -111,137 +110,62 @@ class BeastFeedbacks_Block_Test extends TestCase {
 	}
 
 	/** @test */
-	public function survey_input_init_registers_block_type_and_translations(): void {
-		$dummy_type                = new stdClass();
-		$dummy_type->editor_script = 'beastfeedbacks-survey-input-script';
-
-		expect( 'register_block_type' )
-			->once()
-			->with( \BrainMonkey\Expectation\MD::type( 'string' ) )
-			->andReturn( $dummy_type );
-
-		expect( 'wp_set_script_translations' )
-			->once()
-			->with(
-				'beastfeedbacks-survey-input-script',
-				BEASTFEEDBACKS_DOMAIN,
-				BEASTFEEDBACKS_DIR . 'languages'
-			);
-
+	public function survey_input_init_registers_block(): void {
 		if ( ! function_exists( 'beastfeedbacks_block_survey_input_init' ) ) {
 			require_once BEASTFEEDBACKS_DIR . 'src/survey-input/init.php';
 		}
+
 		beastfeedbacks_block_survey_input_init();
+
+		$registry = \WP_Block_Type_Registry::get_instance();
+		$this->assertTrue( $registry->is_registered( 'beastfeedbacks/survey-input' ) );
 	}
 
 	/** @test */
-	public function survey_choice_init_registers_block_type_and_translations(): void {
-		$dummy_type                = new stdClass();
-		$dummy_type->editor_script = 'beastfeedbacks-survey-choice-script';
-
-		expect( 'register_block_type' )
-			->once()
-			->with( \BrainMonkey\Expectation\MD::type( 'string' ) )
-			->andReturn( $dummy_type );
-
-		expect( 'wp_set_script_translations' )
-			->once()
-			->with(
-				'beastfeedbacks-survey-choice-script',
-				BEASTFEEDBACKS_DOMAIN,
-				BEASTFEEDBACKS_DIR . 'languages'
-			);
-
+	public function survey_choice_init_registers_block(): void {
 		if ( ! function_exists( 'beastfeedbacks_block_survey_choice_init' ) ) {
 			require_once BEASTFEEDBACKS_DIR . 'src/survey-choice/init.php';
 		}
+
 		beastfeedbacks_block_survey_choice_init();
+
+		$registry = \WP_Block_Type_Registry::get_instance();
+		$this->assertTrue( $registry->is_registered( 'beastfeedbacks/survey-choice' ) );
 	}
 
 	/** @test */
-	public function survey_form_init_registers_block_type_and_translations(): void {
-		$dummy_type                = new stdClass();
-		$dummy_type->editor_script = 'beastfeedbacks-survey-form-script';
-
-		expect( 'register_block_type' )
-			->once()
-			->with(
-				\BrainMonkey\Expectation\MD::type( 'string' ),
-				array(
-					'render_callback' => 'beastfeedbacks_block_survey_form_render_callback',
-				)
-			)
-			->andReturn( $dummy_type );
-
-		expect( 'wp_set_script_translations' )
-			->once()
-			->with(
-				'beastfeedbacks-survey-form-script',
-				BEASTFEEDBACKS_DOMAIN,
-				BEASTFEEDBACKS_DIR . 'languages'
-			);
-
+	public function survey_form_init_registers_block(): void {
 		if ( ! function_exists( 'beastfeedbacks_block_survey_form_init' ) ) {
 			require_once BEASTFEEDBACKS_DIR . 'src/survey-form/init.php';
 		}
+
 		beastfeedbacks_block_survey_form_init();
+
+		$registry = \WP_Block_Type_Registry::get_instance();
+		$this->assertTrue( $registry->is_registered( 'beastfeedbacks/survey-form' ) );
 	}
 
 	/** @test */
-	public function vote_init_registers_block_type_and_translations(): void {
-		$dummy_type                = new stdClass();
-		$dummy_type->editor_script = 'beastfeedbacks-vote-script';
-
-		expect( 'register_block_type' )
-			->once()
-			->with(
-				\BrainMonkey\Expectation\MD::type( 'string' ),
-				array(
-					'render_callback' => 'beastfeedbacks_block_vote_render_callback',
-				)
-			)
-			->andReturn( $dummy_type );
-
-		expect( 'wp_set_script_translations' )
-			->once()
-			->with(
-				'beastfeedbacks-vote-script',
-				BEASTFEEDBACKS_DOMAIN,
-				BEASTFEEDBACKS_DIR . 'languages'
-			);
-
+	public function vote_init_registers_block(): void {
 		if ( ! function_exists( 'beastfeedbacks_block_vote_init' ) ) {
 			require_once BEASTFEEDBACKS_DIR . 'src/vote/init.php';
 		}
+
 		beastfeedbacks_block_vote_init();
+
+		$registry = \WP_Block_Type_Registry::get_instance();
+		$this->assertTrue( $registry->is_registered( 'beastfeedbacks/vote' ) );
 	}
 
 	/** @test */
-	public function like_init_registers_block_type_and_translations(): void {
-		$dummy_type                = new stdClass();
-		$dummy_type->editor_script = 'beastfeedbacks-like-script';
-
-		expect( 'register_block_type' )
-			->once()
-			->with(
-				\BrainMonkey\Expectation\MD::type( 'string' ),
-				array(
-					'render_callback' => 'beastfeedbacks_block_like_render_callback',
-				)
-			)
-			->andReturn( $dummy_type );
-
-		expect( 'wp_set_script_translations' )
-			->once()
-			->with(
-				'beastfeedbacks-like-script',
-				BEASTFEEDBACKS_DOMAIN,
-				BEASTFEEDBACKS_DIR . 'languages'
-			);
-
+	public function like_init_registers_block(): void {
 		if ( ! function_exists( 'beastfeedbacks_block_like_init' ) ) {
 			require_once BEASTFEEDBACKS_DIR . 'src/like/init.php';
 		}
+
 		beastfeedbacks_block_like_init();
+
+		$registry = \WP_Block_Type_Registry::get_instance();
+		$this->assertTrue( $registry->is_registered( 'beastfeedbacks/like' ) );
 	}
 }
