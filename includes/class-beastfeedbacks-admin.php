@@ -346,8 +346,14 @@ class BeastFeedbacks_Admin {
 			return;
 		}
 
-		$selected_type = isset( $_GET['beastfeedbacks_type'] ) ? sanitize_key( $_GET['beastfeedbacks_type'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$selected_type = '';
+		if ( isset( $_GET['beastfeedbacks_type_nonce'], $_GET['beastfeedbacks_type'] )
+			&& wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['beastfeedbacks_type_nonce'] ) ), 'beastfeedbacks_type_filter' )
+		) {
+			$selected_type = sanitize_key( $_GET['beastfeedbacks_type'] );
+		}
 
+		wp_nonce_field( 'beastfeedbacks_type_filter', 'beastfeedbacks_type_nonce', false );
 		?>
 		<select name="beastfeedbacks_type">
 			<option value=""><?php esc_html_e( 'All Types', 'beastfeedbacks' ); ?></option>
@@ -416,7 +422,12 @@ class BeastFeedbacks_Admin {
 	 * @return void
 	 */
 	public function type_filter_result( $query ) {
-		$selected_type = isset( $_GET['beastfeedbacks_type'] ) ? sanitize_key( $_GET['beastfeedbacks_type'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$selected_type = '';
+		if ( isset( $_GET['beastfeedbacks_type_nonce'], $_GET['beastfeedbacks_type'] )
+			&& wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['beastfeedbacks_type_nonce'] ) ), 'beastfeedbacks_type_filter' )
+		) {
+			$selected_type = sanitize_key( $_GET['beastfeedbacks_type'] );
+		}
 
 		if ( ! $selected_type || 'beastfeedbacks' !== $query->query_vars['post_type'] ) {
 			return;
