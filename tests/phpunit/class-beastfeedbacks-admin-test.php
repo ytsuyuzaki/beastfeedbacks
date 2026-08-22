@@ -20,7 +20,7 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 	}
 
 	protected function tear_down(): void {
-		unset( $GLOBALS['current_screen'], $GLOBALS['post'] );
+		unset( $GLOBALS['current_screen'], $GLOBALS['post'], $_GET['_beastfeedbacks_nonce'], $_GET['beastfeedbacks_type'], $_GET['beastfeedbacks_parent_id'] );
 		parent::tear_down();
 	}
 
@@ -112,8 +112,9 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 
 	/** @test */
 	public function type_filter_result_sets_meta_query_when_param_present(): void {
-		$_GET['beastfeedbacks_type'] = 'survey'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$q                           = $this->fakeQuery( array( 'post_type' => 'beastfeedbacks' ) );
+		$_GET['_beastfeedbacks_nonce'] = wp_create_nonce( 'beastfeedbacks_filter' );
+		$_GET['beastfeedbacks_type']   = 'survey';
+		$q                             = $this->fakeQuery( array( 'post_type' => 'beastfeedbacks' ) );
 
 		\BeastFeedbacks_Admin::get_instance()->type_filter_result( $q );
 
@@ -124,9 +125,23 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 	}
 
 	/** @test */
-	public function type_filter_result_ignores_when_other_post_type(): void {
+	public function type_filter_result_ignores_when_nonce_invalid_or_missing(): void {
 		$_GET['beastfeedbacks_type'] = 'survey';
-		$q                           = $this->fakeQuery( array( 'post_type' => 'post' ) );
+		$q                           = $this->fakeQuery( array( 'post_type' => 'beastfeedbacks' ) );
+
+		\BeastFeedbacks_Admin::get_instance()->type_filter_result( $q );
+		$this->assertArrayNotHasKey( 'meta_query', $q->query_vars );
+
+		$_GET['_beastfeedbacks_nonce'] = 'invalid_nonce';
+		\BeastFeedbacks_Admin::get_instance()->type_filter_result( $q );
+		$this->assertArrayNotHasKey( 'meta_query', $q->query_vars );
+	}
+
+	/** @test */
+	public function type_filter_result_ignores_when_other_post_type(): void {
+		$_GET['_beastfeedbacks_nonce'] = wp_create_nonce( 'beastfeedbacks_filter' );
+		$_GET['beastfeedbacks_type']   = 'survey';
+		$q                             = $this->fakeQuery( array( 'post_type' => 'post' ) );
 
 		\BeastFeedbacks_Admin::get_instance()->type_filter_result( $q );
 		$this->assertArrayNotHasKey( 'meta_query', $q->query_vars );
@@ -134,8 +149,9 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 
 	/** @test */
 	public function source_filter_result_sets_post_parent_when_param_present(): void {
+		$_GET['_beastfeedbacks_nonce']    = wp_create_nonce( 'beastfeedbacks_filter' );
 		$_GET['beastfeedbacks_parent_id'] = '55';
-		$q                                = $this->fakeQuery(
+		$q                                  = $this->fakeQuery(
 			array(
 				'post_type' => 'beastfeedbacks',
 				'fields'    => '',
@@ -145,6 +161,24 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 		\BeastFeedbacks_Admin::get_instance()->source_filter_result( $q );
 
 		$this->assertSame( 55, $q->query_vars['post_parent'] );
+	}
+
+	/** @test */
+	public function source_filter_result_ignores_when_nonce_invalid_or_missing(): void {
+		$_GET['beastfeedbacks_parent_id'] = '55';
+		$q                                = $this->fakeQuery(
+			array(
+				'post_type' => 'beastfeedbacks',
+				'fields'    => '',
+			)
+		);
+
+		\BeastFeedbacks_Admin::get_instance()->source_filter_result( $q );
+		$this->assertArrayNotHasKey( 'post_parent', $q->query_vars );
+
+		$_GET['_beastfeedbacks_nonce'] = 'invalid_nonce';
+		\BeastFeedbacks_Admin::get_instance()->source_filter_result( $q );
+		$this->assertArrayNotHasKey( 'post_parent', $q->query_vars );
 	}
 
 	/** @test */

@@ -346,8 +346,10 @@ class BeastFeedbacks_Admin {
 			return;
 		}
 
-		$selected_type = isset( $_GET['beastfeedbacks_type'] ) ? sanitize_key( $_GET['beastfeedbacks_type'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$nonce_verified = isset( $_GET['_beastfeedbacks_nonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_beastfeedbacks_nonce'] ), 'beastfeedbacks_filter' );
+		$selected_type  = $nonce_verified && isset( $_GET['beastfeedbacks_type'] ) ? sanitize_key( $_GET['beastfeedbacks_type'] ) : '';
 
+		wp_nonce_field( 'beastfeedbacks_filter', '_beastfeedbacks_nonce' );
 		?>
 		<select name="beastfeedbacks_type">
 			<option value=""><?php esc_html_e( 'All Types', 'beastfeedbacks' ); ?></option>
@@ -375,7 +377,8 @@ class BeastFeedbacks_Admin {
 			return;
 		}
 
-		$selected_parent_id = intval( isset( $_GET['beastfeedbacks_parent_id'] ) ? sanitize_key( $_GET['beastfeedbacks_parent_id'] ) : 0 ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$nonce_verified     = isset( $_GET['_beastfeedbacks_nonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_beastfeedbacks_nonce'] ), 'beastfeedbacks_filter' );
+		$selected_parent_id = intval( $nonce_verified && isset( $_GET['beastfeedbacks_parent_id'] ) ? sanitize_key( $_GET['beastfeedbacks_parent_id'] ) : 0 );
 
 		$args = array(
 			'fields'           => 'id=>parent',
@@ -416,7 +419,8 @@ class BeastFeedbacks_Admin {
 	 * @return void
 	 */
 	public function type_filter_result( $query ) {
-		$selected_type = isset( $_GET['beastfeedbacks_type'] ) ? sanitize_key( $_GET['beastfeedbacks_type'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$nonce_verified = isset( $_GET['_beastfeedbacks_nonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_beastfeedbacks_nonce'] ), 'beastfeedbacks_filter' );
+		$selected_type  = $nonce_verified && isset( $_GET['beastfeedbacks_type'] ) ? sanitize_key( $_GET['beastfeedbacks_type'] ) : '';
 
 		if ( ! $selected_type || 'beastfeedbacks' !== $query->query_vars['post_type'] ) {
 			return;
@@ -445,7 +449,8 @@ class BeastFeedbacks_Admin {
 	 * @return void
 	 */
 	public function source_filter_result( $query ) {
-		$selected_parent_id = intval( isset( $_GET['beastfeedbacks_parent_id'] ) ? sanitize_key( $_GET['beastfeedbacks_parent_id'] ) : 0 ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$nonce_verified     = isset( $_GET['_beastfeedbacks_nonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_beastfeedbacks_nonce'] ), 'beastfeedbacks_filter' );
+		$selected_parent_id = intval( $nonce_verified && isset( $_GET['beastfeedbacks_parent_id'] ) ? sanitize_key( $_GET['beastfeedbacks_parent_id'] ) : 0 );
 
 		if ( ! $selected_parent_id || 'beastfeedbacks' !== $query->query_vars['post_type'] ) {
 			return;
