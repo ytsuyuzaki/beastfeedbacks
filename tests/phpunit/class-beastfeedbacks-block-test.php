@@ -100,4 +100,76 @@ class BeastFeedbacks_Block_Test extends TestCase {
 
 		$this->assertSame( $cats_in, $cats_out, 'Context without post must not add category' );
 	}
+
+	/** @test */
+	public function beastfeedbacks_block_like_render_callback_renders_like_block_html(): void {
+		require_once BEASTFEEDBACKS_DIR . 'src/like/init.php';
+
+		$post_id = wp_insert_post(
+			array(
+				'post_type'   => 'post',
+				'post_status' => 'publish',
+				'post_title'  => 'Test Post for Like Block',
+			)
+		);
+
+		$this->go_to( get_permalink( $post_id ) );
+
+		$attributes = array();
+		$content    = '<button type="submit" class="like-button">Like</button>';
+
+		$html = beastfeedbacks_block_like_render_callback( $attributes, $content );
+
+		$this->assertStringContainsString( 'name="beastfeedbacks_like_form"', $html );
+		$this->assertStringContainsString( 'value="register_beastfeedbacks_form"', $html );
+		$this->assertStringContainsString( 'value="like"', $html );
+		$this->assertStringContainsString( 'value="' . $post_id . '"', $html );
+		$this->assertStringContainsString( '<p class="like-count">0</p>', $html );
+		$this->assertStringContainsString( $content, $html );
+
+		wp_delete_post( $post_id, true );
+	}
+
+	/** @test */
+	public function beastfeedbacks_block_like_render_callback_displays_correct_like_count(): void {
+		require_once BEASTFEEDBACKS_DIR . 'src/like/init.php';
+
+		$post_id = wp_insert_post(
+			array(
+				'post_type'   => 'post',
+				'post_status' => 'publish',
+				'post_title'  => 'Test Post with Likes',
+			)
+		);
+
+		$like_post_1 = wp_insert_post(
+			array(
+				'post_type'   => 'beastfeedbacks',
+				'post_status' => 'publish',
+				'post_parent' => $post_id,
+				'post_title'  => 'Like 1',
+			)
+		);
+		add_post_meta( $like_post_1, 'beastfeedbacks_type', 'like' );
+
+		$like_post_2 = wp_insert_post(
+			array(
+				'post_type'   => 'beastfeedbacks',
+				'post_status' => 'publish',
+				'post_parent' => $post_id,
+				'post_title'  => 'Like 2',
+			)
+		);
+		add_post_meta( $like_post_2, 'beastfeedbacks_type', 'like' );
+
+		$this->go_to( get_permalink( $post_id ) );
+
+		$html = beastfeedbacks_block_like_render_callback( array(), '' );
+
+		$this->assertStringContainsString( '<p class="like-count">2</p>', $html );
+
+		wp_delete_post( $like_post_1, true );
+		wp_delete_post( $like_post_2, true );
+		wp_delete_post( $post_id, true );
+	}
 }
