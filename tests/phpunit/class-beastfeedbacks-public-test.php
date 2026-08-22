@@ -131,6 +131,15 @@ class BeastFeedbacks_Public_Test extends TestCase {
 	}
 
 	/** @test */
+	public function get_instance_returns_singleton(): void {
+		$a = \BeastFeedbacks_Public::get_instance();
+		$b = \BeastFeedbacks_Public::get_instance();
+
+		$this->assertInstanceOf( \BeastFeedbacks_Public::class, $a );
+		$this->assertSame( $a, $b );
+	}
+
+	/** @test */
 	public function get_user_agent_returns_empty_when_not_set(): void {
 		unset( $_SERVER['HTTP_USER_AGENT'] );
 		$ua = \BeastFeedbacks_Public::get_instance()->get_user_agent();
