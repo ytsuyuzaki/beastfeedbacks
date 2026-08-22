@@ -201,4 +201,49 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 		$this->assertSame( 'safe', $admin->esc_csv( 'safe' ) );
 		$this->assertSame( '  space', $admin->esc_csv( '  space' ) ); // 先頭がスペースならそのまま
 	}
+
+	/**
+	 * Test untrash_beastfeedbacks_status_handler returns previous status when post type is beastfeedbacks and previous status is publish.
+	 *
+	 * @test
+	 */
+	public function untrash_beastfeedbacks_status_handler_returns_previous_status_when_beastfeedbacks_and_previous_status_is_publish(): void {
+		Brain\Monkey\Functions\expect( 'get_post' )
+			->once()
+			->with( 1 )
+			->andReturn( (object) array( 'post_type' => 'beastfeedbacks' ) );
+
+		$result = \BeastFeedbacks_Admin::get_instance()->untrash_beastfeedbacks_status_handler( 'draft', 1, 'publish' );
+		$this->assertSame( 'publish', $result );
+	}
+
+	/**
+	 * Test untrash_beastfeedbacks_status_handler returns publish when post type is beastfeedbacks and previous status is not publish.
+	 *
+	 * @test
+	 */
+	public function untrash_beastfeedbacks_status_handler_returns_publish_when_beastfeedbacks_and_previous_status_is_not_publish(): void {
+		Brain\Monkey\Functions\expect( 'get_post' )
+			->once()
+			->with( 2 )
+			->andReturn( (object) array( 'post_type' => 'beastfeedbacks' ) );
+
+		$result = \BeastFeedbacks_Admin::get_instance()->untrash_beastfeedbacks_status_handler( 'draft', 2, 'draft' );
+		$this->assertSame( 'publish', $result );
+	}
+
+	/**
+	 * Test untrash_beastfeedbacks_status_handler returns current status when post type is not beastfeedbacks.
+	 *
+	 * @test
+	 */
+	public function untrash_beastfeedbacks_status_handler_returns_current_status_when_not_beastfeedbacks(): void {
+		Brain\Monkey\Functions\expect( 'get_post' )
+			->once()
+			->with( 3 )
+			->andReturn( (object) array( 'post_type' => 'post' ) );
+
+		$result = \BeastFeedbacks_Admin::get_instance()->untrash_beastfeedbacks_status_handler( 'draft', 3, 'draft' );
+		$this->assertSame( 'draft', $result );
+	}
 }
