@@ -25,6 +25,46 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 	}
 
 	/** @test */
+	public function add_menu_page_registers_menu_and_post_type(): void {
+		\Brain\Monkey\Functions\expect( 'add_menu_page' )
+			->once()
+			->with(
+				'BeastFeedbacks',
+				'BeastFeedbacks',
+				'edit_pages',
+				'edit.php?post_type=beastfeedbacks',
+				'',
+				'dashicons-feedback'
+			);
+
+		\Brain\Monkey\Functions\expect( 'register_post_type' )
+			->once()
+			->with(
+				'beastfeedbacks',
+				array(
+					'labels'                => array(
+						'name' => 'Beastfeedbacks',
+					),
+					'public'                => false,
+					'show_ui'               => true,
+					'show_in_menu'          => false,
+					'show_in_admin_bar'     => false,
+					'show_in_rest'          => false,
+					'rewrite'               => false,
+					'query_var'             => false,
+					'rest_controller_class' => '',
+					'map_meta_cap'          => true,
+					'capability_type'       => 'page',
+					'capabilities'          => array(
+						'create_posts' => 'do_not_allow',
+					),
+				)
+			);
+
+		\BeastFeedbacks_Admin::get_instance()->add_menu_page();
+	}
+
+	/** @test */
 	public function get_instance_returns_singleton(): void {
 		$a = \BeastFeedbacks_Admin::get_instance();
 		$b = \BeastFeedbacks_Admin::get_instance();
