@@ -4,7 +4,7 @@ Tags:              block, feedback, form
 Requires PHP:      8.1
 Requires at least: 6.8
 Tested up to:      7.1
-Stable tag:        0.1.3
+Stable tag:        0.1.4
 License:           GPL-2.0-or-later
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
 Donate link:       https://buy.stripe.com/dRm6oHc9Fcl196Q6Ik2B201
