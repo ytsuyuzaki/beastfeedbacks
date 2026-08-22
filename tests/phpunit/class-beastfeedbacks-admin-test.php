@@ -172,6 +172,28 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 	}
 
 	/** @test */
+	public function add_source_filter_primes_post_caches_on_target_screen(): void {
+		$GLOBALS['current_screen'] = (object) array( 'id' => 'edit-beastfeedbacks' );
+
+		\Brain\Monkey\Functions\when( 'get_posts' )->justReturn( array( 1 => 10, 2 => 20, 3 => 10 ) );
+		\Brain\Monkey\Functions\expect( '_prime_post_caches' )->once()->with( array( 10, 20 ) );
+		\Brain\Monkey\Functions\when( 'get_permalink' )->alias( function( $id ) {
+			return 'https://example.com/page-' . $id . '/';
+		} );
+		\Brain\Monkey\Functions\when( 'wp_parse_url' )->alias( function( $url ) {
+			return parse_url( $url );
+		} );
+
+		ob_start();
+		\BeastFeedbacks_Admin::get_instance()->add_source_filter();
+		$html = ob_get_clean();
+
+		$this->assertStringContainsString( 'name="beastfeedbacks_parent_id"', $html );
+		$this->assertStringContainsString( 'value="10"', $html );
+		$this->assertStringContainsString( 'value="20"', $html );
+	}
+
+	/** @test */
 	public function add_source_filter_has_no_output_on_other_screen(): void {
 		$GLOBALS['current_screen'] = (object) array( 'id' => 'edit-post' );
 		ob_start();

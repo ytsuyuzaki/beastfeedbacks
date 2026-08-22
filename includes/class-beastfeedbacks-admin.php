@@ -386,7 +386,11 @@ class BeastFeedbacks_Admin {
 		);
 
 		$posts      = get_posts( $args );
-		$parent_ids = array_values( array_unique( array_values( $posts ) ) );
+		$parent_ids = array_values( array_filter( array_map( 'intval', array_unique( array_values( $posts ) ) ) ) );
+
+		if ( ! empty( $parent_ids ) ) {
+			_prime_post_caches( $parent_ids );
+		}
 
 		?>
 		<select name="beastfeedbacks_parent_id">
@@ -503,6 +507,12 @@ class BeastFeedbacks_Admin {
 
 		$posts      = get_posts( $args );
 		$post_datas = array();
+
+		$parent_ids = array_values( array_filter( array_map( 'intval', array_unique( wp_list_pluck( $posts, 'post_parent' ) ) ) ) );
+		if ( ! empty( $parent_ids ) ) {
+			_prime_post_caches( $parent_ids );
+		}
+
 		foreach ( $posts as $post ) {
 			$id = $post->ID;
 
