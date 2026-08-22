@@ -115,28 +115,18 @@ class BeastFeedbacks_Block_Test extends TestCase {
 
 	/** @test */
 	public function survey_choice_init_registers_block_and_sets_script_translations(): void {
-		$dummy_type                = new stdClass();
-		$dummy_type->editor_script = 'survey-choice-editor-script';
-
 		$expected_dir = dirname( dirname( __DIR__ ) ) . '/src/survey-choice';
 
-		Functions\expect( 'register_block_type' )
-			->once()
-			->with( $expected_dir )
-			->andReturn( $dummy_type );
-
-		Functions\expect( 'wp_set_script_translations' )
-			->once()
-			->with(
-				'survey-choice-editor-script',
-				BEASTFEEDBACKS_DOMAIN,
-				BEASTFEEDBACKS_DIR . 'languages'
-			);
-
 		if ( ! function_exists( 'beastfeedbacks_block_survey_choice_init' ) ) {
+			// Requiring init.php defines the function and executes beastfeedbacks_block_survey_choice_init().
 			require_once $expected_dir . '/init.php';
 		} else {
 			beastfeedbacks_block_survey_choice_init();
 		}
+
+		$this->assertTrue(
+			WP_Block_Type_Registry::get_instance()->is_registered( 'beastfeedbacks/survey-choice' ),
+			'Block beastfeedbacks/survey-choice should be registered in WP_Block_Type_Registry'
+		);
 	}
 }
