@@ -491,6 +491,23 @@ class BeastFeedbacks_Admin {
 	public function download_csv() {
 		check_admin_referer( 'beastfeedbacks_csv_export' );
 
+		$posts      = $this->get_export_posts();
+		$post_datas = $this->get_csv_data( $posts );
+		$filename   = sprintf(
+			'beastfeedbacks-%s.csv',
+			gmdate( 'Y-m-d_H:i' )
+		);
+
+		$this->output_csv( $filename, $posts, $post_datas );
+		exit();
+	}
+
+	/**
+	 * Retrieve posts for CSV export
+	 *
+	 * @return array List of WP_Post objects.
+	 */
+	public function get_export_posts() {
 		// NOTE: POST情報にフィルター設定を載せて検索する.
 		$args = array(
 			'posts_per_page'   => -1,
@@ -501,7 +518,16 @@ class BeastFeedbacks_Admin {
 			'date_query'       => array(),
 		);
 
-		$posts      = get_posts( $args );
+		return get_posts( $args );
+	}
+
+	/**
+	 * Extract CSV data and fields from feedback posts
+	 *
+	 * @param array $posts List of WP_Post objects.
+	 * @return array Map of field keys to associative array of [ post_id => data_value ].
+	 */
+	public function get_csv_data( array $posts ) {
 		$post_datas = array();
 		foreach ( $posts as $post ) {
 			$id = $post->ID;
@@ -550,11 +576,18 @@ class BeastFeedbacks_Admin {
 			}
 		}
 
-		$filename = sprintf(
-			'beastfeedbacks-%s.csv',
-			gmdate( 'Y-m-d_H:i' )
-		);
+		return $post_datas;
+	}
 
+	/**
+	 * Output CSV headers and stream content to php://output
+	 *
+	 * @param string $filename   CSV file name.
+	 * @param array  $posts      List of WP_Post objects.
+	 * @param array  $post_datas Formatted post data map.
+	 * @return void
+	 */
+	public function output_csv( $filename, array $posts, array $post_datas ) {
 		$fields = array_keys( $post_datas );
 
 		header( 'Content-Disposition: attachment; filename=' . $filename );
@@ -577,7 +610,6 @@ class BeastFeedbacks_Admin {
 		}
 
 		fclose( $output ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
-		exit();
 	}
 
 	/**
