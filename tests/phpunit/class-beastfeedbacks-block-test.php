@@ -121,7 +121,15 @@ class BeastFeedbacks_Block_Test extends TestCase {
 		$GLOBALS['post'] = get_post( $post_id );
 
 		$content = '<div class="vote-options"><input type="radio" name="option" value="1" /> Option 1</div>';
-		$html    = beastfeedbacks_block_vote_render_callback( array(), $content );
+
+		WP_Block_Supports::$block_to_render = array(
+			'blockName' => 'beastfeedbacks/vote',
+			'attrs'     => array(),
+		);
+
+		$html = beastfeedbacks_block_vote_render_callback( array(), $content );
+
+		WP_Block_Supports::$block_to_render = null;
 
 		$this->assertStringContainsString( 'name="beastfeedbacks_vote_form"', $html );
 		$this->assertStringContainsString( 'admin-ajax.php', $html );
@@ -147,7 +155,14 @@ class BeastFeedbacks_Block_Test extends TestCase {
 
 		unset( $GLOBALS['post'] );
 
+		WP_Block_Supports::$block_to_render = array(
+			'blockName' => 'beastfeedbacks/vote',
+			'attrs'     => array(),
+		);
+
 		$html = beastfeedbacks_block_vote_render_callback( array(), '' );
+
+		WP_Block_Supports::$block_to_render = null;
 
 		$this->assertStringContainsString( 'name="beastfeedbacks_vote_form"', $html );
 		$this->assertStringContainsString( '<input type="hidden" name="beastfeedbacks_type" value="vote" />', $html );
