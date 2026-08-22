@@ -14,6 +14,13 @@ use Brain\Monkey\Functions;
 class BeastFeedbacks_Survey_Form_Test extends TestCase {
 
 	/**
+	 * Created post IDs to delete in tear down.
+	 *
+	 * @var int[]
+	 */
+	private $created_ids = array();
+
+	/**
 	 * Set up test environment.
 	 */
 	public function set_up(): void {
@@ -25,88 +32,113 @@ class BeastFeedbacks_Survey_Form_Test extends TestCase {
 	}
 
 	/**
-	 * Test rendering survey form with content and valid post ID.
+	 * Tear down test environment and cleanup posts.
 	 */
-	public function test_survey_form_render_callback_returns_expected_html(): void {
-		Functions\expect( 'get_block_wrapper_attributes' )
-			->once()
-			->andReturn( 'class="wp-block-beastfeedbacks-survey-form"' );
+	public function tear_down(): void {
+		if ( function_exists( 'wp_delete_post' ) ) {
+			foreach ( array_reverse( $this->created_ids ) as $pid ) {
+				if ( get_post( $pid ) ) {
+					wp_delete_post( $pid, true );
+				}
+			}
+		}
+		$this->created_ids = array();
 
-		Functions\expect( 'wp_nonce_field' )
-			->once()
-			->with( 'register_beastfeedbacks_form', '_wpnonce', true, false )
-			->andReturn( '<input type="hidden" id="_wpnonce" name="_wpnonce" value="test_nonce" />' );
-
-		Functions\expect( 'admin_url' )
-			->once()
-			->with( 'admin-ajax.php' )
-			->andReturn( 'https://example.com/wp-admin/admin-ajax.php' );
-
-		Functions\expect( 'esc_url' )
-			->once()
-			->with( 'https://example.com/wp-admin/admin-ajax.php' )
-			->andReturn( 'https://example.com/wp-admin/admin-ajax.php' );
-
-		Functions\expect( 'get_the_ID' )
-			->once()
-			->andReturn( 123 );
-
-		Functions\expect( 'absint' )
-			->once()
-			->with( 123 )
-			->andReturn( 123 );
-
-		Functions\expect( 'esc_attr' )
-			->once()
-			->with( 123 )
-			->andReturn( '123' );
-
-		$attributes = array();
-		$content    = '<p>Survey Input Content</p>';
-
-		$html = beastfeedbacks_block_survey_form_render_callback( $attributes, $content );
-
-		$expected_html = '<div class="wp-block-beastfeedbacks-survey-form">' .
-			'<form action="https://example.com/wp-admin/admin-ajax.php" name="beastfeedbacks_survey_form" method="POST">' .
-			'<input type="hidden" id="_wpnonce" name="_wpnonce" value="test_nonce" />' .
-			'<input type="hidden" name="action" value="register_beastfeedbacks_form" />' .
-			'<input type="hidden" name="beastfeedbacks_type" value="survey" />' .
-			'<input type="hidden" name="id" value="123" />' .
-			'<p>Survey Input Content</p>' .
-			'</form>' .
-			'</div>';
-
-		$this->assertSame( $expected_html, $html );
+		parent::tear_down();
 	}
 
 	/**
-	 * Test rendering survey form when content is empty and post ID is 0.
+	 * Test rendering survey form with post context and valid output.
 	 */
-	public function test_survey_form_render_callback_handles_empty_content(): void {
-		Functions\stubs(
-			array(
-				'get_block_wrapper_attributes' => 'class="wp-block-beastfeedbacks-survey-form"',
-				'wp_nonce_field'               => '<input type="hidden" name="_wpnonce" value="nonce" />',
-				'admin_url'                    => 'https://example.com/wp-admin/admin-ajax.php',
-				'esc_url'                      => function ( $url ) {
-					return $url;
-				},
-				'get_the_ID'                   => 0,
-				'absint'                       => function ( $val ) {
-					return (int) $val;
-				},
-				'esc_attr'                     => function ( $val ) {
-					return (string) $val;
-				},
-			)
-		);
+	public function test_survey_form_render_callback_returns_expected_html(): void {
+		$post_id = 123;
+
+		if ( function_exists( 'get_block_wrapper_attributes' ) ) {
+			$post_id             = wp_insert_post(
+				array(
+					'post_type'   => 'post',
+					'post_status' => 'publish',
+					'post_title'  => 'Survey Form Post Context',
+				)
+			);
+			$this->created_ids[] = $post_id;
+
+			$GLOBALS['post'] = get_post( $post_id );
+			setup_postdata( $GLOBALS['post'] );
+		} else {
+			Functions\stubs(
+				array(
+					'get_block_wrapper_attributes' => 'class="wp-block-beastfeedbacks-survey-form"',
+					'get_the_ID'                   => $post_id,
+					'wp_nonce_field'               => '<input type="hidden" id="_wpnonce" name="_wpnonce" value="test_nonce" />',
+					'admin_url'                    => 'https://example.com/wp-admin/admin-ajax.php',
+					'esc_url'                      => function ( $url ) {
+						return $url;
+					},
+					'absint'                       => function ( $val ) {
+						return (int) $val;
+					},
+					'esc_attr'                     => function ( $val ) {
+						return (string) $val;
+					},
+				)
+			);
+		}
+
+		$attributes = array();
+		$content    = '<p>Survey Inner Content</p>';
+
+		$html = beastfeedbacks_block_survey_form_render_callback( $attributes, $content );
+
+		if ( function_exists( 'wp_reset_postdata' ) && ! empty( $this->created_ids ) ) {
+			wp_reset_postdata();
+		}
+
+		$this->assertStringContainsString( '<form action="', $html );
+		$this->assertStringContainsString( 'admin-ajax.php', $html );
+		$this->assertStringContainsString( 'name="beastfeedbacks_survey_form"', $html );
+		$this->assertStringContainsString( 'method="POST"', $html );
+		$this->assertStringContainsString( 'name="action" value="register_beastfeedbacks_form"', $html );
+		$this->assertStringContainsString( 'name="beastfeedbacks_type" value="survey"', $html );
+		$this->assertStringContainsString( 'name="id" value="' . $post_id . '"', $html );
+		$this->assertStringContainsString( '_wpnonce', $html );
+		$this->assertStringContainsString( '<p>Survey Inner Content</p>', $html );
+	}
+
+	/**
+	 * Test rendering survey form without post context (empty content & zero post ID).
+	 */
+	public function test_survey_form_render_callback_handles_empty_content_and_no_post(): void {
+		if ( function_exists( 'get_block_wrapper_attributes' ) ) {
+			$GLOBALS['post'] = null;
+		} else {
+			Functions\stubs(
+				array(
+					'get_block_wrapper_attributes' => 'class="wp-block-beastfeedbacks-survey-form"',
+					'get_the_ID'                   => false,
+					'wp_nonce_field'               => '<input type="hidden" id="_wpnonce" name="_wpnonce" value="test_nonce" />',
+					'admin_url'                    => 'https://example.com/wp-admin/admin-ajax.php',
+					'esc_url'                      => function ( $url ) {
+						return $url;
+					},
+					'absint'                       => function ( $val ) {
+						return (int) $val;
+					},
+					'esc_attr'                     => function ( $val ) {
+						return (string) $val;
+					},
+				)
+			);
+		}
 
 		$html = beastfeedbacks_block_survey_form_render_callback( array(), '' );
 
-		$this->assertStringContainsString( '<input type="hidden" name="id" value="0" />', $html );
-		$this->assertStringContainsString( '<form action="https://example.com/wp-admin/admin-ajax.php"', $html );
+		$this->assertStringContainsString( '<form action="', $html );
+		$this->assertStringContainsString( 'admin-ajax.php', $html );
 		$this->assertStringContainsString( 'name="beastfeedbacks_survey_form"', $html );
-		$this->assertStringContainsString( 'value="register_beastfeedbacks_form"', $html );
-		$this->assertStringContainsString( 'value="survey"', $html );
+		$this->assertStringContainsString( 'name="action" value="register_beastfeedbacks_form"', $html );
+		$this->assertStringContainsString( 'name="beastfeedbacks_type" value="survey"', $html );
+		$this->assertStringContainsString( 'name="id" value="0"', $html );
+		$this->assertStringContainsString( '_wpnonce', $html );
 	}
 }
