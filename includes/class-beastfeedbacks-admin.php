@@ -377,16 +377,18 @@ class BeastFeedbacks_Admin {
 
 		$selected_parent_id = intval( isset( $_GET['beastfeedbacks_parent_id'] ) ? sanitize_key( $_GET['beastfeedbacks_parent_id'] ) : 0 ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
-		$args = array(
-			'fields'           => 'id=>parent',
-			'posts_per_page'   => 100000, // phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page
-			'post_type'        => 'beastfeedbacks',
-			'post_status'      => 'publish',
-			'suppress_filters' => false,
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$raw_parent_ids = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT DISTINCT post_parent FROM {$wpdb->posts} WHERE post_type = %s AND post_status = %s",
+				$this->post_type,
+				'publish'
+			)
 		);
 
-		$posts      = get_posts( $args );
-		$parent_ids = array_values( array_unique( array_values( $posts ) ) );
+		$parent_ids = ! empty( $raw_parent_ids ) ? array_map( 'absint', $raw_parent_ids ) : array();
 
 		?>
 		<select name="beastfeedbacks_parent_id">
