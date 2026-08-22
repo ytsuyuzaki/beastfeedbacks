@@ -197,99 +197,124 @@ class BeastFeedbacks_Admin {
 	 * @param int    $post_id     The current post ID.
 	 */
 	public function manage_posts_custom_column( $column_name, $post_id ) {
-		$list = array(
-			'beastfeedbacks_source',
-			'beastfeedbacks_type',
-			'beastfeedbacks_date',
-			'beastfeedbacks_response',
-		);
+		switch ( $column_name ) {
+			case 'beastfeedbacks_date':
+				$this->render_date_column( $post_id );
+				break;
+			case 'beastfeedbacks_response':
+				$this->render_response_column( $post_id );
+				break;
+			case 'beastfeedbacks_source':
+				$this->render_source_column( $post_id );
+				break;
+			case 'beastfeedbacks_type':
+				$this->render_type_column( $post_id );
+				break;
+		}
+	}
 
-		if ( ! in_array( $column_name, $list, true ) ) {
+	/**
+	 * Render date column content.
+	 *
+	 * @param int $post_id The current post ID.
+	 */
+	private function render_date_column( $post_id ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+		echo esc_html( date_i18n( 'Y/m/d', get_the_time( 'U' ) ) );
+	}
+
+	/**
+	 * Render response column content.
+	 *
+	 * @param int $post_id The current post ID.
+	 */
+	private function render_response_column( $post_id ) {
+		$post    = get_post( $post_id );
+		$content = json_decode( $post->post_content, true );
+		if ( ! is_array( $content ) ) {
 			return;
 		}
 
-		switch ( $column_name ) {
-			case 'beastfeedbacks_date':
-				echo esc_html( date_i18n( 'Y/m/d', get_the_time( 'U' ) ) );
-				return;
-			case 'beastfeedbacks_response':
-				$post    = get_post( $post_id );
-				$content = json_decode( $post->post_content, true );
-				if ( ! is_array( $content ) ) {
-					return;
-				}
+		$type        = isset( $content['type'] )
+			? $content['type']
+			: '';
+		$post_params = isset( $content['post_params'] )
+			? $content['post_params']
+			: array();
+		?>
+		<table>
+			<tbody>
+				<?php if ( 'vote' === $type ) : ?>
+					<tr>
+						<td><?php echo esc_html_e( 'Select', 'beastfeedbacks' ); ?></td>
+						<td><?php echo esc_html( $post_params['selected'] ); ?></td>
+					</tr>
+				<?php elseif ( 'survey' === $type ) : ?>
+					<?php foreach ( $post_params as $key => $value ) : ?>
+						<tr>
+							<td><?php echo esc_html( $key ); ?></td>
+							<td>
+								<?php if ( is_array( $value ) ) : ?>
+									<?php foreach ( $value as $v ) : ?>
+										<?php echo esc_html( $v ); ?><br />
+									<?php endforeach; ?>
+								<?php else : ?>
+									<?php echo esc_html( $value ); ?>
+								<?php endif ?>
+							</td>
+						</tr>
+					<?php endforeach; ?>
+				<?php endif ?>
+			</tbody>
+		</table>
+		<table>
+			<tbody>
+				<hr />
+				<?php if ( isset( $content['ip_address'] ) ) : ?>
+					<tr>
+						<td>IP_Address</td>
+						<td><?php echo esc_html( $content['ip_address'] ); ?></td>
+					</tr>
+				<?php endif ?>
+				<?php if ( isset( $content['user_agent'] ) ) : ?>
+					<tr>
+						<td>UserAgent</td>
+						<td><?php echo esc_html( $content['user_agent'] ); ?></td>
+					</tr>
+				<?php endif ?>
+			</tbody>
+		</table>
+		<?php
+	}
 
-				$type        = isset( $content['type'] )
-					? $content['type']
-					: '';
-				$post_params = isset( $content['post_params'] )
-					? $content['post_params']
-					: array();
-				?>
-				<table>
-					<tbody>
-						<?php if ( 'vote' === $type ) : ?>
-							<tr>
-								<td><?php echo esc_html_e( 'Select', 'beastfeedbacks' ); ?></td>
-								<td><?php echo esc_html( $post_params['selected'] ); ?></td>
-							</tr>
-						<?php elseif ( 'survey' === $type ) : ?>
-							<?php foreach ( $post_params as $key => $value ) : ?>
-								<tr>
-									<td><?php echo esc_html( $key ); ?></td>
-									<td>
-										<?php if ( is_array( $value ) ) : ?>
-											<?php foreach ( $value as $v ) : ?>
-												<?php echo esc_html( $v ); ?><br />
-											<?php endforeach; ?>
-										<?php else : ?>
-											<?php echo esc_html( $value ); ?>
-										<?php endif ?>
-									</td>
-								</tr>
-							<?php endforeach; ?>
-						<?php endif ?>
-					</tbody>
-				</table>
-				<table>
-					<tbody>
-						<hr />
-						<?php if ( isset( $content['ip_address'] ) ) : ?>
-							<tr>
-								<td>IP_Address</td>
-								<td><?php echo esc_html( $content['ip_address'] ); ?></td>
-							</tr>
-						<?php endif ?>
-						<?php if ( isset( $content['user_agent'] ) ) : ?>
-							<tr>
-								<td>UserAgent</td>
-								<td><?php echo esc_html( $content['user_agent'] ); ?></td>
-							</tr>
-						<?php endif ?>
-					</tbody>
-				</table>
-				<?php
-				return;
-			case 'beastfeedbacks_source':
-				$post = get_post( $post_id );
-				if ( ! isset( $post->post_parent ) ) {
-					return;
-				}
-
-				$form_url   = get_permalink( $post->post_parent );
-				$parsed_url = wp_parse_url( $form_url );
-
-				printf(
-					'<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>',
-					esc_url( $form_url ),
-					esc_html( $parsed_url['path'] )
-				);
-				return;
-			case 'beastfeedbacks_type':
-				$meta = get_post_meta( $post_id, 'beastfeedbacks_type', true );
-				echo esc_html( $meta );
-				return;
+	/**
+	 * Render source column content.
+	 *
+	 * @param int $post_id The current post ID.
+	 */
+	private function render_source_column( $post_id ) {
+		$post = get_post( $post_id );
+		if ( ! isset( $post->post_parent ) ) {
+			return;
 		}
+
+		$form_url   = get_permalink( $post->post_parent );
+		$parsed_url = wp_parse_url( $form_url );
+
+		printf(
+			'<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>',
+			esc_url( $form_url ),
+			esc_html( $parsed_url['path'] )
+		);
+	}
+
+	/**
+	 * Render type column content.
+	 *
+	 * @param int $post_id The current post ID.
+	 */
+	private function render_type_column( $post_id ) {
+		$meta = get_post_meta( $post_id, 'beastfeedbacks_type', true );
+		echo esc_html( $meta );
 	}
 
 	/**

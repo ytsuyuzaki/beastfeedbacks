@@ -201,4 +201,14 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 		$this->assertSame( 'safe', $admin->esc_csv( 'safe' ) );
 		$this->assertSame( '  space', $admin->esc_csv( '  space' ) ); // 先頭がスペースならそのまま
 	}
+
+	/** @test */
+	public function manage_posts_custom_column_handles_unknown_column(): void {
+		$admin = \BeastFeedbacks_Admin::get_instance();
+		ob_start();
+		$admin->manage_posts_custom_column( 'unknown_column', 123 );
+		$output = ob_get_clean();
+
+		$this->assertSame( '', $output );
+	}
 }
