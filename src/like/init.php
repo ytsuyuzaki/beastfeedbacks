@@ -66,11 +66,13 @@ if ( ! function_exists( 'beastfeedbacks_block_like_init' ) ) {
 			)
 		);
 
-		wp_set_script_translations(
-			$type->editor_script,
-			BEASTFEEDBACKS_DOMAIN,
-			BEASTFEEDBACKS_DIR . 'languages',
-		);
+		if ( $type && ! empty( $type->editor_script ) ) {
+			wp_set_script_translations(
+				$type->editor_script,
+				BEASTFEEDBACKS_DOMAIN,
+				BEASTFEEDBACKS_DIR . 'languages',
+			);
+		}
 	}
 }
 

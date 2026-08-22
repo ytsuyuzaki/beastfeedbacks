@@ -113,7 +113,8 @@ class BeastFeedbacks_Block_Test extends TestCase {
 			)
 		);
 
-		$this->go_to( get_permalink( $post_id ) );
+		$GLOBALS['post'] = get_post( $post_id );
+		setup_postdata( $GLOBALS['post'] );
 
 		$attributes = array();
 		$content    = '<button type="submit" class="like-button">Like</button>';
@@ -127,6 +128,7 @@ class BeastFeedbacks_Block_Test extends TestCase {
 		$this->assertStringContainsString( '<p class="like-count">0</p>', $html );
 		$this->assertStringContainsString( $content, $html );
 
+		wp_reset_postdata();
 		wp_delete_post( $post_id, true );
 	}
 
@@ -162,12 +164,14 @@ class BeastFeedbacks_Block_Test extends TestCase {
 		);
 		add_post_meta( $like_post_2, 'beastfeedbacks_type', 'like' );
 
-		$this->go_to( get_permalink( $post_id ) );
+		$GLOBALS['post'] = get_post( $post_id );
+		setup_postdata( $GLOBALS['post'] );
 
 		$html = beastfeedbacks_block_like_render_callback( array(), '' );
 
 		$this->assertStringContainsString( '<p class="like-count">2</p>', $html );
 
+		wp_reset_postdata();
 		wp_delete_post( $like_post_1, true );
 		wp_delete_post( $like_post_2, true );
 		wp_delete_post( $post_id, true );
