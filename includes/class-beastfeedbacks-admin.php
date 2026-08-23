@@ -491,6 +491,10 @@ class BeastFeedbacks_Admin {
 	public function download_csv() {
 		check_admin_referer( 'beastfeedbacks_csv_export' );
 
+		if ( ! current_user_can( 'edit_pages' ) ) {
+			wp_die( esc_html__( 'You do not have permission to export feedback data.', 'beastfeedbacks' ) );
+		}
+
 		// NOTE: POST情報にフィルター設定を載せて検索する.
 		$args = array(
 			'posts_per_page'   => -1,

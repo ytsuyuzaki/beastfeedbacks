@@ -21,6 +21,7 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 
 	protected function tear_down(): void {
 		unset( $GLOBALS['current_screen'], $GLOBALS['post'] );
+		wp_set_current_user( 0 );
 		parent::tear_down();
 	}
 
@@ -203,6 +204,38 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 	}
 
 	/** @test */
+	public function download_csv_fails_without_capability(): void {
+		$user_id = wp_create_user( 'subscriber_' . wp_rand(), 'password123', 'sub_' . wp_rand() . '@example.com' );
+		wp_set_current_user( $user_id );
+
+		$nonce                = wp_create_nonce( 'beastfeedbacks_csv_export' );
+		$_REQUEST['_wpnonce'] = $nonce;
+		$_GET['_wpnonce']     = $nonce;
+
+		$die_handler = static function () {
+			return static function ( $message = '' ) {
+				throw new RuntimeException( 'wp_die_permission_denied: ' . $message );
+			};
+		};
+
+		add_filter( 'wp_die_ajax_handler', $die_handler );
+		add_filter( 'wp_die_handler', $die_handler );
+
+		try {
+			\BeastFeedbacks_Admin::get_instance()->download_csv();
+			$this->fail( 'download_csv did not die when user lacked capability' );
+		} catch ( RuntimeException $e ) {
+			$this->assertStringContainsString( 'wp_die_permission_denied', $e->getMessage() );
+			$this->assertStringContainsString( 'You do not have permission to export feedback data.', $e->getMessage() );
+		} finally {
+			remove_filter( 'wp_die_ajax_handler', $die_handler );
+			remove_filter( 'wp_die_handler', $die_handler );
+			wp_delete_user( $user_id );
+			wp_set_current_user( 0 );
+		}
+	}
+
+	/** @test */
 	public function download_csv_fails_without_valid_nonce(): void {
 		$_REQUEST = array();
 		$_GET     = array();
@@ -230,6 +263,12 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 
 	/** @test */
 	public function download_csv_outputs_csv_with_feedback_data(): void {
+		$admin_id = wp_create_user( 'admin_' . wp_rand(), 'password123', 'admin_' . wp_rand() . '@example.com' );
+		$user     = get_user_by( 'id', $admin_id );
+		if ( $user ) {
+			$user->add_role( 'administrator' );
+		}
+		wp_set_current_user( $admin_id );
 		// Parent post for permalink source
 		$parent_id = wp_insert_post(
 			array(
@@ -341,6 +380,12 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 
 	/** @test */
 	public function download_csv_handles_no_posts(): void {
+		$admin_id = wp_create_user( 'admin_' . wp_rand(), 'password123', 'admin_' . wp_rand() . '@example.com' );
+		$user     = get_user_by( 'id', $admin_id );
+		if ( $user ) {
+			$user->add_role( 'administrator' );
+		}
+		wp_set_current_user( $admin_id );
 		// Delete any existing beastfeedbacks posts to ensure empty list
 		$existing = get_posts(
 			array(
@@ -382,6 +427,12 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 
 	/** @test */
 	public function download_csv_handles_invalid_json_content(): void {
+		$admin_id = wp_create_user( 'admin_' . wp_rand(), 'password123', 'admin_' . wp_rand() . '@example.com' );
+		$user     = get_user_by( 'id', $admin_id );
+		if ( $user ) {
+			$user->add_role( 'administrator' );
+		}
+		wp_set_current_user( $admin_id );
 		$post_id = wp_insert_post(
 			array(
 				'post_type'    => 'beastfeedbacks',
