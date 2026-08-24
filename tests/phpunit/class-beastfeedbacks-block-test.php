@@ -20,7 +20,7 @@ class BeastFeedbacks_Block_Test extends TestCase {
 			define( 'BEASTFEEDBACKS_DOMAIN', 'beastfeedbacks' );
 		}
 		if ( ! defined( 'BEASTFEEDBACKS_DIR' ) ) {
-			define( 'BEASTFEEDBACKS_DIR', '/dummy/path/' );
+			define( 'BEASTFEEDBACKS_DIR', dirname( __DIR__, 2 ) . '/' );
 		}
 
 		// 念のため該当フックをリセット（他テストからの影響排除）
@@ -120,9 +120,13 @@ class BeastFeedbacks_Block_Test extends TestCase {
 		if ( ! function_exists( 'beastfeedbacks_block_survey_choice_init' ) ) {
 			// Requiring init.php defines the function and executes beastfeedbacks_block_survey_choice_init().
 			require_once $expected_dir . '/init.php';
-		} else {
-			beastfeedbacks_block_survey_choice_init();
 		}
+
+		if ( WP_Block_Type_Registry::get_instance()->is_registered( 'beastfeedbacks/survey-choice' ) ) {
+			unregister_block_type( 'beastfeedbacks/survey-choice' );
+		}
+
+		beastfeedbacks_block_survey_choice_init();
 
 		$this->assertTrue(
 			WP_Block_Type_Registry::get_instance()->is_registered( 'beastfeedbacks/survey-choice' ),
@@ -296,5 +300,85 @@ class BeastFeedbacks_Block_Test extends TestCase {
 		$this->assertStringContainsString( '<input type="hidden" name="id" value="0" />', $html );
 		$this->assertStringContainsString( '<form action="', $html );
 		$this->assertStringContainsString( '</form>', $html );
+	}
+
+	/** @test */
+	public function survey_input_init_registers_block(): void {
+		if ( ! function_exists( 'beastfeedbacks_block_survey_input_init' ) ) {
+			require_once BEASTFEEDBACKS_DIR . 'src/survey-input/init.php';
+		}
+
+		if ( WP_Block_Type_Registry::get_instance()->is_registered( 'beastfeedbacks/survey-input' ) ) {
+			unregister_block_type( 'beastfeedbacks/survey-input' );
+		}
+
+		beastfeedbacks_block_survey_input_init();
+
+		$registry = \WP_Block_Type_Registry::get_instance();
+		$this->assertTrue( $registry->is_registered( 'beastfeedbacks/survey-input' ) );
+	}
+
+	/** @test */
+	public function survey_choice_init_registers_block(): void {
+		if ( ! function_exists( 'beastfeedbacks_block_survey_choice_init' ) ) {
+			require_once BEASTFEEDBACKS_DIR . 'src/survey-choice/init.php';
+		}
+
+		if ( WP_Block_Type_Registry::get_instance()->is_registered( 'beastfeedbacks/survey-choice' ) ) {
+			unregister_block_type( 'beastfeedbacks/survey-choice' );
+		}
+
+		beastfeedbacks_block_survey_choice_init();
+
+		$registry = \WP_Block_Type_Registry::get_instance();
+		$this->assertTrue( $registry->is_registered( 'beastfeedbacks/survey-choice' ) );
+	}
+
+	/** @test */
+	public function survey_form_init_registers_block(): void {
+		if ( ! function_exists( 'beastfeedbacks_block_survey_form_init' ) ) {
+			require_once BEASTFEEDBACKS_DIR . 'src/survey-form/init.php';
+		}
+
+		if ( WP_Block_Type_Registry::get_instance()->is_registered( 'beastfeedbacks/survey-form' ) ) {
+			unregister_block_type( 'beastfeedbacks/survey-form' );
+		}
+
+		beastfeedbacks_block_survey_form_init();
+
+		$registry = \WP_Block_Type_Registry::get_instance();
+		$this->assertTrue( $registry->is_registered( 'beastfeedbacks/survey-form' ) );
+	}
+
+	/** @test */
+	public function vote_init_registers_block(): void {
+		if ( ! function_exists( 'beastfeedbacks_block_vote_init' ) ) {
+			require_once BEASTFEEDBACKS_DIR . 'src/vote/init.php';
+		}
+
+		if ( WP_Block_Type_Registry::get_instance()->is_registered( 'beastfeedbacks/vote' ) ) {
+			unregister_block_type( 'beastfeedbacks/vote' );
+		}
+
+		beastfeedbacks_block_vote_init();
+
+		$registry = \WP_Block_Type_Registry::get_instance();
+		$this->assertTrue( $registry->is_registered( 'beastfeedbacks/vote' ) );
+	}
+
+	/** @test */
+	public function like_init_registers_block(): void {
+		if ( ! function_exists( 'beastfeedbacks_block_like_init' ) ) {
+			require_once BEASTFEEDBACKS_DIR . 'src/like/init.php';
+		}
+
+		if ( WP_Block_Type_Registry::get_instance()->is_registered( 'beastfeedbacks/like' ) ) {
+			unregister_block_type( 'beastfeedbacks/like' );
+		}
+
+		beastfeedbacks_block_like_init();
+
+		$registry = \WP_Block_Type_Registry::get_instance();
+		$this->assertTrue( $registry->is_registered( 'beastfeedbacks/like' ) );
 	}
 }
