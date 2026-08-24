@@ -19,9 +19,31 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 		}
 	}
 
+	/** @var int[] 作成した投稿のIDを記録して後始末 */
+	private $created_ids = array();
+
 	protected function tear_down(): void {
+		foreach ( array_reverse( $this->created_ids ) as $pid ) {
+			if ( get_post( $pid ) ) {
+				wp_delete_post( $pid, true );
+			}
+		}
+		$this->created_ids = array();
+
 		unset( $GLOBALS['current_screen'], $GLOBALS['post'] );
 		parent::tear_down();
+	}
+
+	/**
+	 * 投稿を作成し、ID を回収・記録するユーティリティ
+	 *
+	 * @param array $args wp_insert_post() の引数.
+	 * @return int 作成した投稿ID
+	 */
+	private function create_post( array $args ): int {
+		$pid                 = wp_insert_post( $args );
+		$this->created_ids[] = $pid;
+		return $pid;
 	}
 
 	/** @test */
@@ -514,5 +536,182 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 		$this->assertSame( 'draft', $result );
 
 		wp_delete_post( $post_id, true );
+	}
+
+	/** @test */
+	public function manage_posts_custom_column_returns_early_for_unsupported_column(): void {
+		$admin   = \BeastFeedbacks_Admin::get_instance();
+		$post_id = $this->create_post(
+			array(
+				'post_type'   => 'beastfeedbacks',
+				'post_status' => 'publish',
+			)
+		);
+
+		ob_start();
+		$admin->manage_posts_custom_column( 'unsupported_column', $post_id );
+		$output = ob_get_clean();
+
+		$this->assertSame( '', $output );
+	}
+
+	/** @test */
+	public function manage_posts_custom_column_outputs_date_for_beastfeedbacks_date(): void {
+		$admin   = \BeastFeedbacks_Admin::get_instance();
+		$post_id = $this->create_post(
+			array(
+				'post_type'   => 'beastfeedbacks',
+				'post_status' => 'publish',
+				'post_date'   => '2025-01-15 10:20:30',
+			)
+		);
+
+		$post            = get_post( $post_id );
+		$GLOBALS['post'] = $post;
+
+		ob_start();
+		$admin->manage_posts_custom_column( 'beastfeedbacks_date', $post_id );
+		$output = ob_get_clean();
+
+		$expected_date = date_i18n( 'Y/m/d', get_the_time( 'U' ) );
+		$this->assertSame( $expected_date, $output );
+	}
+
+	/** @test */
+	public function manage_posts_custom_column_outputs_type_for_beastfeedbacks_type(): void {
+		$admin   = \BeastFeedbacks_Admin::get_instance();
+		$post_id = $this->create_post(
+			array(
+				'post_type'   => 'beastfeedbacks',
+				'post_status' => 'publish',
+			)
+		);
+		add_post_meta( $post_id, 'beastfeedbacks_type', 'survey' );
+
+		ob_start();
+		$admin->manage_posts_custom_column( 'beastfeedbacks_type', $post_id );
+		$output = ob_get_clean();
+
+		$this->assertSame( 'survey', $output );
+	}
+
+	/** @test */
+	public function manage_posts_custom_column_outputs_source_link_for_beastfeedbacks_source(): void {
+		$admin = \BeastFeedbacks_Admin::get_instance();
+
+		// Parent post
+		$parent_id = $this->create_post(
+			array(
+				'post_type'   => 'post',
+				'post_status' => 'publish',
+				'post_title'  => 'parent post',
+			)
+		);
+
+		// Child feedback post
+		$post_id = $this->create_post(
+			array(
+				'post_type'   => 'beastfeedbacks',
+				'post_status' => 'publish',
+				'post_parent' => $parent_id,
+			)
+		);
+
+		ob_start();
+		$admin->manage_posts_custom_column( 'beastfeedbacks_source', $post_id );
+		$output = ob_get_clean();
+
+		$form_url   = get_permalink( $parent_id );
+		$parsed_url = wp_parse_url( $form_url );
+		$expected   = sprintf(
+			'<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>',
+			esc_url( $form_url ),
+			esc_html( $parsed_url['path'] )
+		);
+
+		$this->assertSame( $expected, $output );
+
+		// Invalid / non-existent post ID where $post is null
+		ob_start();
+		$admin->manage_posts_custom_column( 'beastfeedbacks_source', 999999 );
+		$no_parent_output = ob_get_clean();
+
+		$this->assertSame( '', $no_parent_output );
+	}
+
+	/** @test */
+	public function manage_posts_custom_column_outputs_response_data_for_vote_and_survey(): void {
+		$admin = \BeastFeedbacks_Admin::get_instance();
+
+		// Case 1: Non-array or invalid JSON content
+		$invalid_post_id = $this->create_post(
+			array(
+				'post_type'    => 'beastfeedbacks',
+				'post_status'  => 'publish',
+				'post_content' => 'invalid json content',
+			)
+		);
+
+		ob_start();
+		$admin->manage_posts_custom_column( 'beastfeedbacks_response', $invalid_post_id );
+		$invalid_output = ob_get_clean();
+		$this->assertSame( '', $invalid_output );
+
+		// Case 2: Vote response
+		$vote_content = array(
+			'type'        => 'vote',
+			'post_params' => array(
+				'selected' => 'Option 1',
+			),
+			'ip_address'  => '192.168.1.1',
+			'user_agent'  => 'Test User Agent',
+		);
+		$vote_post_id = $this->create_post(
+			array(
+				'post_type'    => 'beastfeedbacks',
+				'post_status'  => 'publish',
+				'post_content' => wp_json_encode( $vote_content ),
+			)
+		);
+
+		ob_start();
+		$admin->manage_posts_custom_column( 'beastfeedbacks_response', $vote_post_id );
+		$vote_output = ob_get_clean();
+
+		$this->assertStringContainsString( 'Option 1', $vote_output );
+		$this->assertStringContainsString( 'IP_Address', $vote_output );
+		$this->assertStringContainsString( '192.168.1.1', $vote_output );
+		$this->assertStringContainsString( 'UserAgent', $vote_output );
+		$this->assertStringContainsString( 'Test User Agent', $vote_output );
+
+		// Case 3: Survey response with scalar and array values
+		$survey_content = array(
+			'type'        => 'survey',
+			'post_params' => array(
+				'Question 1' => 'Answer 1',
+				'Question 2' => array( 'Choice A', 'Choice B' ),
+			),
+			'ip_address'  => '10.0.0.1',
+		);
+		$survey_post_id = $this->create_post(
+			array(
+				'post_type'    => 'beastfeedbacks',
+				'post_status'  => 'publish',
+				'post_content' => wp_json_encode( $survey_content ),
+			)
+		);
+
+		ob_start();
+		$admin->manage_posts_custom_column( 'beastfeedbacks_response', $survey_post_id );
+		$survey_output = ob_get_clean();
+
+		$this->assertStringContainsString( 'Question 1', $survey_output );
+		$this->assertStringContainsString( 'Answer 1', $survey_output );
+		$this->assertStringContainsString( 'Question 2', $survey_output );
+		$this->assertStringContainsString( 'Choice A', $survey_output );
+		$this->assertStringContainsString( 'Choice B', $survey_output );
+		$this->assertStringContainsString( 'Choice A<br />', $survey_output );
+		$this->assertStringContainsString( '10.0.0.1', $survey_output );
+		$this->assertStringNotContainsString( 'UserAgent', $survey_output );
 	}
 }
