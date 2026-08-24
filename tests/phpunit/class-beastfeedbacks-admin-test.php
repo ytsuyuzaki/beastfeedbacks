@@ -231,9 +231,13 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 		$this->assertSame( "'+1+2", $admin->esc_csv( '+1+2' ) );
 		$this->assertSame( "'-1", $admin->esc_csv( '-1' ) );
 		$this->assertSame( "'@cmd", $admin->esc_csv( '@cmd' ) );
+		$this->assertSame( "'\tcmd", $admin->esc_csv( "\tcmd" ) );
+		$this->assertSame( "'\rcmd", $admin->esc_csv( "\rcmd" ) );
+		$this->assertSame( "' =SUM(A1:A2)", $admin->esc_csv( ' =SUM(A1:A2)' ) );
+		$this->assertSame( "'  +1+2", $admin->esc_csv( '  +1+2' ) );
 
 		$this->assertSame( 'safe', $admin->esc_csv( 'safe' ) );
-		$this->assertSame( '  space', $admin->esc_csv( '  space' ) ); // 先頭がスペースならそのまま
+		$this->assertSame( '  space', $admin->esc_csv( '  space' ) );
 	}
 
 	/** @test */
