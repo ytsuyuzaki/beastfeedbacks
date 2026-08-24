@@ -119,6 +119,46 @@ class BeastFeedbacks_Test extends TestCase {
 		$this->assertSame( 3, $count, 'like が3件なら 3 を返すべき' );
 	}
 
+	/** @test */
+	public function beastfeedbacks_deactivate_calls_deactivator_deactivate(): void {
+		$dir = defined( 'BEASTFEEDBACKS_DIR' ) ? BEASTFEEDBACKS_DIR : dirname( __DIR__, 2 ) . '/';
+		include_once $dir . 'includes/class-beastfeedbacks-deactivator.php';
+
+		$called = false;
+		$handle = \Patchwork\redefine(
+			'BeastFeedbacks_Deactivator::deactivate',
+			function () use ( &$called ) {
+				$called = true;
+			}
+		);
+
+		beastfeedbacks_deactivate();
+
+		\Patchwork\restore( $handle );
+
+		$this->assertTrue( $called, 'beastfeedbacks_deactivate() は BeastFeedbacks_Deactivator::deactivate() を呼び出すべき' );
+	}
+
+	/** @test */
+	public function beastfeedbacks_activate_calls_activator_activate(): void {
+		$dir = defined( 'BEASTFEEDBACKS_DIR' ) ? BEASTFEEDBACKS_DIR : dirname( __DIR__, 2 ) . '/';
+		include_once $dir . 'includes/class-beastfeedbacks-activator.php';
+
+		$called = false;
+		$handle = \Patchwork\redefine(
+			'BeastFeedbacks_Activator::activate',
+			function () use ( &$called ) {
+				$called = true;
+			}
+		);
+
+		beastfeedbacks_activate();
+
+		\Patchwork\restore( $handle );
+
+		$this->assertTrue( $called, 'beastfeedbacks_activate() は BeastFeedbacks_Activator::activate() を呼び出すべき' );
+	}
+
 	/**
 	 * Verify init loads dependencies and registers admin, public, and block hooks when is_admin returns true.
 	 *
