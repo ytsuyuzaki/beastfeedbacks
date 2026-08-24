@@ -6,11 +6,23 @@
  * wp-env run tests-cli --env-cwd='wp-content/plugins/beastfeedbacks/' vendor/bin/phpunit
  */
 use Yoast\WPTestUtils\BrainMonkey\TestCase;
+use Brain\Monkey\Functions;
 
 class BeastFeedbacks_Block_Test extends TestCase {
 
 	protected function set_up(): void {
 		parent::set_up();
+
+		if ( ! defined( 'ABSPATH' ) ) {
+			define( 'ABSPATH', true );
+		}
+		if ( ! defined( 'BEASTFEEDBACKS_DOMAIN' ) ) {
+			define( 'BEASTFEEDBACKS_DOMAIN', 'beastfeedbacks' );
+		}
+		if ( ! defined( 'BEASTFEEDBACKS_DIR' ) ) {
+			define( 'BEASTFEEDBACKS_DIR', '/dummy/path/' );
+		}
+
 		// 念のため該当フックをリセット（他テストからの影響排除）
 		remove_all_filters( 'block_categories_all' );
 		remove_all_actions( 'init' );
@@ -99,5 +111,22 @@ class BeastFeedbacks_Block_Test extends TestCase {
 		$cats_out = $instance->block_categories_all( $cats_in, $context );
 
 		$this->assertSame( $cats_in, $cats_out, 'Context without post must not add category' );
+	}
+
+	/** @test */
+	public function survey_choice_init_registers_block_and_sets_script_translations(): void {
+		$expected_dir = dirname( dirname( __DIR__ ) ) . '/src/survey-choice';
+
+		if ( ! function_exists( 'beastfeedbacks_block_survey_choice_init' ) ) {
+			// Requiring init.php defines the function and executes beastfeedbacks_block_survey_choice_init().
+			require_once $expected_dir . '/init.php';
+		} else {
+			beastfeedbacks_block_survey_choice_init();
+		}
+
+		$this->assertTrue(
+			WP_Block_Type_Registry::get_instance()->is_registered( 'beastfeedbacks/survey-choice' ),
+			'Block beastfeedbacks/survey-choice should be registered in WP_Block_Type_Registry'
+		);
 	}
 }
