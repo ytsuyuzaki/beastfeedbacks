@@ -28,6 +28,15 @@ class BeastFeedbacks_Test extends TestCase {
 	}
 
 	/** @test */
+	public function get_instance_returns_singleton(): void {
+		$a = \BeastFeedbacks::get_instance();
+		$b = \BeastFeedbacks::get_instance();
+
+		$this->assertInstanceOf( \BeastFeedbacks::class, $a );
+		$this->assertSame( $a, $b, 'get_instance() must return the same instance' );
+	}
+
+	/** @test */
 	public function get_like_count_returns_zero_when_no_likes(): void {
 		$parent_id = $this->create_post(
 			array(
