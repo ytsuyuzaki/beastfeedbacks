@@ -455,4 +455,64 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 		$this->assertGreaterThanOrEqual( 2, count( $lines ) );
 		$this->assertStringContainsString( 'source,date,type,ip_address,user_agent', $lines[0] );
 	}
+
+	/**
+	 * Test untrash_beastfeedbacks_status_handler returns previous status when post type is beastfeedbacks and previous status is publish.
+	 *
+	 * @test
+	 */
+	public function untrash_beastfeedbacks_status_handler_returns_previous_status_when_beastfeedbacks_and_previous_status_is_publish(): void {
+		$post_id = wp_insert_post(
+			array(
+				'post_type'   => 'beastfeedbacks',
+				'post_status' => 'trash',
+				'post_title'  => 'Test BeastFeedback',
+			)
+		);
+
+		$result = \BeastFeedbacks_Admin::get_instance()->untrash_beastfeedbacks_status_handler( 'draft', $post_id, 'publish' );
+		$this->assertSame( 'publish', $result );
+
+		wp_delete_post( $post_id, true );
+	}
+
+	/**
+	 * Test untrash_beastfeedbacks_status_handler returns publish when post type is beastfeedbacks and previous status is not publish.
+	 *
+	 * @test
+	 */
+	public function untrash_beastfeedbacks_status_handler_returns_publish_when_beastfeedbacks_and_previous_status_is_not_publish(): void {
+		$post_id = wp_insert_post(
+			array(
+				'post_type'   => 'beastfeedbacks',
+				'post_status' => 'trash',
+				'post_title'  => 'Test BeastFeedback',
+			)
+		);
+
+		$result = \BeastFeedbacks_Admin::get_instance()->untrash_beastfeedbacks_status_handler( 'draft', $post_id, 'draft' );
+		$this->assertSame( 'publish', $result );
+
+		wp_delete_post( $post_id, true );
+	}
+
+	/**
+	 * Test untrash_beastfeedbacks_status_handler returns current status when post type is not beastfeedbacks.
+	 *
+	 * @test
+	 */
+	public function untrash_beastfeedbacks_status_handler_returns_current_status_when_not_beastfeedbacks(): void {
+		$post_id = wp_insert_post(
+			array(
+				'post_type'   => 'post',
+				'post_status' => 'trash',
+				'post_title'  => 'Test Standard Post',
+			)
+		);
+
+		$result = \BeastFeedbacks_Admin::get_instance()->untrash_beastfeedbacks_status_handler( 'draft', $post_id, 'draft' );
+		$this->assertSame( 'draft', $result );
+
+		wp_delete_post( $post_id, true );
+	}
 }
