@@ -30,7 +30,15 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 		}
 		$this->created_ids = array();
 
+		wp_dequeue_script( BEASTFEEDBACKS_DOMAIN );
+		wp_deregister_script( BEASTFEEDBACKS_DOMAIN );
+		wp_dequeue_style( BEASTFEEDBACKS_DOMAIN );
+		wp_deregister_style( BEASTFEEDBACKS_DOMAIN );
+		remove_all_actions( 'admin_enqueue_scripts' );
+		remove_all_actions( 'pre_get_posts' );
+		set_current_screen( 'front' );
 		unset( $GLOBALS['current_screen'], $GLOBALS['post'] );
+		$_GET = array();
 		parent::tear_down();
 	}
 
@@ -81,6 +89,49 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 	}
 
 	/** @test */
+	public function init_registers_admin_enqueue_scripts_action(): void {
+		$instance = \BeastFeedbacks_Admin::get_instance();
+		$instance->init();
+
+		$this->assertSame(
+			10,
+			has_action( 'admin_enqueue_scripts', array( $instance, 'admin_enqueue_scripts' ) )
+		);
+	}
+
+	/** @test */
+	public function admin_enqueue_scripts_does_not_enqueue_assets_when_not_target_screen(): void {
+		set_current_screen( 'edit-post' );
+
+		\BeastFeedbacks_Admin::get_instance()->admin_enqueue_scripts();
+
+		$this->assertFalse( wp_script_is( BEASTFEEDBACKS_DOMAIN, 'enqueued' ) );
+		$this->assertFalse( wp_style_is( BEASTFEEDBACKS_DOMAIN, 'enqueued' ) );
+	}
+
+	/** @test */
+	public function admin_enqueue_scripts_enqueues_js_and_css_on_target_screen(): void {
+		set_current_screen( 'edit-beastfeedbacks' );
+
+		\BeastFeedbacks_Admin::get_instance()->admin_enqueue_scripts();
+
+		$this->assertTrue( wp_script_is( BEASTFEEDBACKS_DOMAIN, 'enqueued' ) );
+		$this->assertTrue( wp_style_is( BEASTFEEDBACKS_DOMAIN, 'enqueued' ) );
+
+		global $wp_scripts, $wp_styles;
+
+		$script = $wp_scripts->registered[ BEASTFEEDBACKS_DOMAIN ];
+		$this->assertSame( BEASTFEEDBACKS_URL . 'public/js/beastfeedbacks-admin.js', $script->src );
+		$this->assertSame( BEASTFEEDBACKS_VERSION, $script->ver );
+		$this->assertSame( array(), $script->deps );
+
+		$style = $wp_styles->registered[ BEASTFEEDBACKS_DOMAIN ];
+		$this->assertSame( BEASTFEEDBACKS_URL . 'public/css/beastfeedbacks-admin.css', $style->src );
+		$this->assertSame( BEASTFEEDBACKS_VERSION, $style->ver );
+		$this->assertSame( array(), $style->deps );
+	}
+
+	/** @test */
 	public function get_instance_returns_singleton(): void {
 		$a = \BeastFeedbacks_Admin::get_instance();
 		$b = \BeastFeedbacks_Admin::get_instance();
@@ -106,31 +157,31 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 
 	/** @test */
 	public function admin_bulk_actions_unsets_edit_only_on_target_screen(): void {
-		$GLOBALS['current_screen'] = (object) array( 'id' => 'edit-post' );
-		$in                        = array(
+		set_current_screen( 'edit-post' );
+		$in  = array(
 			'edit'  => '編集',
 			'trash' => 'ゴミ箱',
 		);
-		$out                       = \BeastFeedbacks_Admin::get_instance()->admin_bulk_actions( $in );
+		$out = \BeastFeedbacks_Admin::get_instance()->admin_bulk_actions( $in );
 		$this->assertSame( $in, $out );
 
-		$GLOBALS['current_screen'] = (object) array( 'id' => 'edit-beastfeedbacks' );
-		$out2                      = \BeastFeedbacks_Admin::get_instance()->admin_bulk_actions( $in );
+		set_current_screen( 'edit-beastfeedbacks' );
+		$out2 = \BeastFeedbacks_Admin::get_instance()->admin_bulk_actions( $in );
 		$this->assertArrayNotHasKey( 'edit', $out2 );
 		$this->assertArrayHasKey( 'trash', $out2 );
 	}
 
 	/** @test */
 	public function admin_view_tabs_unsets_publish_on_target_screen(): void {
-		$GLOBALS['current_screen'] = (object) array( 'id' => 'edit-post' );
-		$views                     = array(
+		set_current_screen( 'edit-post' );
+		$views = array(
 			'all'     => 'All',
 			'publish' => 'Published',
 		);
 		$this->assertSame( $views, \BeastFeedbacks_Admin::get_instance()->admin_view_tabs( $views ) );
 
-		$GLOBALS['current_screen'] = (object) array( 'id' => 'edit-beastfeedbacks' );
-		$out                       = \BeastFeedbacks_Admin::get_instance()->admin_view_tabs( $views );
+		set_current_screen( 'edit-beastfeedbacks' );
+		$out   = \BeastFeedbacks_Admin::get_instance()->admin_view_tabs( $views );
 		$this->assertArrayNotHasKey( 'publish', $out );
 		$this->assertArrayHasKey( 'all', $out );
 	}
@@ -220,7 +271,7 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 
 	/** @test */
 	public function add_type_filter_has_no_output_on_other_screen(): void {
-		$GLOBALS['current_screen'] = (object) array( 'id' => 'edit-post' );
+		set_current_screen( 'edit-post' );
 		ob_start();
 		\BeastFeedbacks_Admin::get_instance()->add_type_filter();
 		$html = ob_get_clean();
@@ -229,7 +280,7 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 
 	/** @test */
 	public function add_source_filter_has_no_output_on_other_screen(): void {
-		$GLOBALS['current_screen'] = (object) array( 'id' => 'edit-post' );
+		set_current_screen( 'edit-post' );
 		ob_start();
 		\BeastFeedbacks_Admin::get_instance()->add_source_filter();
 		$html = ob_get_clean();
@@ -238,7 +289,7 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 
 	/** @test */
 	public function add_export_button_has_no_output_on_other_screen(): void {
-		$GLOBALS['current_screen'] = (object) array( 'id' => 'edit-post' );
+		set_current_screen( 'edit-post' );
 		ob_start();
 		\BeastFeedbacks_Admin::get_instance()->add_export_button();
 		$html = ob_get_clean();
