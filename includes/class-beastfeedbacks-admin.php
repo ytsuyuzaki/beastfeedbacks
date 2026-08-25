@@ -336,6 +336,7 @@ class BeastFeedbacks_Admin {
 
 		unset( $actions['inline hide-if-no-js'] );
 		unset( $actions['edit'] );
+		unset( $actions['view'] );
 
 		return $actions;
 	}
