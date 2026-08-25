@@ -413,7 +413,11 @@ class BeastFeedbacks_Admin {
 			)
 		);
 
-		$parent_ids = ! empty( $raw_parent_ids ) ? array_map( 'absint', $raw_parent_ids ) : array();
+		$parent_ids = ! empty( $raw_parent_ids ) ? array_values( array_filter( array_map( 'absint', $raw_parent_ids ) ) ) : array();
+
+		if ( ! empty( $parent_ids ) ) {
+			_prime_post_caches( $parent_ids );
+		}
 
 		?>
 		<select name="beastfeedbacks_parent_id">
@@ -557,6 +561,11 @@ class BeastFeedbacks_Admin {
 	public function get_csv_data( array $posts ) {
 		$post_datas      = array();
 		$permalink_cache = array();
+
+		$parent_ids = array_values( array_filter( array_map( 'intval', array_unique( wp_list_pluck( $posts, 'post_parent' ) ) ) ) );
+		if ( ! empty( $parent_ids ) ) {
+			_prime_post_caches( $parent_ids );
+		}
 		foreach ( $posts as $post ) {
 			$id = $post->ID;
 
