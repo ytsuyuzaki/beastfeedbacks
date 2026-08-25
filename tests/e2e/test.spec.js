@@ -1,27 +1,10 @@
 import { test, expect } from '@wordpress/e2e-test-utils-playwright';
-
-/**
- * アンケートフォームブロックを挿入・公開し、フロントエンドページへ遷移するヘルパー
- *
- * @param {Object} fixtures        - テストフィクスチャ
- * @param {Object} fixtures.editor - エディタユーティリティ
- * @param {Object} fixtures.page   - Playwright ページオブジェクト
- */
-async function insertPublishAndVisit( { editor, page } ) {
-	await editor.insertBlock( { name: 'beastfeedbacks/survey-form' } );
-	await editor.publishPost();
-
-	// 公開パネルが開いた状態で "View Post" リンクの href を取得して直接遷移する
-	// （パネルヘッダーがリンクをブロックするためクリックではなく goto を使用）
-	const viewPostLink = page
-		.getByRole( 'link', { name: /view post/i } )
-		.first();
-	await expect( viewPostLink ).toBeVisible();
-	const href = await viewPostLink.getAttribute( 'href' );
-	await page.goto( href );
-
-	await page.waitForLoadState( 'domcontentloaded' );
-}
+import {
+	insertBlockAndVerify,
+	publishAndVisit,
+	insertPublishAndVisit,
+	getFeedbackForm,
+} from './helpers';
 
 test.describe( 'Survey Form Block', () => {
 	test.beforeEach( async ( { admin } ) => {
@@ -34,24 +17,16 @@ test.describe( 'Survey Form Block', () => {
 		page,
 	} ) => {
 		// エディタ上にフォームブロックが表示されていることを確認
-		// ブロックエディタのコンテンツは iframe 内にあるため editor.canvas を使用
-		await editor.insertBlock( { name: 'beastfeedbacks/survey-form' } );
-		await expect(
-			editor.canvas.locator( '[data-type="beastfeedbacks/survey-form"]' )
-		).toBeVisible();
+		await insertBlockAndVerify( {
+			editor,
+			blockName: 'beastfeedbacks/survey-form',
+		} );
 
 		// 投稿を公開してフロントエンドページへ移動する
-		await editor.publishPost();
-		const viewPostLink = page
-			.getByRole( 'link', { name: /view post/i } )
-			.first();
-		await expect( viewPostLink ).toBeVisible();
-		const href = await viewPostLink.getAttribute( 'href' );
-		await page.goto( href );
-		await page.waitForLoadState( 'domcontentloaded' );
+		await publishAndVisit( { editor, page } );
 
 		// フロントエンドにアンケートフォームが表示されていることを確認する
-		const form = page.locator( 'form[name="beastfeedbacks_survey_form"]' );
+		const form = getFeedbackForm( page, 'beastfeedbacks_survey_form' );
 		await expect( form ).toBeVisible();
 		await expect(
 			form.locator( 'input[type="radio"]' ).first()
@@ -65,9 +40,13 @@ test.describe( 'Survey Form Block', () => {
 		page,
 	} ) => {
 		// ブロックを挿入・公開してフロントエンドページへ移動する
-		await insertPublishAndVisit( { editor, page } );
+		await insertPublishAndVisit( {
+			editor,
+			page,
+			blockName: 'beastfeedbacks/survey-form',
+		} );
 
-		const form = page.locator( 'form[name="beastfeedbacks_survey_form"]' );
+		const form = getFeedbackForm( page, 'beastfeedbacks_survey_form' );
 		await expect( form ).toBeVisible();
 
 		// ラジオボタンを選択する（最初の選択肢）

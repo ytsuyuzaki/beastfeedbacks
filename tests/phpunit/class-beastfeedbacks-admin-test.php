@@ -1,35 +1,13 @@
 <?php
+/**
+ * Tests for BeastFeedbacks_Admin class.
+ *
+ * @package BeastFeedbacks
+ */
 
-use Yoast\WPTestUtils\BrainMonkey\TestCase;
-
-class BeastFeedbacks_Admin_Test extends TestCase {
-
-	protected function set_up(): void {
-		parent::set_up();
-
-		// プラグイン定数が未定義ならダミー定義
-		if ( ! defined( 'BEASTFEEDBACKS_DOMAIN' ) ) {
-			define( 'BEASTFEEDBACKS_DOMAIN', 'beastfeedbacks' );
-		}
-		if ( ! defined( 'BEASTFEEDBACKS_URL' ) ) {
-			define( 'BEASTFEEDBACKS_URL', 'https://example.com/wp-content/plugins/beastfeedbacks/' );
-		}
-		if ( ! defined( 'BEASTFEEDBACKS_VERSION' ) ) {
-			define( 'BEASTFEEDBACKS_VERSION', '0.1.0-test' );
-		}
-	}
-
-	/** @var int[] 作成した投稿のIDを記録して後始末 */
-	private $created_ids = array();
+class BeastFeedbacks_Admin_Test extends BeastFeedbacks_TestCase {
 
 	protected function tear_down(): void {
-		foreach ( array_reverse( $this->created_ids ) as $pid ) {
-			if ( get_post( $pid ) ) {
-				wp_delete_post( $pid, true );
-			}
-		}
-		$this->created_ids = array();
-
 		wp_dequeue_script( BEASTFEEDBACKS_DOMAIN );
 		wp_deregister_script( BEASTFEEDBACKS_DOMAIN );
 		wp_dequeue_style( BEASTFEEDBACKS_DOMAIN );
@@ -41,18 +19,6 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 		$_GET = array();
 		wp_set_current_user( 0 );
 		parent::tear_down();
-	}
-
-	/**
-	 * 投稿を作成し、ID を回収・記録するユーティリティ
-	 *
-	 * @param array $args wp_insert_post() の引数.
-	 * @return int 作成した投稿ID
-	 */
-	private function create_post( array $args ): int {
-		$pid                 = wp_insert_post( $args );
-		$this->created_ids[] = $pid;
-		return $pid;
 	}
 
 	/** @test */
@@ -328,18 +294,16 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 
 	/** @test */
 	public function add_source_filter_renders_options_on_target_screen(): void {
-		$parent_id = wp_insert_post(
+		$parent_id = $this->create_post(
 			array(
 				'post_title'  => 'Test Parent Page',
-				'post_status' => 'publish',
 				'post_type'   => 'page',
 			)
 		);
 
-		wp_insert_post(
+		$this->create_post(
 			array(
 				'post_title'  => 'Feedback 1',
-				'post_status' => 'publish',
 				'post_type'   => 'beastfeedbacks',
 				'post_parent' => $parent_id,
 			)
@@ -475,10 +439,9 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 		wp_set_current_user( $admin_id );
 
 		// Parent post for permalink source
-		$parent_id = wp_insert_post(
+		$parent_id = $this->create_post(
 			array(
 				'post_type'   => 'page',
-				'post_status' => 'publish',
 				'post_title'  => 'Export Parent Page',
 			)
 		);
@@ -494,10 +457,9 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 				'formula'      => '=SUM(1,2)',
 			),
 		);
-		$post_id1 = wp_insert_post(
+		$post_id1 = $this->create_post(
 			array(
 				'post_type'    => 'beastfeedbacks',
-				'post_status'  => 'publish',
 				'post_parent'  => $parent_id,
 				'post_content' => wp_json_encode( $content1 ),
 				'post_date'    => '2025-01-01 10:00:00',
@@ -514,10 +476,9 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 				'selected'     => 'Option A',
 			),
 		);
-		$post_id2 = wp_insert_post(
+		$post_id2 = $this->create_post(
 			array(
 				'post_type'    => 'beastfeedbacks',
-				'post_status'  => 'publish',
 				'post_parent'  => $parent_id,
 				'post_content' => wp_json_encode( $content2 ),
 				'post_date'    => '2025-01-02 10:00:00',
@@ -644,10 +605,9 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 		);
 		wp_set_current_user( $admin_id );
 
-		$post_id = wp_insert_post(
+		$post_id = $this->create_post(
 			array(
 				'post_type'    => 'beastfeedbacks',
-				'post_status'  => 'publish',
 				'post_content' => 'invalid-non-json-content',
 				'post_date'    => '2025-01-03 10:00:00',
 			)
@@ -677,8 +637,6 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 		}
 		$csv_output = ob_get_clean();
 
-		wp_delete_post( $post_id, true );
-
 		$lines = explode( "\n", trim( str_replace( "\r\n", "\n", $csv_output ) ) );
 		$this->assertGreaterThanOrEqual( 2, count( $lines ) );
 		$this->assertStringContainsString( 'source,date,type,ip_address,user_agent', $lines[0] );
@@ -690,7 +648,7 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 	 * @test
 	 */
 	public function untrash_beastfeedbacks_status_handler_returns_previous_status_when_beastfeedbacks_and_previous_status_is_publish(): void {
-		$post_id = wp_insert_post(
+		$post_id = $this->create_post(
 			array(
 				'post_type'   => 'beastfeedbacks',
 				'post_status' => 'trash',
@@ -700,8 +658,6 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 
 		$result = \BeastFeedbacks_Admin::get_instance()->untrash_beastfeedbacks_status_handler( 'draft', $post_id, 'publish' );
 		$this->assertSame( 'publish', $result );
-
-		wp_delete_post( $post_id, true );
 	}
 
 	/**
@@ -710,7 +666,7 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 	 * @test
 	 */
 	public function untrash_beastfeedbacks_status_handler_returns_publish_when_beastfeedbacks_and_previous_status_is_not_publish(): void {
-		$post_id = wp_insert_post(
+		$post_id = $this->create_post(
 			array(
 				'post_type'   => 'beastfeedbacks',
 				'post_status' => 'trash',
@@ -720,8 +676,6 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 
 		$result = \BeastFeedbacks_Admin::get_instance()->untrash_beastfeedbacks_status_handler( 'draft', $post_id, 'draft' );
 		$this->assertSame( 'publish', $result );
-
-		wp_delete_post( $post_id, true );
 	}
 
 	/**
@@ -730,9 +684,8 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 	 * @test
 	 */
 	public function untrash_beastfeedbacks_status_handler_returns_current_status_when_not_beastfeedbacks(): void {
-		$post_id = wp_insert_post(
+		$post_id = $this->create_post(
 			array(
-				'post_type'   => 'post',
 				'post_status' => 'trash',
 				'post_title'  => 'Test Standard Post',
 			)
@@ -740,8 +693,6 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 
 		$result = \BeastFeedbacks_Admin::get_instance()->untrash_beastfeedbacks_status_handler( 'draft', $post_id, 'draft' );
 		$this->assertSame( 'draft', $result );
-
-		wp_delete_post( $post_id, true );
 	}
 
 	/** @test */

@@ -2,26 +2,13 @@
 /**
  * Tests for BeastFeedbacks_Block
  *
- * 実行例:
- * wp-env run tests-cli --env-cwd='wp-content/plugins/beastfeedbacks/' vendor/bin/phpunit
+ * @package BeastFeedbacks
  */
-use Yoast\WPTestUtils\BrainMonkey\TestCase;
-use Brain\Monkey\Functions;
 
-class BeastFeedbacks_Block_Test extends TestCase {
+class BeastFeedbacks_Block_Test extends BeastFeedbacks_TestCase {
 
 	protected function set_up(): void {
 		parent::set_up();
-
-		if ( ! defined( 'ABSPATH' ) ) {
-			define( 'ABSPATH', true );
-		}
-		if ( ! defined( 'BEASTFEEDBACKS_DOMAIN' ) ) {
-			define( 'BEASTFEEDBACKS_DOMAIN', 'beastfeedbacks' );
-		}
-		if ( ! defined( 'BEASTFEEDBACKS_DIR' ) ) {
-			define( 'BEASTFEEDBACKS_DIR', dirname( __DIR__, 2 ) . '/' );
-		}
 
 		// 念のため該当フックをリセット（他テストからの影響排除）
 		remove_all_filters( 'block_categories_all' );
@@ -138,32 +125,22 @@ class BeastFeedbacks_Block_Test extends TestCase {
 	public function beastfeedbacks_block_like_render_callback_renders_like_block_html(): void {
 		require_once BEASTFEEDBACKS_DIR . 'src/like/init.php';
 
-		$post_id = wp_insert_post(
+		$post_id = $this->create_post(
 			array(
-				'post_type'   => 'post',
-				'post_status' => 'publish',
-				'post_title'  => 'Test Post for Like Block',
+				'post_title' => 'Test Post for Like Block',
 			)
 		);
-
-		$GLOBALS['post'] = get_post( $post_id );
-		setup_postdata( $GLOBALS['post'] );
 
 		$attributes = array();
 		$content    = '<button type="submit" class="like-button">Like</button>';
 
-		if ( class_exists( 'WP_Block_Supports' ) ) {
-			WP_Block_Supports::$block_to_render = array(
-				'blockName' => 'beastfeedbacks/like',
-				'attrs'     => $attributes,
-			);
-		}
-
-		$html = beastfeedbacks_block_like_render_callback( $attributes, $content );
-
-		if ( class_exists( 'WP_Block_Supports' ) ) {
-			WP_Block_Supports::$block_to_render = null;
-		}
+		$html = $this->render_block_with_context(
+			'beastfeedbacks/like',
+			$attributes,
+			'beastfeedbacks_block_like_render_callback',
+			$content,
+			$post_id
+		);
 
 		$this->assertStringContainsString( 'name="beastfeedbacks_like_form"', $html );
 		$this->assertStringContainsString( 'value="register_beastfeedbacks_form"', $html );
@@ -171,65 +148,30 @@ class BeastFeedbacks_Block_Test extends TestCase {
 		$this->assertStringContainsString( 'value="' . $post_id . '"', $html );
 		$this->assertStringContainsString( '<p class="like-count">0</p>', $html );
 		$this->assertStringContainsString( $content, $html );
-
-		wp_reset_postdata();
-		wp_delete_post( $post_id, true );
 	}
 
 	/** @test */
 	public function beastfeedbacks_block_like_render_callback_displays_correct_like_count(): void {
 		require_once BEASTFEEDBACKS_DIR . 'src/like/init.php';
 
-		$post_id = wp_insert_post(
+		$post_id = $this->create_post(
 			array(
-				'post_type'   => 'post',
-				'post_status' => 'publish',
-				'post_title'  => 'Test Post with Likes',
+				'post_title' => 'Test Post with Likes',
 			)
 		);
 
-		$like_post_1 = wp_insert_post(
-			array(
-				'post_type'   => 'beastfeedbacks',
-				'post_status' => 'publish',
-				'post_parent' => $post_id,
-				'post_title'  => 'Like 1',
-			)
+		$this->create_like_post( $post_id );
+		$this->create_like_post( $post_id );
+
+		$html = $this->render_block_with_context(
+			'beastfeedbacks/like',
+			array(),
+			'beastfeedbacks_block_like_render_callback',
+			'',
+			$post_id
 		);
-		add_post_meta( $like_post_1, 'beastfeedbacks_type', 'like' );
-
-		$like_post_2 = wp_insert_post(
-			array(
-				'post_type'   => 'beastfeedbacks',
-				'post_status' => 'publish',
-				'post_parent' => $post_id,
-				'post_title'  => 'Like 2',
-			)
-		);
-		add_post_meta( $like_post_2, 'beastfeedbacks_type', 'like' );
-
-		$GLOBALS['post'] = get_post( $post_id );
-		setup_postdata( $GLOBALS['post'] );
-
-		if ( class_exists( 'WP_Block_Supports' ) ) {
-			WP_Block_Supports::$block_to_render = array(
-				'blockName' => 'beastfeedbacks/like',
-				'attrs'     => array(),
-			);
-		}
-
-		$html = beastfeedbacks_block_like_render_callback( array(), '' );
-
-		if ( class_exists( 'WP_Block_Supports' ) ) {
-			WP_Block_Supports::$block_to_render = null;
-		}
 
 		$this->assertStringContainsString( '<p class="like-count">2</p>', $html );
-
-		wp_reset_postdata();
-		wp_delete_post( $like_post_1, true );
-		wp_delete_post( $like_post_2, true );
-		wp_delete_post( $post_id, true );
 	}
 
 	/**
@@ -242,25 +184,21 @@ class BeastFeedbacks_Block_Test extends TestCase {
 			require_once dirname( __DIR__, 2 ) . '/src/vote/init.php';
 		}
 
-		$post_id         = wp_insert_post(
+		$post_id = $this->create_post(
 			array(
-				'post_type'   => 'post',
-				'post_status' => 'publish',
-				'post_title'  => 'Vote Test Post',
+				'post_title' => 'Vote Test Post',
 			)
 		);
-		$GLOBALS['post'] = get_post( $post_id );
 
 		$content = '<div class="vote-options"><input type="radio" name="option" value="1" /> Option 1</div>';
 
-		WP_Block_Supports::$block_to_render = array(
-			'blockName' => 'beastfeedbacks/vote',
-			'attrs'     => array(),
+		$html = $this->render_block_with_context(
+			'beastfeedbacks/vote',
+			array(),
+			'beastfeedbacks_block_vote_render_callback',
+			$content,
+			$post_id
 		);
-
-		$html = beastfeedbacks_block_vote_render_callback( array(), $content );
-
-		WP_Block_Supports::$block_to_render = null;
 
 		$this->assertStringContainsString( 'name="beastfeedbacks_vote_form"', $html );
 		$this->assertStringContainsString( 'admin-ajax.php', $html );
@@ -269,9 +207,6 @@ class BeastFeedbacks_Block_Test extends TestCase {
 		$this->assertStringContainsString( '<input type="hidden" name="beastfeedbacks_type" value="vote" />', $html );
 		$this->assertStringContainsString( '<input type="hidden" name="id" value="' . $post_id . '" />', $html );
 		$this->assertStringContainsString( $content, $html );
-
-		wp_delete_post( $post_id, true );
-		unset( $GLOBALS['post'] );
 	}
 
 	/**
@@ -284,16 +219,12 @@ class BeastFeedbacks_Block_Test extends TestCase {
 			require_once dirname( __DIR__, 2 ) . '/src/vote/init.php';
 		}
 
-		unset( $GLOBALS['post'] );
-
-		WP_Block_Supports::$block_to_render = array(
-			'blockName' => 'beastfeedbacks/vote',
-			'attrs'     => array(),
+		$html = $this->render_block_with_context(
+			'beastfeedbacks/vote',
+			array(),
+			'beastfeedbacks_block_vote_render_callback',
+			''
 		);
-
-		$html = beastfeedbacks_block_vote_render_callback( array(), '' );
-
-		WP_Block_Supports::$block_to_render = null;
 
 		$this->assertStringContainsString( 'name="beastfeedbacks_vote_form"', $html );
 		$this->assertStringContainsString( '<input type="hidden" name="beastfeedbacks_type" value="vote" />', $html );

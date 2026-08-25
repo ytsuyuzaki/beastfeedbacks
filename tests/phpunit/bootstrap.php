@@ -18,6 +18,8 @@ require_once dirname( __DIR__ ) . './../vendor/yoast/wp-test-utils/src/WPIntegra
  */
 WPIntegration\bootstrap_it();
 
+require_once __DIR__ . '/class-beastfeedbacks-testcase.php';
+
 if ( ! defined( 'WP_PLUGIN_DIR' ) || file_exists( WP_PLUGIN_DIR . '/beastfeedbacks/beastfeedbacks.php' ) === false ) {
 	echo PHP_EOL, 'ERROR: Please check whether the WP_PLUGIN_DIR environment variable is set and set to the correct value. The integration test suite won\'t be able to run without it.', PHP_EOL;
 	exit( 1 );

@@ -1,31 +1,11 @@
 <?php
+/**
+ * Tests for BeastFeedbacks main class.
+ *
+ * @package BeastFeedbacks
+ */
 
-use Yoast\WPTestUtils\BrainMonkey\TestCase;
-
-class BeastFeedbacks_Test extends TestCase {
-
-	/** @var int[] 作成した投稿のIDを記録して後始末 */
-	private $created_ids = array();
-
-	public function set_up(): void {
-		parent::set_up();
-
-		if ( ! defined( 'BEASTFEEDBACKS_DIR' ) ) {
-			define( 'BEASTFEEDBACKS_DIR', dirname( __DIR__, 2 ) . '/' );
-		}
-	}
-
-	public function tear_down(): void {
-		// 作成した投稿を削除してクリーンアップ
-		foreach ( array_reverse( $this->created_ids ) as $pid ) {
-			if ( get_post( $pid ) ) {
-				wp_delete_post( $pid, true );
-			}
-		}
-		$this->created_ids = array();
-
-		parent::tear_down();
-	}
+class BeastFeedbacks_Test extends BeastFeedbacks_TestCase {
 
 	/** @test */
 	public function get_instance_returns_singleton(): void {
@@ -40,9 +20,7 @@ class BeastFeedbacks_Test extends TestCase {
 	public function get_like_count_returns_zero_when_no_likes(): void {
 		$parent_id = $this->create_post(
 			array(
-				'post_type'   => 'post',
-				'post_status' => 'publish',
-				'post_title'  => 'parent',
+				'post_title' => 'parent',
 			)
 		);
 
@@ -60,31 +38,13 @@ class BeastFeedbacks_Test extends TestCase {
 		// ノイズ2: 親が違う
 		$other_parent = $this->create_post(
 			array(
-				'post_type'   => 'post',
-				'post_status' => 'publish',
-				'post_title'  => 'other-parent',
+				'post_title' => 'other-parent',
 			)
 		);
-		$other_like   = $this->create_post(
-			array(
-				'post_type'   => 'beastfeedbacks',
-				'post_status' => 'publish',
-				'post_parent' => $other_parent,
-				'post_title'  => 'noise-other-parent-like',
-			)
-		);
-		add_post_meta( $other_like, 'beastfeedbacks_type', 'like' );
+		$this->create_like_post( $other_parent );
 
 		// ノイズ3: meta が like ではない
-		$vote_noise = $this->create_post(
-			array(
-				'post_type'   => 'beastfeedbacks',
-				'post_status' => 'publish',
-				'post_parent' => $parent_id,
-				'post_title'  => 'noise-vote',
-			)
-		);
-		add_post_meta( $vote_noise, 'beastfeedbacks_type', 'vote' );
+		$this->create_vote_post( $parent_id );
 
 		$count = \BeastFeedbacks::get_instance()->get_like_count( $parent_id );
 		$this->assertSame( 0, $count, 'like が無ければ 0 を返すべき' );
@@ -94,35 +54,17 @@ class BeastFeedbacks_Test extends TestCase {
 	public function get_like_count_returns_positive_number_when_likes_exist(): void {
 		$parent_id = $this->create_post(
 			array(
-				'post_type'   => 'post',
-				'post_status' => 'publish',
-				'post_title'  => 'parent',
+				'post_title' => 'parent',
 			)
 		);
 
 		// 条件に合う like を3件
 		for ( $i = 0; $i < 3; $i++ ) {
-			$like_id = $this->create_post(
-				array(
-					'post_type'   => 'beastfeedbacks',
-					'post_status' => 'publish',
-					'post_parent' => $parent_id,
-					'post_title'  => 'like-' . $i,
-				)
-			);
-			add_post_meta( $like_id, 'beastfeedbacks_type', 'like' );
+			$this->create_like_post( $parent_id );
 		}
 
 		// ノイズ: type が vote
-		$vote_noise = $this->create_post(
-			array(
-				'post_type'   => 'beastfeedbacks',
-				'post_status' => 'publish',
-				'post_parent' => $parent_id,
-				'post_title'  => 'vote-noise',
-			)
-		);
-		add_post_meta( $vote_noise, 'beastfeedbacks_type', 'vote' );
+		$this->create_vote_post( $parent_id );
 
 		$count = \BeastFeedbacks::get_instance()->get_like_count( $parent_id );
 		$this->assertSame( 3, $count, 'like が3件なら 3 を返すべき' );
@@ -221,17 +163,5 @@ class BeastFeedbacks_Test extends TestCase {
 		$this->assertNotFalse(
 			has_action( 'init', array( \BeastFeedbacks_Block::get_instance(), 'init_blocks' ) )
 		);
-	}
-
-	/**
-	 * 投稿を作成し、ID を回収・記録するユーティリティ
-	 *
-	 * @param array $args wp_insert_post() の引数.
-	 * @return int 作成した投稿ID
-	 */
-	private function create_post( array $args ): int {
-		$pid                 = wp_insert_post( $args );
-		$this->created_ids[] = $pid;
-		return $pid;
 	}
 }

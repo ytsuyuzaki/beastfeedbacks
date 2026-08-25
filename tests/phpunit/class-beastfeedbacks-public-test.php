@@ -1,14 +1,13 @@
 <?php
+/**
+ * Tests for BeastFeedbacks_Public class.
+ *
+ * @package BeastFeedbacks
+ */
 
-use Yoast\WPTestUtils\BrainMonkey\TestCase;
+class BeastFeedbacks_Public_Test extends BeastFeedbacks_TestCase {
 
-class BeastFeedbacks_Public_Test extends TestCase {
-
-
-	/** @var int[] 作成した投稿のIDを記録して後始末 */
-	private $created_ids = array();
-
-	public function set_up(): void {
+	protected function set_up(): void {
 		parent::set_up();
 
 		if ( ! defined( 'DOING_AJAX' ) ) {
@@ -16,14 +15,7 @@ class BeastFeedbacks_Public_Test extends TestCase {
 		}
 	}
 
-	public function tear_down(): void {
-		foreach ( array_reverse( $this->created_ids ) as $pid ) {
-			if ( get_post( $pid ) ) {
-				wp_delete_post( $pid, true );
-			}
-		}
-		$this->created_ids = array();
-
+	protected function tear_down(): void {
 		// グローバルの後片付け
 		unset( $_SERVER['REMOTE_ADDR'], $_SERVER['HTTP_USER_AGENT'] );
 		$_POST    = array();
@@ -36,9 +28,7 @@ class BeastFeedbacks_Public_Test extends TestCase {
 	public function register_beastfeedbacks_form_stores_survey_response_and_ignores_control_fields(): void {
 		$parent_id = $this->create_post(
 			array(
-				'post_type'   => 'post',
-				'post_status' => 'publish',
-				'post_title'  => 'survey parent',
+				'post_title' => 'survey parent',
 			)
 		);
 
@@ -88,21 +78,12 @@ class BeastFeedbacks_Public_Test extends TestCase {
 	public function register_beastfeedbacks_form_returns_updated_count_for_like_response(): void {
 		$parent_id = $this->create_post(
 			array(
-				'post_type'   => 'post',
-				'post_status' => 'publish',
-				'post_title'  => 'like parent',
+				'post_title' => 'like parent',
 			)
 		);
 
-		$existing_like = $this->create_post(
-			array(
-				'post_type'   => 'beastfeedbacks',
-				'post_status' => 'publish',
-				'post_parent' => $parent_id,
-				'post_title'  => 'existing like',
-			)
-		);
-		add_post_meta( $existing_like, 'beastfeedbacks_type', 'like' );
+		$this->create_like_post( $parent_id );
+
 		$_SERVER['REMOTE_ADDR'] = '192.0.2.20';
 		$_POST                  = $this->create_ajax_request( array(), $parent_id, 'like' );
 		$_REQUEST               = $_POST;
@@ -224,65 +205,5 @@ class BeastFeedbacks_Public_Test extends TestCase {
 		$like_res = $instance->build_response_data( 123, 'like' );
 		$this->assertSame( 1, $like_res['success'] );
 		$this->assertStringContainsString( 'vote', $like_res['message'] );
-	}
-
-	/**
-	 * 投稿を作成し、ID を回収・記録するユーティリティ
-	 *
-	 * @param array $args wp_insert_post() の引数.
-	 * @return int 作成した投稿ID
-	 */
-	private function create_post( array $args ): int {
-		$pid                 = wp_insert_post( $args );
-		$this->created_ids[] = $pid;
-		return $pid;
-	}
-
-	/**
-	 * AJAX handler に渡すリクエスト値を作る。
-	 *
-	 * @param array  $params 追加のフォーム入力値.
-	 * @param int    $post_id 親投稿 ID.
-	 * @param string $type フィードバック種別.
-	 * @return array
-	 */
-	private function create_ajax_request( array $params, int $post_id, string $type ): array {
-		return array_merge(
-			array(
-				'_ajax_nonce'        => wp_create_nonce( 'register_beastfeedbacks_form' ),
-				'action'             => 'register_beastfeedbacks_form',
-				'id'                 => (string) $post_id,
-				'beastfeedbacks_type' => $type,
-				'_wp_http_referer'   => '/ignored',
-			),
-			$params
-		);
-	}
-
-	/**
-	 * AJAX handler を呼び出し、wp_die() の代わりにレスポンスを返す。
-	 *
-	 * @return array
-	 */
-	private function call_ajax_handler(): array {
-		$die_handler = static function () {
-			return static function () {
-				throw new RuntimeException( 'wp_die' );
-			};
-		};
-
-		add_filter( 'wp_die_ajax_handler', $die_handler );
-		add_filter( 'wp_die_handler', $die_handler );
-		ob_start();
-		try {
-			\BeastFeedbacks_Public::get_instance()->register_beastfeedbacks_form();
-		} catch ( RuntimeException $e ) {
-			$this->assertSame( 'wp_die', $e->getMessage() );
-		} finally {
-			remove_filter( 'wp_die_ajax_handler', $die_handler );
-			remove_filter( 'wp_die_handler', $die_handler );
-		}
-
-		return json_decode( ob_get_clean(), true );
 	}
 }
