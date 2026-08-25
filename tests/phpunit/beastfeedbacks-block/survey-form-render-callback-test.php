@@ -1,18 +1,12 @@
 <?php
 /**
- * Tests for beastfeedbacks_block_survey_form_render_callback function.
+ * Tests for beastfeedbacks_block_survey_form_render_callback().
  *
  * @package BeastFeedbacks
  */
 
-/**
- * Class BeastFeedbacks_Survey_Form_Test
- */
-class BeastFeedbacks_Survey_Form_Test extends BeastFeedbacks_TestCase {
+class BeastFeedbacks_Block_Survey_Form_Render_Callback_Test extends BeastFeedbacks_TestCase {
 
-	/**
-	 * Set up test environment.
-	 */
 	protected function set_up(): void {
 		parent::set_up();
 
