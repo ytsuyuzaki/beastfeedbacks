@@ -309,4 +309,42 @@ class CSV_Edge_Cases_Test extends BeastFeedbacks_TestCase {
 		$this->assertStringContainsString( 'Just normal answer', $csv_output );
 		$this->assertStringContainsString( '100', $csv_output );
 	}
+
+	/**
+	 * Test 6: Verify CSV header formula injection is escaped in output_csv.
+	 *
+	 * @test
+	 */
+	public function output_csv_escapes_formula_triggers_in_column_headers(): void {
+		$admin = \BeastFeedbacks_Admin::get_instance();
+
+		$post_id    = $this->create_post(
+			array(
+				'post_type'  => 'beastfeedbacks',
+				'post_title' => 'CSV Header Injection Test',
+			)
+		);
+		$posts      = array( get_post( $post_id ) );
+		$post_datas = array(
+			'=FORMULA_HEADER()' => array( $post_id => 'some_data' ),
+			'+PLUS_HEADER'      => array( $post_id => 'data2' ),
+			'NORMAL_HEADER'     => array( $post_id => 'data3' ),
+		);
+
+		ob_start();
+		$admin->output_csv( 'headers.csv', $posts, $post_datas );
+		$csv_output = ob_get_clean();
+
+		$stream = fopen( 'php://memory', 'r+' );
+		fwrite( $stream, $csv_output );
+		rewind( $stream );
+
+		$header = fgetcsv( $stream );
+		fclose( $stream );
+
+		$this->assertIsArray( $header );
+		$this->assertSame( "'=FORMULA_HEADER()", $header[0] );
+		$this->assertSame( "'+PLUS_HEADER", $header[1] );
+		$this->assertSame( 'NORMAL_HEADER', $header[2] );
+	}
 }

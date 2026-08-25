@@ -65,7 +65,8 @@ class BeastFeedbacks_Public {
 		$post    = get_post( $id );
 		$post_id = $post ? (int) $post->ID : 0;
 
-		if ( ! $post_id || $post_id <= 0 ) {
+		// Security: Require target post to exist, be published, and not be a feedback item itself.
+		if ( ! $post_id || $post_id <= 0 || 'publish' !== get_post_status( $post_id ) || 'beastfeedbacks' === get_post_type( $post_id ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid post ID', 'beastfeedbacks' ) ) );
 		}
 
@@ -108,12 +109,21 @@ class BeastFeedbacks_Public {
 				continue;
 			}
 			if ( isset( $post_data[ $post_key ] ) ) {
-				$post_value = wp_unslash( $post_data[ $post_key ] );
-				if ( is_array( $post_value ) ) {
-					$post_params[ $post_key ] = array_map( 'sanitize_text_field', $post_value );
+				$sanitized_key = sanitize_text_field( (string) $post_key );
+				if ( '' === $sanitized_key ) {
 					continue;
 				}
-				$post_params[ $post_key ] = sanitize_text_field( $post_value );
+				$post_value = wp_unslash( $post_data[ $post_key ] );
+				if ( is_array( $post_value ) ) {
+					$post_params[ $sanitized_key ] = array_map(
+						function ( $item ) {
+							return is_array( $item ) ? '' : sanitize_text_field( $item );
+						},
+						$post_value
+					);
+					continue;
+				}
+				$post_params[ $sanitized_key ] = sanitize_text_field( $post_value );
 			}
 		}
 

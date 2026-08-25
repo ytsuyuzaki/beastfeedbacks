@@ -29,4 +29,20 @@ class BeastFeedbacks_Public_Extract_Post_Params_Test extends BeastFeedbacks_Test
 		$this->assertSame( 'Great service!', $result['comment'] );
 		$this->assertSame( array( 'fast', 'helpful' ), $result['tags'] );
 	}
+
+	/** @test */
+	public function extract_post_params_sanitizes_keys_and_handles_nested_arrays(): void {
+		$raw_data = array(
+			'<script>alert("key")</script>' => 'value1',
+			'Field <b>Name</b>'             => 'value2',
+			'nested_array'                  => array( 'level1' => array( 'level2' ) ),
+		);
+
+		$result = \BeastFeedbacks_Public::get_instance()->extract_post_params( $raw_data );
+
+		$this->assertArrayNotHasKey( '<script>alert("key")</script>', $result );
+		$this->assertArrayHasKey( 'Field Name', $result );
+		$this->assertSame( 'value2', $result['Field Name'] );
+		$this->assertSame( array( 'level1' => '' ), $result['nested_array'] );
+	}
 }
