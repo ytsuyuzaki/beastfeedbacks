@@ -1,7 +1,10 @@
 {
 	"core": "WordPress/WordPress#7.1",
 	"phpVersion": "8.5",
-	"plugins": [ "." ],
+	"plugins": [ "./" ],
+	"mappings": {
+		"wp-content/plugins/beastfeedbacks": "."
+	},
 	"config": {
 		"WP_DEBUG": true,
 		"SCRIPT_DEBUG": true
