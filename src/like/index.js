@@ -26,7 +26,7 @@ export function Edit() {
 					<p className="like-count">0</p>
 				</div>
 				<InnerBlocks
-					allowedBlocks={ TEMPLATE }
+					allowedBlocks={ [ 'core/button' ] }
 					template={ TEMPLATE }
 					templateLock="all"
 				/>
