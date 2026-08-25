@@ -173,6 +173,59 @@ class BeastFeedbacks_Public_Test extends TestCase {
 		);
 	}
 
+	/** @test */
+	public function extract_post_params_filters_and_sanitizes_input(): void {
+		$raw_data = array(
+			'id'                  => '123',
+			'beastfeedbacks_type' => 'survey',
+			'action'              => 'register_beastfeedbacks_form',
+			'_wp_http_referer'    => '/test',
+			'_wpnonce'            => 'nonce123',
+			'comment'             => ' Great service! <script>alert(1)</script> ',
+			'tags'                => array( 'fast', 'helpful<script>' ),
+		);
+
+		$result = \BeastFeedbacks_Public::get_instance()->extract_post_params( $raw_data );
+
+		$this->assertArrayNotHasKey( 'id', $result );
+		$this->assertArrayNotHasKey( 'beastfeedbacks_type', $result );
+		$this->assertArrayNotHasKey( 'action', $result );
+		$this->assertArrayNotHasKey( '_wp_http_referer', $result );
+		$this->assertArrayNotHasKey( '_wpnonce', $result );
+		$this->assertSame( 'Great service!', $result['comment'] );
+		$this->assertSame( array( 'fast', 'helpful' ), $result['tags'] );
+	}
+
+	/** @test */
+	public function format_feedback_content_encodes_json_correctly(): void {
+		$content = \BeastFeedbacks_Public::get_instance()->format_feedback_content(
+			'TestUA',
+			'127.0.0.1',
+			'survey',
+			array( 'key' => 'val' )
+		);
+
+		$decoded = json_decode( stripslashes( $content ), true );
+		$this->assertSame( 'TestUA', $decoded['user_agent'] );
+		$this->assertSame( '127.0.0.1', $decoded['ip_address'] );
+		$this->assertSame( 'survey', $decoded['type'] );
+		$this->assertSame( array( 'key' => 'val' ), $decoded['post_params'] );
+	}
+
+	/** @test */
+	public function build_response_data_returns_expected_array_for_survey_and_like(): void {
+		$instance = \BeastFeedbacks_Public::get_instance();
+
+		$survey_res = $instance->build_response_data( 123, 'survey' );
+		$this->assertSame( 1, $survey_res['success'] );
+		$this->assertSame( 1, $survey_res['count'] );
+		$this->assertStringContainsString( 'questionnaire', $survey_res['message'] );
+
+		$like_res = $instance->build_response_data( 123, 'like' );
+		$this->assertSame( 1, $like_res['success'] );
+		$this->assertStringContainsString( 'vote', $like_res['message'] );
+	}
+
 	/**
 	 * 投稿を作成し、ID を回収・記録するユーティリティ
 	 *
