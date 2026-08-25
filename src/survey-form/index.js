@@ -10,7 +10,7 @@ import variations from './variations';
 import metadata from './block.json';
 import './style.scss';
 
-function Edit() {
+export function Edit() {
 	const blockProps = useBlockProps();
 	const innerBlocksProps = useInnerBlocksProps(
 		{},

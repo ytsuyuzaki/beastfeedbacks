@@ -16,7 +16,7 @@ const TEMPLATE = [
 	],
 ];
 
-function Edit() {
+export function Edit() {
 	const blockProps = useBlockProps();
 
 	return (

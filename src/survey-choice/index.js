@@ -27,7 +27,7 @@ function GenerateStyle( { layout } ) {
 	return style;
 }
 
-function Edit( { attributes, setAttributes, isSelected } ) {
+export function Edit( { attributes, setAttributes, isSelected } ) {
 	const { width } = attributes;
 	const blockProps = useBlockProps();
 	const childStyle = GenerateStyle( attributes );

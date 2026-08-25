@@ -110,11 +110,13 @@ npm run make-pot           # 翻訳ファイル (POT) 生成・更新
 ### テスト実行
 
 ```bash
-# 全テスト一括実行 (Version check -> Build -> wp-env start -> PHPUnit -> E2E -> wp-env stop)
+# 全テスト一括実行 (Version check -> React Unit Test -> Build -> wp-env start -> PHPUnit -> E2E -> wp-env stop)
 npm test
 
 # 個別実行
 npm run test:version       # バージョン整合性チェック
+npm run test:unit:js       # React / Gutenberg ブロック単体テスト (Jest + RTL)
+npm run test:unit:js:watch # React 単体テスト (ウォッチモード)
 npm run wp-env:test        # PHPUnit テスト実行 (wp-env起動中)
 npm run test:e2e           # Playwright E2E テスト実行 (wp-env起動中)
 npm run test:e2e:debug     # Playwright デバッグモード

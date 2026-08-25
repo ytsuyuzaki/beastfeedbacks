@@ -22,7 +22,12 @@
 	"main": "block/",
 	"devDependencies": {
 		"@playwright/test": "^1.60.0",
+		"@testing-library/jest-dom": "^7.0.1",
+		"@testing-library/react": "^16.3.2",
+		"@testing-library/user-event": "^14.6.6",
 		"@wordpress/api-fetch": "^7.47.0",
+		"@wordpress/block-editor": "^16.2.0",
+		"@wordpress/blocks": "^15.26.0",
 		"@wordpress/components": "^38.0.0",
 		"@wordpress/data": "^10.47.0",
 		"@wordpress/e2e-test-utils-playwright": "^1.53.0",
@@ -59,7 +64,9 @@
 		"lint:php:fix": "vendor/bin/phpcbf",
 		"lint": "sh -c 'npm run format -- --check && npm run lint:pkg-json && npm run lint:js && npm run lint:css && npm run lint:md:docs && npm run lint:php && npm run lint:php:cs && npm run check-engines && npm run check-licenses'",
 		"test:version": "node tests/check-version.js",
-		"test": "sh -c 'npm run test:version && npm run build && npm run wp-env:start && npm run wp-env:test && npm run test:e2e; status=$?; npm run wp-env:stop; exit $status'",
+		"test:unit:js": "wp-scripts test-unit-js",
+		"test:unit:js:watch": "wp-scripts test-unit-js --watch",
+		"test": "sh -c 'npm run test:version && npm run test:unit:js && npm run build && npm run wp-env:start && npm run wp-env:test && npm run test:e2e; status=$?; npm run wp-env:stop; exit $status'",
 		"test:e2e": "playwright test",
 		"test:e2e:debug": "playwright test --debug"
 	},

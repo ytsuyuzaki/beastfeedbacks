@@ -5,7 +5,7 @@ import metadata from './block.json';
 import './style.scss';
 import FieldControls from './field-controls';
 
-function Edit( { attributes, setAttributes } ) {
+export function Edit( { attributes, setAttributes } ) {
 	const { label, required, tagType, placeholder, width } = attributes;
 	const blockProps = useBlockProps();
 
