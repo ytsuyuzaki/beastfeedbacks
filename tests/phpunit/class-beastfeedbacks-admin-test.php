@@ -607,6 +607,16 @@ class BeastFeedbacks_Admin_Test extends TestCase {
 	}
 
 	/** @test */
+	public function manage_posts_custom_column_handles_unknown_column(): void {
+		$admin = \BeastFeedbacks_Admin::get_instance();
+		ob_start();
+		$admin->manage_posts_custom_column( 'unknown_column', 123 );
+		$output = ob_get_clean();
+
+		$this->assertSame( '', $output );
+	}
+
+	/** @test */
 	public function manage_posts_custom_column_outputs_date_for_beastfeedbacks_date(): void {
 		$admin   = \BeastFeedbacks_Admin::get_instance();
 		$post_id = $this->create_post(
