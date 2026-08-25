@@ -527,6 +527,11 @@ class BeastFeedbacks_Admin {
 	public function download_csv() {
 		check_admin_referer( 'beastfeedbacks_csv_export' );
 
+		// Security: Verify user capability to prevent unauthorized data export.
+		if ( ! current_user_can( 'edit_pages' ) ) {
+			wp_die( esc_html__( 'You do not have permission to access this page.', 'beastfeedbacks' ), 403 );
+		}
+
 		$posts      = $this->get_export_posts();
 		$post_datas = $this->get_csv_data( $posts );
 		$filename   = sprintf(
