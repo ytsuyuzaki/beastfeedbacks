@@ -21,10 +21,14 @@ describe( 'Survey Choice Block Edit component', () => {
 		);
 
 		expect( screen.getByTestId( 'mock-block-props' ) ).toBeInTheDocument();
-		expect( screen.getByText( 'Satisfaction' ) ).toBeInTheDocument();
-		expect( screen.getByText( 'Very satisfied' ) ).toBeInTheDocument();
-		expect( screen.getByText( 'Satisfied' ) ).toBeInTheDocument();
-		expect( screen.getByText( 'Normal' ) ).toBeInTheDocument();
+		expect(
+			screen.getAllByText( 'Satisfaction' )[ 0 ]
+		).toBeInTheDocument();
+		expect(
+			screen.getAllByText( 'Very satisfied' )[ 0 ]
+		).toBeInTheDocument();
+		expect( screen.getAllByText( 'Satisfied' )[ 0 ] ).toBeInTheDocument();
+		expect( screen.getAllByText( 'Normal' )[ 0 ] ).toBeInTheDocument();
 	} );
 
 	it( 'renders required indicator when required is true', () => {

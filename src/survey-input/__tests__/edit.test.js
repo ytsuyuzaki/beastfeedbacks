@@ -21,8 +21,10 @@ describe( 'Survey Input Block Edit component', () => {
 		);
 
 		expect( screen.getByTestId( 'mock-block-props' ) ).toBeInTheDocument();
-		expect( screen.getByText( 'Your Name' ) ).toBeInTheDocument();
-		expect( screen.getByText( 'Enter your name' ) ).toBeInTheDocument();
+		expect( screen.getAllByText( 'Your Name' )[ 0 ] ).toBeInTheDocument();
+		expect(
+			screen.getAllByText( 'Enter your name' )[ 0 ]
+		).toBeInTheDocument();
 		expect(
 			container.querySelector(
 				'.beastfeedbacks-survey-input_label_required'
@@ -72,7 +74,7 @@ describe( 'Survey Input Block Edit component', () => {
 			/>
 		);
 
-		const labelRichText = screen.getByText( 'Your Name' );
+		const labelRichText = screen.getAllByText( 'Your Name' )[ 0 ];
 		await user.click( labelRichText );
 
 		expect( setAttributes ).toHaveBeenCalledWith( {

@@ -61,6 +61,8 @@ jest.mock( '@wordpress/block-editor', () => {
 			( {
 				value,
 				onChange,
+				onSplit,
+				onRemove,
 				placeholder,
 				className,
 				tagName = 'div',
@@ -76,6 +78,35 @@ jest.mock( '@wordpress/block-editor', () => {
 						}
 					>
 						{ value || placeholder }
+						<textarea
+							data-testid="mock-rich-text-input"
+							value={ value || '' }
+							onChange={ ( e ) =>
+								onChange && onChange( e.target.value )
+							}
+						/>
+						{ onSplit && (
+							<button
+								data-testid="mock-rich-text-split"
+								onClick={ ( e ) => {
+									e.stopPropagation();
+									onSplit( value || '', true );
+								} }
+							>
+								Split
+							</button>
+						) }
+						{ onRemove && (
+							<button
+								data-testid="mock-rich-text-remove"
+								onClick={ ( e ) => {
+									e.stopPropagation();
+									onRemove();
+								} }
+							>
+								Remove
+							</button>
+						) }
 					</Tag>
 				);
 			},
