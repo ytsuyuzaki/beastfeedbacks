@@ -66,3 +66,25 @@ export function getFeedbackForm(
 ) {
 	return page.locator( `form[name="${ formName }"]` );
 }
+
+/**
+ * BeastFeedbacks の管理画面（フィードバック一覧）に遷移するヘルパー
+ *
+ * @param {Object} fixtures       - テストフィクスチャ
+ * @param {Object} fixtures.admin - Admin ユーティリティ
+ * @param {Object} fixtures.page  - Playwright ページオブジェクト
+ */
+export async function visitFeedbackAdmin( { admin, page } ) {
+	await admin.visitAdminPage( 'edit.php?post_type=beastfeedbacks' );
+	await page.waitForLoadState( 'domcontentloaded' );
+}
+
+/**
+ * フィードバック一覧テーブルの最新（1行目）の行ロケータを取得するヘルパー
+ *
+ * @param {Object} page - Playwright ページオブジェクト
+ * @return {import('@playwright/test').Locator} 先頭行のロケータ
+ */
+export function getLatestFeedbackRow( page ) {
+	return page.locator( '#the-list tr' ).first();
+}
