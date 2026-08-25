@@ -66,6 +66,7 @@
 		"test:version": "node tests/check-version.js",
 		"test:unit:js": "wp-scripts test-unit-js",
 		"test:unit:js:watch": "wp-scripts test-unit-js --watch",
+		"test:matrix": "sh -c 'npm run test:version && npm run build && npm run wp-env:start && npm run wp-env:test && npm run test:e2e; status=$?; npm run wp-env:stop; exit $status'",
 		"test": "sh -c 'npm run test:version && npm run test:unit:js && npm run build && npm run wp-env:start && npm run wp-env:test && npm run test:e2e; status=$?; npm run wp-env:stop; exit $status'",
 		"test:e2e": "playwright test",
 		"test:e2e:debug": "playwright test --debug"

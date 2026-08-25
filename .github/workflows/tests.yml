@@ -55,6 +55,38 @@ jobs:
             - name: Check generated files are committed
               run: git diff --exit-code
 
+    unit-js:
+        name: Run JavaScript unit tests
+
+        runs-on: ubuntu-latest
+        timeout-minutes: 2
+
+        needs: [lint]
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v5
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v5
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+                  cache: 'npm'
+
+            - name: Restore npm dependencies
+              id: npm-cache
+              uses: actions/cache/restore@v4
+              with:
+                  path: node_modules/
+                  key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-npm-${{ hashFiles('package-lock.json') }}
+
+            - name: Install npm dependencies
+              if: steps.npm-cache.outputs.cache-hit != 'true'
+              run: npm ci
+
+            - name: Run JS unit tests
+              run: npm run test:unit:js
+
     playwright:
         name: Install Playwright browsers
 
@@ -99,7 +131,7 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 5
 
-        needs: [playwright]
+        needs: [playwright, unit-js]
 
         strategy:
             fail-fast: false
@@ -157,8 +189,8 @@ jobs:
                   path: ~/.cache/ms-playwright
                   key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
 
-            - name: Run npm test
-              run: npm run test
+            - name: Run matrix tests
+              run: npm run test:matrix
 
             - name: Upload Playwright test results
               if: always()
