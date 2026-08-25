@@ -58,10 +58,14 @@ class BeastFeedbacks_Public {
 		$id   = sanitize_text_field( wp_unslash( $_POST['id'] ) );
 		$type = sanitize_text_field( wp_unslash( $_POST['beastfeedbacks_type'] ) );
 
+		if ( ! in_array( $type, BeastFeedbacks_Block::TYPES, true ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid feedback type', 'beastfeedbacks' ) ) );
+		}
+
 		$post    = get_post( $id );
 		$post_id = $post ? (int) $post->ID : 0;
 
-		if ( ! $post_id ) {
+		if ( ! $post_id || $post_id <= 0 ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid post ID', 'beastfeedbacks' ) ) );
 		}
 
@@ -72,7 +76,10 @@ class BeastFeedbacks_Public {
 		$post_params = $this->extract_post_params( $_POST );
 		$content     = $this->format_feedback_content( $user_agent, $ip_address, $type, $post_params );
 
-		$this->save_feedback( $post_id, $type, $title, $time, $content );
+		$saved = $this->save_feedback( $post_id, $type, $title, $time, $content );
+		if ( is_wp_error( $saved ) || ! $saved ) {
+			wp_send_json_error( array( 'message' => __( 'Failed to save feedback', 'beastfeedbacks' ) ) );
+		}
 
 		$response_data = $this->build_response_data( $post_id, $type );
 
