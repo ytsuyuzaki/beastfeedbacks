@@ -683,9 +683,12 @@ class BeastFeedbacks_Admin {
 	 * @return string
 	 */
 	public function esc_csv( $field ) {
-		$active_content_triggers = array( '=', '+', '-', '@' );
+		$active_content_triggers = array( '=', '+', '-', '@', "\t", "\r" );
 
-		if ( in_array( mb_substr( $field, 0, 1 ), $active_content_triggers, true ) ) {
+		$string_field  = (string) $field;
+		$trimmed_field = ltrim( $string_field, ' ' );
+
+		if ( '' !== $string_field && ( in_array( mb_substr( $string_field, 0, 1 ), $active_content_triggers, true ) || ( '' !== $trimmed_field && in_array( mb_substr( $trimmed_field, 0, 1 ), $active_content_triggers, true ) ) ) ) {
 			$field = "'" . $field;
 		}
 
