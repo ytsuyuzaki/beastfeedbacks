@@ -652,7 +652,9 @@ class BeastFeedbacks_Admin {
 
 		$output = fopen( 'php://output', 'w' );
 
-		fputcsv( $output, $fields );
+		// Security: Escape CSV header column names against formula injection.
+		$escaped_fields = array_map( array( $this, 'esc_csv' ), $fields );
+		fputcsv( $output, $escaped_fields );
 
 		foreach ( $posts as $post ) {
 			$current_row = array();
