@@ -66,15 +66,17 @@ class BeastFeedbacks {
 	 */
 	public function get_like_count( $post_id ) {
 		$args  = array(
-			'post_type'   => 'beastfeedbacks',
-			'post_parent' => $post_id,
-			'meta_query'  => array( // NOTE: クエリ効率化.
+			'post_type'      => 'beastfeedbacks',
+			'post_parent'    => $post_id,
+			'fields'         => 'ids',
+			'posts_per_page' => 1,
+			'meta_query'     => array( // NOTE: クエリ効率化.
 				array(
 					'key'   => 'beastfeedbacks_type',
 					'value' => 'like',
 				),
 			),
-			'post_status' => 'publish',
+			'post_status'    => 'publish',
 		);
 		$query = new WP_Query( $args );
 		return $query->found_posts;
