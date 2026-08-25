@@ -130,6 +130,9 @@ test.describe( 'Frontend UI Interactions & Edge Cases', () => {
 		editor,
 		page,
 	} ) => {
+		// 意図的な500エラー発生時のブラウザ標準エラーログ出力を抑制
+		page.removeAllListeners( 'console' );
+
 		// admin-ajax.php へのリクエストをインターセプトして 500 エラーを返却する
 		await page.route( '**/admin-ajax.php', ( route ) =>
 			route.fulfill( {
