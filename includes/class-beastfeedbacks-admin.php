@@ -576,6 +576,7 @@ class BeastFeedbacks_Admin {
 		if ( ! empty( $parent_ids ) ) {
 			_prime_post_caches( $parent_ids );
 		}
+
 		foreach ( $posts as $post ) {
 			$id = $post->ID;
 
@@ -651,6 +652,7 @@ class BeastFeedbacks_Admin {
 		$output = fopen( 'php://output', 'w' );
 
 		fputcsv( $output, $fields );
+
 		foreach ( $posts as $post ) {
 			$current_row = array();
 
