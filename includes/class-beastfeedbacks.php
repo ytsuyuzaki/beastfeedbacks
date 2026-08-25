@@ -69,10 +69,11 @@ class BeastFeedbacks {
 			'post_type'              => 'beastfeedbacks',
 			'post_parent'            => $post_id,
 			'post_status'            => 'publish',
-			'posts_per_page'         => 1,
-			'fields'                 => 'ids',
-			'update_post_term_cache' => false,
-			'update_post_meta_cache' => false,
+			'posts_per_page'         => 1, // Only need found_posts count; avoid retrieving full result set.
+			'fields'                 => 'ids', // Only return IDs to prevent instantiation of full WP_Post objects.
+			'no_found_rows'          => false, // Ensure total found posts calculation is enabled.
+			'update_post_term_cache' => false, // Skip taxonomy term cache query for count operation.
+			'update_post_meta_cache' => false, // Skip postmeta cache query for count operation.
 			'meta_query'             => array( // NOTE: クエリ効率化.
 				array(
 					'key'   => 'beastfeedbacks_type',
