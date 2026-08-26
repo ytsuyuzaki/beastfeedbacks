@@ -85,12 +85,11 @@ describe( 'beastfeedbacks-admin.js', () => {
 		} );
 
 		test( 'URLクエリパラメータに beastfeedbacks_type と beastfeedbacks_parent_id が存在する場合、$.post リクエストに含まれること', () => {
-			Object.defineProperty( window, 'location', {
-				value: new URL(
-					'http://example.com/wp-admin/edit.php?post_type=beastfeedbacks&beastfeedbacks_type=survey&beastfeedbacks_parent_id=42'
-				),
-				writable: true,
-			} );
+			window.history.pushState(
+				{},
+				'',
+				'http://example.com/wp-admin/edit.php?post_type=beastfeedbacks&beastfeedbacks_type=survey&beastfeedbacks_parent_id=42'
+			);
 
 			require( '../../public/js/beastfeedbacks-admin.js' );
 			document.dispatchEvent( new Event( 'DOMContentLoaded' ) );
