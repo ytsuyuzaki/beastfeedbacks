@@ -569,15 +569,158 @@ class BeastFeedbacks_Admin {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'beastfeedbacks' ), 403 );
 		}
 
-		$posts      = $this->get_export_posts();
-		$post_datas = $this->get_csv_data( $posts );
-		$filename   = sprintf(
+		$filename = sprintf(
 			'beastfeedbacks-%s.csv',
 			gmdate( 'Y-m-d_H:i' )
 		);
 
-		$this->output_csv( $filename, $posts, $post_datas );
+		$this->stream_csv( $filename );
 		wp_die();
+	}
+
+	/**
+	 * Stream CSV export directly to output in chunks to minimize memory usage.
+	 *
+	 * @param string $filename CSV file name.
+	 * @return void
+	 */
+	public function stream_csv( $filename ) {
+		$args = array(
+			'posts_per_page'   => -1,
+			'post_type'        => 'beastfeedbacks',
+			'post_status'      => array( 'publish' ),
+			'order'            => 'ASC',
+			'suppress_filters' => false,
+			'date_query'       => array(),
+			'fields'           => 'ids',
+		);
+
+		$post_ids = get_posts( $args );
+
+		if ( ! headers_sent() ) {
+			header( 'Content-Disposition: attachment; filename=' . $filename );
+			header( 'Pragma: no-cache' );
+			header( 'Expires: 0' );
+			header( 'Content-Type: text/csv; charset=utf-8' );
+		}
+
+		$output = fopen( 'php://output', 'w' );
+
+		if ( empty( $post_ids ) ) {
+			fclose( $output ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+			return;
+		}
+
+		$chunk_size = 500;
+		$chunks     = array_chunk( $post_ids, $chunk_size );
+
+		// Pass 1: Collect all unique field keys across all posts.
+		$fields     = array( 'source', 'date', 'type', 'ip_address', 'user_agent' );
+		$fields_map = array_fill_keys( $fields, true );
+
+		foreach ( $chunks as $chunk ) {
+			$posts = get_posts(
+				array(
+					'post_type'        => 'beastfeedbacks',
+					'post__in'         => $chunk,
+					'orderby'          => 'post__in',
+					'posts_per_page'   => count( $chunk ),
+					'suppress_filters' => false,
+				)
+			);
+
+			foreach ( $posts as $post ) {
+				$content = json_decode( $post->post_content, true );
+				if ( is_array( $content ) && isset( $content['post_params'] ) && is_array( $content['post_params'] ) ) {
+					foreach ( $content['post_params'] as $key => $val ) {
+						if ( ! isset( $fields_map[ $key ] ) ) {
+							$fields_map[ $key ] = true;
+							$fields[]           = $key;
+						}
+					}
+				}
+			}
+
+			foreach ( $chunk as $id ) {
+				clean_post_cache( $id );
+			}
+		}
+
+		// Output CSV headers.
+		$escaped_fields = array_map( array( $this, 'esc_csv' ), $fields );
+		fputcsv( $output, $escaped_fields );
+
+		// Pass 2: Stream rows.
+		$permalink_cache = array();
+
+		foreach ( $chunks as $chunk ) {
+			$posts = get_posts(
+				array(
+					'post_type'        => 'beastfeedbacks',
+					'post__in'         => $chunk,
+					'orderby'          => 'post__in',
+					'posts_per_page'   => count( $chunk ),
+					'suppress_filters' => false,
+				)
+			);
+
+			$parent_ids = array_values( array_filter( array_map( 'intval', array_unique( wp_list_pluck( $posts, 'post_parent' ) ) ) ) );
+			if ( ! empty( $parent_ids ) ) {
+				_prime_post_caches( $parent_ids );
+			}
+
+			foreach ( $posts as $post ) {
+				$source = '';
+				if ( $post->post_parent ) {
+					$parent_id = $post->post_parent;
+					if ( ! isset( $permalink_cache[ $parent_id ] ) ) {
+						$form_url                      = get_permalink( $parent_id );
+						$parsed_url                    = wp_parse_url( $form_url );
+						$permalink_cache[ $parent_id ] = esc_html( isset( $parsed_url['path'] ) ? $parsed_url['path'] : '' );
+					}
+					$source = $permalink_cache[ $parent_id ];
+				}
+
+				$content = json_decode( $post->post_content, true );
+				if ( ! is_array( $content ) ) {
+					$content = array();
+				}
+
+				$type        = isset( $content['type'] ) ? $content['type'] : '';
+				$post_params = isset( $content['post_params'] ) && is_array( $content['post_params'] )
+					? $content['post_params']
+					: array();
+
+				$ip_address = isset( $content['ip_address'] ) ? $content['ip_address'] : '';
+				$user_agent = isset( $content['user_agent'] ) ? $content['user_agent'] : '';
+
+				$row_data = array(
+					'source'     => $source,
+					'date'       => $post->post_date,
+					'type'       => $type,
+					'ip_address' => $ip_address,
+					'user_agent' => $user_agent,
+				);
+
+				$row_data = array_merge( $row_data, $post_params );
+
+				$current_row = array();
+				foreach ( $fields as $single_field_name ) {
+					$value = isset( $row_data[ $single_field_name ] ) ? $row_data[ $single_field_name ] : '';
+					if ( is_array( $value ) ) {
+						$value = implode( ',', $value );
+					}
+					$current_row[] = $this->esc_csv( $value );
+				}
+				fputcsv( $output, $current_row );
+			}
+
+			foreach ( $chunk as $id ) {
+				clean_post_cache( $id );
+			}
+		}
+
+		fclose( $output ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 	}
 
 	/**
