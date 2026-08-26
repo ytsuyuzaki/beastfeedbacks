@@ -44,6 +44,8 @@ describe( 'beastfeedbacks-admin.js', () => {
 		delete window.addLoadEvent;
 		delete window.jQuery;
 		delete window.$;
+		// テスト間でURLクエリパラメータが漏れないようリセット
+		window.history.pushState( {}, '', '/' );
 	} );
 
 	test( 'DOM上に .beastfeedbacks-export-btn が存在しない場合は何もしないこと', () => {
@@ -88,7 +90,7 @@ describe( 'beastfeedbacks-admin.js', () => {
 			window.history.pushState(
 				{},
 				'',
-				'http://example.com/wp-admin/edit.php?post_type=beastfeedbacks&beastfeedbacks_type=survey&beastfeedbacks_parent_id=42'
+				'/wp-admin/edit.php?post_type=beastfeedbacks&beastfeedbacks_type=survey&beastfeedbacks_parent_id=42'
 			);
 
 			require( '../../public/js/beastfeedbacks-admin.js' );
