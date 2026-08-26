@@ -155,7 +155,7 @@ class BeastFeedbacks_Public_Register_Beastfeedbacks_Form_Test extends BeastFeedb
 
 		$response = $this->call_ajax_handler();
 
-		$this->assertSame( 0, $response['success'] );
+		$this->assertFalse( $response['success'] );
 		$this->assertSame( 'Invalid request', $response['data']['message'] );
 
 		// Missing id parameter.
@@ -168,7 +168,7 @@ class BeastFeedbacks_Public_Register_Beastfeedbacks_Form_Test extends BeastFeedb
 
 		$response = $this->call_ajax_handler();
 
-		$this->assertSame( 0, $response['success'] );
+		$this->assertFalse( $response['success'] );
 		$this->assertSame( 'Invalid request', $response['data']['message'] );
 	}
 
@@ -182,7 +182,7 @@ class BeastFeedbacks_Public_Register_Beastfeedbacks_Form_Test extends BeastFeedb
 
 		$response = $this->call_ajax_handler();
 
-		$this->assertSame( 0, $response['success'] );
+		$this->assertFalse( $response['success'] );
 		$this->assertSame( 'Invalid post ID', $response['data']['message'] );
 
 		// Zero post ID.
@@ -191,7 +191,7 @@ class BeastFeedbacks_Public_Register_Beastfeedbacks_Form_Test extends BeastFeedb
 
 		$response = $this->call_ajax_handler();
 
-		$this->assertSame( 0, $response['success'] );
+		$this->assertFalse( $response['success'] );
 		$this->assertSame( 'Invalid post ID', $response['data']['message'] );
 
 		// Negative post ID.
@@ -200,7 +200,7 @@ class BeastFeedbacks_Public_Register_Beastfeedbacks_Form_Test extends BeastFeedb
 
 		$response = $this->call_ajax_handler();
 
-		$this->assertSame( 0, $response['success'] );
+		$this->assertFalse( $response['success'] );
 		$this->assertSame( 'Invalid post ID', $response['data']['message'] );
 	}
 
@@ -216,7 +216,7 @@ class BeastFeedbacks_Public_Register_Beastfeedbacks_Form_Test extends BeastFeedb
 
 		$response = $this->call_ajax_handler();
 
-		$this->assertSame( 0, $response['success'] );
+		$this->assertFalse( $response['success'] );
 		$this->assertSame( 'Invalid feedback type', $response['data']['message'] );
 
 		// Empty string type.
@@ -225,7 +225,7 @@ class BeastFeedbacks_Public_Register_Beastfeedbacks_Form_Test extends BeastFeedb
 
 		$response = $this->call_ajax_handler();
 
-		$this->assertSame( 0, $response['success'] );
+		$this->assertFalse( $response['success'] );
 		$this->assertSame( 'Invalid request', $response['data']['message'] );
 	}
 
@@ -249,7 +249,7 @@ class BeastFeedbacks_Public_Register_Beastfeedbacks_Form_Test extends BeastFeedb
 			remove_filter( 'wp_insert_post_empty_content', $fail_insert );
 		}
 
-		$this->assertSame( 0, $response['success'] );
+		$this->assertFalse( $response['success'] );
 		$this->assertSame( 'Failed to save feedback', $response['data']['message'] );
 	}
 }
