@@ -294,17 +294,28 @@ class BeastFeedbacks_Admin {
 	 */
 	private function render_source_column( $post_id ) {
 		$post = get_post( $post_id );
-		if ( ! isset( $post->post_parent ) ) {
+		if ( ! isset( $post->post_parent ) || ! $post->post_parent ) {
 			return;
 		}
 
-		$form_url   = get_permalink( $post->post_parent );
-		$parsed_url = wp_parse_url( $form_url );
+		// Cache permalinks and parsed path per parent ID to avoid redundant get_permalink() and wp_parse_url() calls during list table rendering.
+		static $permalink_cache = array();
+
+		$parent_id = $post->post_parent;
+
+		if ( ! isset( $permalink_cache[ $parent_id ] ) ) {
+			$form_url                      = get_permalink( $parent_id );
+			$parsed_url                    = wp_parse_url( $form_url );
+			$permalink_cache[ $parent_id ] = array(
+				'url'  => $form_url,
+				'path' => esc_html( isset( $parsed_url['path'] ) ? $parsed_url['path'] : '' ),
+			);
+		}
 
 		printf(
 			'<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>',
-			esc_url( $form_url ),
-			esc_html( $parsed_url['path'] )
+			esc_url( $permalink_cache[ $parent_id ]['url'] ),
+			$permalink_cache[ $parent_id ]['path'] // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		);
 	}
 
