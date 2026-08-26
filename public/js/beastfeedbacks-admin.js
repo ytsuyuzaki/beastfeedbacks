@@ -23,7 +23,9 @@ document.addEventListener( 'DOMContentLoaded', () => {
 					requestData.beastfeedbacks_type = typeParam;
 				}
 
-				const parentIdParam = urlParams.get( 'beastfeedbacks_parent_id' );
+				const parentIdParam = urlParams.get(
+					'beastfeedbacks_parent_id'
+				);
 				if ( parentIdParam ) {
 					requestData.beastfeedbacks_parent_id = parentIdParam;
 				}
