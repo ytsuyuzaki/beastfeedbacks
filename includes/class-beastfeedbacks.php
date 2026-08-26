@@ -74,12 +74,8 @@ class BeastFeedbacks {
 			'no_found_rows'          => false, // Ensure total found posts calculation is enabled.
 			'update_post_term_cache' => false, // Skip taxonomy term cache query for count operation.
 			'update_post_meta_cache' => false, // Skip postmeta cache query for count operation.
-			'meta_query'             => array( // NOTE: クエリ効率化.
-				array(
-					'key'   => 'beastfeedbacks_type',
-					'value' => 'like',
-				),
-			),
+			'meta_key'               => 'beastfeedbacks_type',
+			'meta_value'             => 'like',
 		);
 		$query = new WP_Query( $args );
 		return $query->found_posts;
