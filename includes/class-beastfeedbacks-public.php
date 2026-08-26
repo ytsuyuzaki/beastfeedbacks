@@ -195,7 +195,7 @@ class BeastFeedbacks_Public {
 			? __( 'Thank you for your responses to the questionnaire. ', 'beastfeedbacks' )
 			: __( 'Thank you for the vote. ', 'beastfeedbacks' );
 		$count   = ( 'like' === $type )
-			? BeastFeedbacks::get_instance()->get_like_count( $post_id )
+			? BeastFeedbacks_Utils::get_like_count( $post_id )
 			: 1;
 
 		return array(
