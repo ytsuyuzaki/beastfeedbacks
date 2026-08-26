@@ -33,6 +33,24 @@ class BeastFeedbacks_Admin_Download_Csv_Test extends BeastFeedbacks_TestCase {
 	}
 
 	/** @test */
+	public function output_csv_executes_header_setting_without_error(): void {
+		$admin = \BeastFeedbacks_Admin::get_instance();
+
+		$posts      = array();
+		$post_datas = array(
+			'source' => array(),
+			'type'   => array(),
+		);
+		$filename   = 'test-export-2025-01-01.csv';
+
+		ob_start();
+		$admin->output_csv( $filename, $posts, $post_datas );
+		$csv_output = ob_get_clean();
+
+		$this->assertStringContainsString( 'source,type', $csv_output );
+	}
+
+	/** @test */
 	public function download_csv_fails_without_edit_pages_capability(): void {
 		$subscriber_id = wp_insert_user(
 			array(
