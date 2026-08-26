@@ -8,7 +8,9 @@
 class BeastFeedbacks_Admin_Pre_Get_Posts_Test extends BeastFeedbacks_TestCase {
 
 	protected function tear_down(): void {
-		$_GET = array();
+		$_GET     = array();
+		$_POST    = array();
+		$_REQUEST = array();
 		parent::tear_down();
 	}
 
@@ -102,6 +104,40 @@ class BeastFeedbacks_Admin_Pre_Get_Posts_Test extends BeastFeedbacks_TestCase {
 		$_GET['_beastfeedbacks_nonce'] = 'invalid_nonce';
 		\BeastFeedbacks_Admin::get_instance()->source_filter_result( $q );
 		$this->assertArrayNotHasKey( 'post_parent', $q->query_vars );
+	}
+
+	/** @test */
+	public function type_filter_result_supports_post_request_and_export_nonce(): void {
+		$_POST['_wpnonce']           = wp_create_nonce( 'beastfeedbacks_csv_export' );
+		$_POST['beastfeedbacks_type'] = 'vote';
+		$_REQUEST                   = array_merge( $_GET, $_POST );
+
+		$q = $this->fake_query( array( 'post_type' => 'beastfeedbacks' ) );
+
+		\BeastFeedbacks_Admin::get_instance()->type_filter_result( $q );
+
+		$this->assertArrayHasKey( 'meta_query', $q->query_vars );
+		$mq = $q->query_vars['meta_query'];
+		$this->assertSame( 'beastfeedbacks_type', $mq[0]['key'] );
+		$this->assertSame( 'vote', $mq[0]['value'] );
+	}
+
+	/** @test */
+	public function source_filter_result_supports_post_request_and_export_nonce(): void {
+		$_POST['_wpnonce']                 = wp_create_nonce( 'beastfeedbacks_csv_export' );
+		$_POST['beastfeedbacks_parent_id'] = '102';
+		$_REQUEST                         = array_merge( $_GET, $_POST );
+
+		$q = $this->fake_query(
+			array(
+				'post_type' => 'beastfeedbacks',
+				'fields'    => '',
+			)
+		);
+
+		\BeastFeedbacks_Admin::get_instance()->source_filter_result( $q );
+
+		$this->assertSame( 102, $q->query_vars['post_parent'] );
 	}
 
 	/** @test */

@@ -114,8 +114,13 @@ class BeastFeedbacks_Admin_Manage_Posts_Custom_Column_Test extends BeastFeedback
 		);
 
 		$this->assertSame( $expected, $output );
+	}
 
-		// Invalid / non-existent post ID where $post is null
+	/** @test */
+	public function manage_posts_custom_column_returns_empty_when_source_post_does_not_exist(): void {
+		$admin = \BeastFeedbacks_Admin::get_instance();
+
+		// Non-existent post ID
 		ob_start();
 		$admin->manage_posts_custom_column( 'beastfeedbacks_source', 999999 );
 		$no_parent_output = ob_get_clean();
@@ -124,10 +129,8 @@ class BeastFeedbacks_Admin_Manage_Posts_Custom_Column_Test extends BeastFeedback
 	}
 
 	/** @test */
-	public function manage_posts_custom_column_outputs_response_data_for_vote_and_survey(): void {
-		$admin = \BeastFeedbacks_Admin::get_instance();
-
-		// Case 1: Non-array or invalid JSON content
+	public function manage_posts_custom_column_returns_empty_when_invalid_json_content(): void {
+		$admin           = \BeastFeedbacks_Admin::get_instance();
 		$invalid_post_id = $this->create_post(
 			array(
 				'post_type'    => 'beastfeedbacks',
@@ -138,10 +141,14 @@ class BeastFeedbacks_Admin_Manage_Posts_Custom_Column_Test extends BeastFeedback
 
 		ob_start();
 		$admin->manage_posts_custom_column( 'beastfeedbacks_response', $invalid_post_id );
-		$invalid_output = ob_get_clean();
-		$this->assertSame( '', $invalid_output );
+		$output = ob_get_clean();
 
-		// Case 2: Vote response
+		$this->assertSame( '', $output );
+	}
+
+	/** @test */
+	public function manage_posts_custom_column_outputs_response_data_for_vote(): void {
+		$admin        = \BeastFeedbacks_Admin::get_instance();
 		$vote_content = array(
 			'type'        => 'vote',
 			'post_params' => array(
@@ -160,15 +167,19 @@ class BeastFeedbacks_Admin_Manage_Posts_Custom_Column_Test extends BeastFeedback
 
 		ob_start();
 		$admin->manage_posts_custom_column( 'beastfeedbacks_response', $vote_post_id );
-		$vote_output = ob_get_clean();
+		$output = ob_get_clean();
 
-		$this->assertStringContainsString( 'Option 1', $vote_output );
-		$this->assertStringContainsString( 'IP_Address', $vote_output );
-		$this->assertStringContainsString( '192.168.1.1', $vote_output );
-		$this->assertStringContainsString( 'UserAgent', $vote_output );
-		$this->assertStringContainsString( 'Test User Agent', $vote_output );
+		$this->assertStringContainsString( 'Select', $output );
+		$this->assertStringContainsString( 'Option 1', $output );
+		$this->assertStringContainsString( 'IP_Address', $output );
+		$this->assertStringContainsString( '192.168.1.1', $output );
+		$this->assertStringContainsString( 'UserAgent', $output );
+		$this->assertStringContainsString( 'Test User Agent', $output );
+	}
 
-		// Case 3: Survey response with scalar and array values
+	/** @test */
+	public function manage_posts_custom_column_outputs_response_data_for_survey(): void {
+		$admin          = \BeastFeedbacks_Admin::get_instance();
 		$survey_content = array(
 			'type'        => 'survey',
 			'post_params' => array(
@@ -187,15 +198,103 @@ class BeastFeedbacks_Admin_Manage_Posts_Custom_Column_Test extends BeastFeedback
 
 		ob_start();
 		$admin->manage_posts_custom_column( 'beastfeedbacks_response', $survey_post_id );
-		$survey_output = ob_get_clean();
+		$output = ob_get_clean();
 
-		$this->assertStringContainsString( 'Question 1', $survey_output );
-		$this->assertStringContainsString( 'Answer 1', $survey_output );
-		$this->assertStringContainsString( 'Question 2', $survey_output );
-		$this->assertStringContainsString( 'Choice A', $survey_output );
-		$this->assertStringContainsString( 'Choice B', $survey_output );
-		$this->assertStringContainsString( 'Choice A<br />', $survey_output );
-		$this->assertStringContainsString( '10.0.0.1', $survey_output );
-		$this->assertStringNotContainsString( 'UserAgent', $survey_output );
+		$this->assertStringContainsString( 'Question 1', $output );
+		$this->assertStringContainsString( 'Answer 1', $output );
+		$this->assertStringContainsString( 'Question 2', $output );
+		$this->assertStringContainsString( 'Choice A', $output );
+		$this->assertStringContainsString( 'Choice B', $output );
+		$this->assertStringContainsString( 'Choice A<br />', $output );
+		$this->assertStringContainsString( '10.0.0.1', $output );
+		$this->assertStringNotContainsString( 'UserAgent', $output );
+	}
+
+	/** @test */
+	public function manage_posts_custom_column_outputs_response_data_for_like(): void {
+		$admin        = \BeastFeedbacks_Admin::get_instance();
+		$like_content = array(
+			'type'       => 'like',
+			'ip_address' => '172.16.0.1',
+			'user_agent' => 'Like Test Agent',
+		);
+		$like_post_id = $this->create_post(
+			array(
+				'post_type'    => 'beastfeedbacks',
+				'post_status'  => 'publish',
+				'post_content' => wp_json_encode( $like_content ),
+			)
+		);
+
+		ob_start();
+		$admin->manage_posts_custom_column( 'beastfeedbacks_response', $like_post_id );
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'IP_Address', $output );
+		$this->assertStringContainsString( '172.16.0.1', $output );
+		$this->assertStringContainsString( 'UserAgent', $output );
+		$this->assertStringContainsString( 'Like Test Agent', $output );
+		$this->assertStringNotContainsString( 'Select', $output );
+	}
+
+	/** @test */
+	public function the_posts_filter_primes_parent_post_caches(): void {
+		$admin = \BeastFeedbacks_Admin::get_instance();
+
+		$parent_id1 = $this->create_post(
+			array(
+				'post_type'   => 'post',
+				'post_status' => 'publish',
+			)
+		);
+		$parent_id2 = $this->create_post(
+			array(
+				'post_type'   => 'post',
+				'post_status' => 'publish',
+			)
+		);
+
+		$child_id1 = $this->create_post(
+			array(
+				'post_type'   => 'beastfeedbacks',
+				'post_status' => 'publish',
+				'post_parent' => $parent_id1,
+			)
+		);
+		$child_id2 = $this->create_post(
+			array(
+				'post_type'   => 'beastfeedbacks',
+				'post_status' => 'publish',
+				'post_parent' => $parent_id2,
+			)
+		);
+
+		clean_post_cache( $parent_id1 );
+		clean_post_cache( $parent_id2 );
+
+		$this->assertFalse( wp_cache_get( $parent_id1, 'posts' ) );
+		$this->assertFalse( wp_cache_get( $parent_id2, 'posts' ) );
+
+		set_current_screen( 'edit-beastfeedbacks' );
+
+		$query = new WP_Query(
+			array(
+				'post_type' => 'beastfeedbacks',
+			)
+		);
+
+		$posts = array( get_post( $child_id1 ), get_post( $child_id2 ) );
+		$res   = $admin->prime_parent_post_caches( $posts, $query );
+
+		$this->assertSame( $posts, $res );
+		$this->assertNotFalse( wp_cache_get( $parent_id1, 'posts' ) );
+		$this->assertNotFalse( wp_cache_get( $parent_id2, 'posts' ) );
+
+		clean_post_cache( $parent_id1 );
+		clean_post_cache( $parent_id2 );
+		set_current_screen( 'front' );
+
+		$admin->prime_parent_post_caches( $posts, $query );
+		$this->assertFalse( wp_cache_get( $parent_id1, 'posts' ) );
 	}
 }

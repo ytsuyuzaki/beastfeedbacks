@@ -44,6 +44,8 @@ describe( 'beastfeedbacks-admin.js', () => {
 		delete window.addLoadEvent;
 		delete window.jQuery;
 		delete window.$;
+		// テスト間でURLクエリパラメータが漏れないようリセット
+		window.history.pushState( {}, '', '/' );
 	} );
 
 	test( 'DOM上に .beastfeedbacks-export-btn が存在しない場合は何もしないこと', () => {
@@ -79,6 +81,30 @@ describe( 'beastfeedbacks-admin.js', () => {
 				{
 					action: 'beastfeedbacks_export',
 					_wpnonce: 'test-nonce-123',
+				},
+				expect.any( Function )
+			);
+		} );
+
+		test( 'URLクエリパラメータに beastfeedbacks_type と beastfeedbacks_parent_id が存在する場合、$.post リクエストに含まれること', () => {
+			window.history.pushState(
+				{},
+				'',
+				'/wp-admin/edit.php?post_type=beastfeedbacks&beastfeedbacks_type=survey&beastfeedbacks_parent_id=42'
+			);
+
+			require( '../../public/js/beastfeedbacks-admin.js' );
+			document.dispatchEvent( new Event( 'DOMContentLoaded' ) );
+
+			btn.click();
+
+			expect( mockPost ).toHaveBeenCalledWith(
+				'http://example.com/wp-admin/admin-ajax.php',
+				{
+					action: 'beastfeedbacks_export',
+					_wpnonce: 'test-nonce-123',
+					beastfeedbacks_type: 'survey',
+					beastfeedbacks_parent_id: '42',
 				},
 				expect.any( Function )
 			);
