@@ -222,8 +222,10 @@ class BeastFeedbacks_Public {
 	 * @return string
 	 */
 	public function get_ip_address() {
-		return isset( $_SERVER['REMOTE_ADDR'] )
+		$ip = isset( $_SERVER['REMOTE_ADDR'] )
 			? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) )
 			: '';
+
+		return false !== filter_var( $ip, FILTER_VALIDATE_IP ) ? $ip : '';
 	}
 }
