@@ -236,4 +236,65 @@ class BeastFeedbacks_Admin_Manage_Posts_Custom_Column_Test extends BeastFeedback
 		$this->assertStringContainsString( 'Like Test Agent', $output );
 		$this->assertStringNotContainsString( 'Select', $output );
 	}
+
+	/** @test */
+	public function the_posts_filter_primes_parent_post_caches(): void {
+		$admin = \BeastFeedbacks_Admin::get_instance();
+
+		$parent_id1 = $this->create_post(
+			array(
+				'post_type'   => 'post',
+				'post_status' => 'publish',
+			)
+		);
+		$parent_id2 = $this->create_post(
+			array(
+				'post_type'   => 'post',
+				'post_status' => 'publish',
+			)
+		);
+
+		$child_id1 = $this->create_post(
+			array(
+				'post_type'   => 'beastfeedbacks',
+				'post_status' => 'publish',
+				'post_parent' => $parent_id1,
+			)
+		);
+		$child_id2 = $this->create_post(
+			array(
+				'post_type'   => 'beastfeedbacks',
+				'post_status' => 'publish',
+				'post_parent' => $parent_id2,
+			)
+		);
+
+		clean_post_cache( $parent_id1 );
+		clean_post_cache( $parent_id2 );
+
+		$this->assertFalse( wp_cache_get( $parent_id1, 'posts' ) );
+		$this->assertFalse( wp_cache_get( $parent_id2, 'posts' ) );
+
+		set_current_screen( 'edit-beastfeedbacks' );
+
+		$query = new WP_Query(
+			array(
+				'post_type' => 'beastfeedbacks',
+			)
+		);
+
+		$posts = array( get_post( $child_id1 ), get_post( $child_id2 ) );
+		$res   = $admin->prime_parent_post_caches( $posts, $query );
+
+		$this->assertSame( $posts, $res );
+		$this->assertNotFalse( wp_cache_get( $parent_id1, 'posts' ) );
+		$this->assertNotFalse( wp_cache_get( $parent_id2, 'posts' ) );
+
+		clean_post_cache( $parent_id1 );
+		clean_post_cache( $parent_id2 );
+		set_current_screen( 'front' );
+
+		$admin->prime_parent_post_caches( $posts, $query );
+		$this->assertFalse( wp_cache_get( $parent_id1, 'posts' ) );
+	}
 }

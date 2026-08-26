@@ -74,6 +74,7 @@ class BeastFeedbacks_Admin {
 
 		add_action( 'pre_get_posts', array( $this, 'type_filter_result' ) );
 		add_action( 'pre_get_posts', array( $this, 'source_filter_result' ) );
+		add_filter( 'the_posts', array( $this, 'prime_parent_post_caches' ), 10, 2 );
 
 		add_action( "wp_ajax_{$this->export_action_name}", array( $this, 'download_csv' ) );
 	}
@@ -472,6 +473,39 @@ class BeastFeedbacks_Admin {
 		}
 
 		$query->set( 'meta_query', $meta_query );
+	}
+
+	/**
+	 * Prime parent post caches to prevent N+1 queries in admin list table.
+	 *
+	 * @param array    $posts Array of WP_Post objects.
+	 * @param WP_Query $query WP_Query instance.
+	 * @return array
+	 */
+	public function prime_parent_post_caches( $posts, $query ) {
+		if ( ! is_admin() ) {
+			return $posts;
+		}
+
+		if ( empty( $posts ) || ! is_array( $posts ) ) {
+			return $posts;
+		}
+
+		$post_type = isset( $query->query_vars['post_type'] ) ? $query->query_vars['post_type'] : '';
+		if ( is_array( $post_type ) ) {
+			if ( ! in_array( $this->post_type, $post_type, true ) ) {
+				return $posts;
+			}
+		} elseif ( $this->post_type !== $post_type ) {
+			return $posts;
+		}
+
+		$parent_ids = array_values( array_unique( array_filter( array_map( 'absint', wp_list_pluck( $posts, 'post_parent' ) ) ) ) );
+		if ( ! empty( $parent_ids ) ) {
+			_prime_post_caches( $parent_ids );
+		}
+
+		return $posts;
 	}
 
 	/**
