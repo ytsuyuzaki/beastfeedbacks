@@ -202,6 +202,45 @@ class BeastFeedbacks_Public_Register_Beastfeedbacks_Form_Test extends BeastFeedb
 
 		$this->assertFalse( $response['success'] );
 		$this->assertSame( 'Invalid post ID', $response['data']['message'] );
+
+		// Draft (unpublished) post ID.
+		$draft_id = $this->create_post(
+			array(
+				'post_status' => 'draft',
+			)
+		);
+		$_POST    = $this->create_ajax_request( array(), $draft_id, 'like' ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$_REQUEST = $_POST;
+
+		$response = $this->call_ajax_handler();
+
+		$this->assertSame( 0, $response['success'] );
+		$this->assertSame( 'Invalid post ID', $response['data']['message'] );
+
+		// Trashed post ID.
+		$trash_id = $this->create_post(
+			array(
+				'post_status' => 'trash',
+			)
+		);
+		$_POST    = $this->create_ajax_request( array(), $trash_id, 'like' ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$_REQUEST = $_POST;
+
+		$response = $this->call_ajax_handler();
+
+		$this->assertSame( 0, $response['success'] );
+		$this->assertSame( 'Invalid post ID', $response['data']['message'] );
+
+		// Target post is itself a feedback post ('beastfeedbacks' post type).
+		$parent_id   = $this->create_post();
+		$feedback_id = $this->create_like_post( $parent_id );
+		$_POST       = $this->create_ajax_request( array(), $feedback_id, 'like' ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$_REQUEST    = $_POST;
+
+		$response = $this->call_ajax_handler();
+
+		$this->assertSame( 0, $response['success'] );
+		$this->assertSame( 'Invalid post ID', $response['data']['message'] );
 	}
 
 	/**
