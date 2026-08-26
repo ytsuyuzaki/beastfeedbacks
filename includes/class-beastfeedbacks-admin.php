@@ -451,8 +451,9 @@ class BeastFeedbacks_Admin {
 	 * @return void
 	 */
 	public function type_filter_result( $query ) {
-		$nonce_verified = isset( $_GET['_beastfeedbacks_nonce'] ) && wp_verify_nonce( sanitize_key( wp_unslash( $_GET['_beastfeedbacks_nonce'] ) ), 'beastfeedbacks_filter' );
-		$selected_type  = $nonce_verified && isset( $_GET['beastfeedbacks_type'] ) ? sanitize_key( wp_unslash( $_GET['beastfeedbacks_type'] ) ) : '';
+		$nonce_verified = ( isset( $_REQUEST['_beastfeedbacks_nonce'] ) && wp_verify_nonce( sanitize_key( wp_unslash( $_REQUEST['_beastfeedbacks_nonce'] ) ), 'beastfeedbacks_filter' ) )
+			|| ( isset( $_REQUEST['_wpnonce'] ) && wp_verify_nonce( sanitize_key( wp_unslash( $_REQUEST['_wpnonce'] ) ), 'beastfeedbacks_csv_export' ) );
+		$selected_type  = $nonce_verified && isset( $_REQUEST['beastfeedbacks_type'] ) ? sanitize_key( wp_unslash( $_REQUEST['beastfeedbacks_type'] ) ) : '';
 
 		if ( ! $selected_type || 'beastfeedbacks' !== $query->query_vars['post_type'] ) {
 			return;
@@ -481,8 +482,9 @@ class BeastFeedbacks_Admin {
 	 * @return void
 	 */
 	public function source_filter_result( $query ) {
-		$nonce_verified     = isset( $_GET['_beastfeedbacks_nonce'] ) && wp_verify_nonce( sanitize_key( wp_unslash( $_GET['_beastfeedbacks_nonce'] ) ), 'beastfeedbacks_filter' );
-		$selected_parent_id = intval( $nonce_verified && isset( $_GET['beastfeedbacks_parent_id'] ) ? sanitize_key( wp_unslash( $_GET['beastfeedbacks_parent_id'] ) ) : 0 );
+		$nonce_verified     = ( isset( $_REQUEST['_beastfeedbacks_nonce'] ) && wp_verify_nonce( sanitize_key( wp_unslash( $_REQUEST['_beastfeedbacks_nonce'] ) ), 'beastfeedbacks_filter' ) )
+			|| ( isset( $_REQUEST['_wpnonce'] ) && wp_verify_nonce( sanitize_key( wp_unslash( $_REQUEST['_wpnonce'] ) ), 'beastfeedbacks_csv_export' ) );
+		$selected_parent_id = intval( $nonce_verified && isset( $_REQUEST['beastfeedbacks_parent_id'] ) ? sanitize_key( wp_unslash( $_REQUEST['beastfeedbacks_parent_id'] ) ) : 0 );
 
 		if ( ! $selected_parent_id || 'beastfeedbacks' !== $query->query_vars['post_type'] ) {
 			return;

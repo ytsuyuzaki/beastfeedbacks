@@ -84,6 +84,29 @@ describe( 'beastfeedbacks-admin.js', () => {
 			);
 		} );
 
+		test( 'URLクエリパラメータに beastfeedbacks_type と beastfeedbacks_parent_id が存在する場合、$.post リクエストに含まれること', () => {
+			delete window.location;
+			window.location = new URL(
+				'http://example.com/wp-admin/edit.php?post_type=beastfeedbacks&beastfeedbacks_type=survey&beastfeedbacks_parent_id=42'
+			);
+
+			require( '../../public/js/beastfeedbacks-admin.js' );
+			document.dispatchEvent( new Event( 'DOMContentLoaded' ) );
+
+			btn.click();
+
+			expect( mockPost ).toHaveBeenCalledWith(
+				'http://example.com/wp-admin/admin-ajax.php',
+				{
+					action: 'beastfeedbacks_export',
+					_wpnonce: 'test-nonce-123',
+					beastfeedbacks_type: 'survey',
+					beastfeedbacks_parent_id: '42',
+				},
+				expect.any( Function )
+			);
+		} );
+
 		test( 'Content-Disposition ヘッダーからファイル名が抽出され、Blob / a タグダウンロード / revokeObjectURL / btn.disabled 復元が行われること', () => {
 			require( '../../public/js/beastfeedbacks-admin.js' );
 			document.dispatchEvent( new Event( 'DOMContentLoaded' ) );

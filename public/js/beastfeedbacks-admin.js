@@ -12,12 +12,25 @@ document.addEventListener( 'DOMContentLoaded', () => {
 		btn.onclick = () => {
 			btn.disabled = true;
 			jQuery( function ( $ ) {
+				const urlParams = new URLSearchParams( window.location.search );
+				const requestData = {
+					action,
+					_wpnonce: nonce,
+				};
+
+				const typeParam = urlParams.get( 'beastfeedbacks_type' );
+				if ( typeParam ) {
+					requestData.beastfeedbacks_type = typeParam;
+				}
+
+				const parentIdParam = urlParams.get( 'beastfeedbacks_parent_id' );
+				if ( parentIdParam ) {
+					requestData.beastfeedbacks_parent_id = parentIdParam;
+				}
+
 				$.post(
 					endpoint,
-					{
-						action,
-						_wpnonce: nonce,
-					},
+					requestData,
 					function ( response, status, xhr ) {
 						const blob = new Blob( [ response ], {
 							type: 'application/octetstream',
