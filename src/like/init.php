@@ -33,7 +33,7 @@ if ( ! function_exists( 'beastfeedbacks_block_like_render_callback' ) ) {
 		$post_id      = get_the_ID();
 		$post_id_attr = esc_attr( absint( $post_id ) );
 
-		$like_count      = BeastFeedbacks::get_instance()->get_like_count( $post_id );
+		$like_count      = BeastFeedbacks_Utils::get_like_count( $post_id );
 		$like_count_text = esc_html( $like_count );
 
 		$html = '<div ' . $wrapper_attrs . '>' .
