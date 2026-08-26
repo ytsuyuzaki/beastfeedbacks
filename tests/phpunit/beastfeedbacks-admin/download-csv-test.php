@@ -272,6 +272,93 @@ class BeastFeedbacks_Admin_Download_Csv_Test extends BeastFeedbacks_TestCase {
 	}
 
 	/** @test */
+	public function get_export_posts_respects_type_and_source_filters(): void {
+		$admin_id = wp_insert_user(
+			array(
+				'user_login' => 'test_admin_' . uniqid(),
+				'user_pass'  => 'password',
+				'role'       => 'administrator',
+			)
+		);
+		wp_set_current_user( $admin_id );
+
+		$parent1 = $this->create_post( array( 'post_type' => 'page' ) );
+		$parent2 = $this->create_post( array( 'post_type' => 'page' ) );
+
+		// Post 1: type survey, parent1
+		$post1 = $this->create_post(
+			array(
+				'post_type'    => 'beastfeedbacks',
+				'post_parent'  => $parent1,
+				'post_content' => wp_json_encode( array( 'type' => 'survey' ) ),
+			)
+		);
+		add_post_meta( $post1, 'beastfeedbacks_type', 'survey' );
+
+		// Post 2: type vote, parent1
+		$post2 = $this->create_post(
+			array(
+				'post_type'    => 'beastfeedbacks',
+				'post_parent'  => $parent1,
+				'post_content' => wp_json_encode( array( 'type' => 'vote' ) ),
+			)
+		);
+		add_post_meta( $post2, 'beastfeedbacks_type', 'vote' );
+
+		// Post 3: type survey, parent2
+		$post3 = $this->create_post(
+			array(
+				'post_type'    => 'beastfeedbacks',
+				'post_parent'  => $parent2,
+				'post_content' => wp_json_encode( array( 'type' => 'survey' ) ),
+			)
+		);
+		add_post_meta( $post3, 'beastfeedbacks_type', 'survey' );
+
+		$admin = \BeastFeedbacks_Admin::get_instance();
+		$nonce = wp_create_nonce( 'beastfeedbacks_csv_export' );
+
+		// 1. Filter by type 'vote'
+		$_POST                             = array(
+			'_wpnonce'           => $nonce,
+			'beastfeedbacks_type' => 'vote',
+		);
+		$_REQUEST                          = $_POST;
+		$posts                             = $admin->get_export_posts();
+		$post_ids                          = wp_list_pluck( $posts, 'ID' );
+		$this->assertContains( $post2, $post_ids );
+		$this->assertNotContains( $post1, $post_ids );
+		$this->assertNotContains( $post3, $post_ids );
+
+		// 2. Filter by source (parent1)
+		$_POST                             = array(
+			'_wpnonce'                => $nonce,
+			'beastfeedbacks_parent_id' => $parent1,
+		);
+		$_REQUEST                          = $_POST;
+		$posts                             = $admin->get_export_posts();
+		$post_ids                          = wp_list_pluck( $posts, 'ID' );
+		$this->assertContains( $post1, $post_ids );
+		$this->assertContains( $post2, $post_ids );
+		$this->assertNotContains( $post3, $post_ids );
+
+		// 3. Filter by type 'survey' AND parent1
+		$_POST                             = array(
+			'_wpnonce'                => $nonce,
+			'beastfeedbacks_type'      => 'survey',
+			'beastfeedbacks_parent_id' => $parent1,
+		);
+		$_REQUEST                          = $_POST;
+		$posts                             = $admin->get_export_posts();
+		$post_ids                          = wp_list_pluck( $posts, 'ID' );
+		$this->assertContains( $post1, $post_ids );
+		$this->assertNotContains( $post2, $post_ids );
+		$this->assertNotContains( $post3, $post_ids );
+
+		wp_delete_user( $admin_id );
+	}
+
+	/** @test */
 	public function download_csv_handles_invalid_json_content(): void {
 		$admin_id = wp_insert_user(
 			array(
