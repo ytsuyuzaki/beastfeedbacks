@@ -597,13 +597,15 @@ class BeastFeedbacks_Admin {
 	 */
 	public function stream_csv( $filename ) {
 		$args = array(
-			'posts_per_page'   => -1,
-			'post_type'        => 'beastfeedbacks',
-			'post_status'      => array( 'publish' ),
-			'order'            => 'ASC',
-			'suppress_filters' => false,
-			'date_query'       => array(),
-			'fields'           => 'ids',
+			'posts_per_page'         => -1,
+			'post_type'              => 'beastfeedbacks',
+			'post_status'            => array( 'publish' ),
+			'order'                  => 'ASC',
+			'suppress_filters'       => false,
+			'date_query'             => array(),
+			'fields'                 => 'ids',
+			'update_post_term_cache' => false,
+			'update_post_meta_cache' => false,
 		);
 
 		$post_ids = get_posts( $args );
@@ -632,11 +634,13 @@ class BeastFeedbacks_Admin {
 		foreach ( $chunks as $chunk ) {
 			$posts = get_posts(
 				array(
-					'post_type'        => 'beastfeedbacks',
-					'post__in'         => $chunk,
-					'orderby'          => 'post__in',
-					'posts_per_page'   => count( $chunk ),
-					'suppress_filters' => false,
+					'post_type'              => 'beastfeedbacks',
+					'post__in'               => $chunk,
+					'orderby'                => 'post__in',
+					'posts_per_page'         => count( $chunk ),
+					'suppress_filters'       => false,
+					'update_post_term_cache' => false,
+					'update_post_meta_cache' => false,
 				)
 			);
 
@@ -667,11 +671,13 @@ class BeastFeedbacks_Admin {
 		foreach ( $chunks as $chunk ) {
 			$posts = get_posts(
 				array(
-					'post_type'        => 'beastfeedbacks',
-					'post__in'         => $chunk,
-					'orderby'          => 'post__in',
-					'posts_per_page'   => count( $chunk ),
-					'suppress_filters' => false,
+					'post_type'              => 'beastfeedbacks',
+					'post__in'               => $chunk,
+					'orderby'                => 'post__in',
+					'posts_per_page'         => count( $chunk ),
+					'suppress_filters'       => false,
+					'update_post_term_cache' => false,
+					'update_post_meta_cache' => false,
 				)
 			);
 
@@ -742,12 +748,14 @@ class BeastFeedbacks_Admin {
 	public function get_export_posts() {
 		// NOTE: POST情報にフィルター設定を載せて検索する.
 		$args = array(
-			'posts_per_page'   => -1,
-			'post_type'        => 'beastfeedbacks',
-			'post_status'      => array( 'publish' ),
-			'order'            => 'ASC',
-			'suppress_filters' => false,
-			'date_query'       => array(),
+			'posts_per_page'         => -1,
+			'post_type'              => 'beastfeedbacks',
+			'post_status'            => array( 'publish' ),
+			'order'                  => 'ASC',
+			'suppress_filters'       => false,
+			'date_query'             => array(),
+			'update_post_term_cache' => false,
+			'update_post_meta_cache' => false,
 		);
 
 		return get_posts( $args );
