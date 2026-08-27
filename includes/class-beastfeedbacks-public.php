@@ -104,12 +104,21 @@ class BeastFeedbacks_Public {
 			'_wpnonce',
 		);
 
+		// Security: Enforce maximum parameter limit to prevent resource exhaustion via post parameter flooding.
+		$max_params = 50;
+
 		foreach ( array_keys( $post_data ) as $post_key ) {
+			if ( count( $post_params ) >= $max_params ) {
+				break;
+			}
+
 			if ( in_array( $post_key, $ignore_keys, true ) ) {
 				continue;
 			}
 			if ( isset( $post_data[ $post_key ] ) ) {
 				$sanitized_key = sanitize_text_field( (string) $post_key );
+				// Security: Truncate oversized keys to prevent DoS/storage bloat.
+				$sanitized_key = mb_substr( $sanitized_key, 0, 100 );
 				if ( '' === $sanitized_key ) {
 					continue;
 				}
@@ -117,13 +126,18 @@ class BeastFeedbacks_Public {
 				if ( is_array( $post_value ) ) {
 					$post_params[ $sanitized_key ] = array_map(
 						function ( $item ) {
-							return is_array( $item ) ? '' : sanitize_text_field( $item );
+							if ( is_array( $item ) ) {
+								return '';
+							}
+							$sanitized_item = sanitize_text_field( $item );
+							return mb_substr( $sanitized_item, 0, 2000 );
 						},
 						$post_value
 					);
 					continue;
 				}
-				$post_params[ $sanitized_key ] = sanitize_text_field( $post_value );
+				$sanitized_val                 = sanitize_text_field( $post_value );
+				$post_params[ $sanitized_key ] = mb_substr( $sanitized_val, 0, 2000 );
 			}
 		}
 
@@ -211,9 +225,14 @@ class BeastFeedbacks_Public {
 	 * @return string
 	 */
 	public function get_user_agent() {
-		return isset( $_SERVER['HTTP_USER_AGENT'] )
-			? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) )
-			: ''; // @codingStandardsIgnoreLine
+		if ( ! isset( $_SERVER['HTTP_USER_AGENT'] ) ) { // @codingStandardsIgnoreLine
+			return '';
+		}
+
+		$ua = sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ); // @codingStandardsIgnoreLine
+
+		// Security: Limit User-Agent string length to mitigate header flooding and buffer bloat.
+		return mb_substr( $ua, 0, 500 );
 	}
 
 	/**

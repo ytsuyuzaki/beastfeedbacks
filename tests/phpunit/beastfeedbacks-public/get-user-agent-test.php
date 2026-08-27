@@ -25,4 +25,11 @@ class BeastFeedbacks_Public_Get_User_Agent_Test extends BeastFeedbacks_TestCase 
 		$ua                         = \BeastFeedbacks_Public::get_instance()->get_user_agent();
 		$this->assertStringContainsString( 'TestAgent/1.0', $ua );
 	}
+
+	/** @test */
+	public function get_user_agent_truncates_oversized_input(): void {
+		$_SERVER['HTTP_USER_AGENT'] = str_repeat( 'A', 1000 );
+		$ua                         = \BeastFeedbacks_Public::get_instance()->get_user_agent();
+		$this->assertSame( 500, strlen( $ua ) );
+	}
 }
