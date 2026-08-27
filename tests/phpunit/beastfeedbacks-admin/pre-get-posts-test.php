@@ -39,6 +39,7 @@ class BeastFeedbacks_Admin_Pre_Get_Posts_Test extends BeastFeedbacks_TestCase {
 	public function type_filter_result_sets_meta_query_when_param_present(): void {
 		$_GET['_beastfeedbacks_nonce'] = wp_create_nonce( 'beastfeedbacks_filter' );
 		$_GET['beastfeedbacks_type']   = 'survey';
+		$_REQUEST                      = $_GET;
 		$q                             = $this->fake_query( array( 'post_type' => 'beastfeedbacks' ) );
 
 		\BeastFeedbacks_Admin::get_instance()->type_filter_result( $q );
@@ -76,6 +77,7 @@ class BeastFeedbacks_Admin_Pre_Get_Posts_Test extends BeastFeedbacks_TestCase {
 	public function source_filter_result_sets_post_parent_when_param_present(): void {
 		$_GET['_beastfeedbacks_nonce']    = wp_create_nonce( 'beastfeedbacks_filter' );
 		$_GET['beastfeedbacks_parent_id'] = '55';
+		$_REQUEST                         = $_GET;
 		$q                                = $this->fake_query(
 			array(
 				'post_type' => 'beastfeedbacks',

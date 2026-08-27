@@ -334,6 +334,7 @@ class BeastFeedbacks_Admin_Download_Csv_Test extends BeastFeedbacks_TestCase {
 		add_post_meta( $post3, 'beastfeedbacks_type', 'survey' );
 
 		$admin = \BeastFeedbacks_Admin::get_instance();
+		$admin->init();
 		$nonce = wp_create_nonce( 'beastfeedbacks_csv_export' );
 
 		// 1. Filter by type 'vote'
