@@ -288,6 +288,27 @@ class BeastFeedbacks_Admin {
 	}
 
 	/**
+	 * Retrieve and cache permalink URL and parsed path for a given parent post ID.
+	 *
+	 * @param int $parent_id Parent post ID.
+	 * @return array Associative array containing 'url' and 'path'.
+	 */
+	public function get_parent_permalink_data( $parent_id ) {
+		static $cache = array();
+
+		if ( ! isset( $cache[ $parent_id ] ) ) {
+			$form_url            = get_permalink( $parent_id );
+			$parsed_url          = wp_parse_url( $form_url );
+			$cache[ $parent_id ] = array(
+				'url'  => $form_url,
+				'path' => esc_html( isset( $parsed_url['path'] ) ? $parsed_url['path'] : '' ),
+			);
+		}
+
+		return $cache[ $parent_id ];
+	}
+
+	/**
 	 * Render source column content.
 	 *
 	 * @param int $post_id The current post ID.
@@ -298,24 +319,12 @@ class BeastFeedbacks_Admin {
 			return;
 		}
 
-		// Cache permalinks and parsed path per parent ID to avoid redundant get_permalink() and wp_parse_url() calls during list table rendering.
-		static $permalink_cache = array();
-
-		$parent_id = $post->post_parent;
-
-		if ( ! isset( $permalink_cache[ $parent_id ] ) ) {
-			$form_url                      = get_permalink( $parent_id );
-			$parsed_url                    = wp_parse_url( $form_url );
-			$permalink_cache[ $parent_id ] = array(
-				'url'  => $form_url,
-				'path' => esc_html( isset( $parsed_url['path'] ) ? $parsed_url['path'] : '' ),
-			);
-		}
+		$permalink_data = $this->get_parent_permalink_data( $post->post_parent );
 
 		printf(
 			'<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>',
-			esc_url( $permalink_cache[ $parent_id ]['url'] ),
-			$permalink_cache[ $parent_id ]['path'] // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			esc_url( $permalink_data['url'] ),
+			$permalink_data['path'] // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		);
 	}
 
@@ -440,9 +449,8 @@ class BeastFeedbacks_Admin {
 			<option value=""><?php esc_html_e( 'All Sources', 'beastfeedbacks' ); ?></option>
 			<?php foreach ( $parent_ids as $parent_id ) : ?>
 				<?php
-				$parent_url    = get_permalink( $parent_id );
-				$parsed_url    = wp_parse_url( $parent_url );
-				$select_source = esc_html( $parsed_url['path'] );
+				$permalink_data = $this->get_parent_permalink_data( $parent_id );
+				$select_source  = $permalink_data['path'];
 				?>
 				<option value="<?php echo esc_html( $parent_id ); ?>"
 					<?php if ( $selected_parent_id === $parent_id ) : ?>
@@ -666,8 +674,6 @@ class BeastFeedbacks_Admin {
 		fputcsv( $output, $escaped_fields );
 
 		// Pass 2: Stream rows.
-		$permalink_cache = array();
-
 		foreach ( $chunks as $chunk ) {
 			$posts = get_posts(
 				array(
@@ -689,13 +695,8 @@ class BeastFeedbacks_Admin {
 			foreach ( $posts as $post ) {
 				$source = '';
 				if ( $post->post_parent ) {
-					$parent_id = $post->post_parent;
-					if ( ! isset( $permalink_cache[ $parent_id ] ) ) {
-						$form_url                      = get_permalink( $parent_id );
-						$parsed_url                    = wp_parse_url( $form_url );
-						$permalink_cache[ $parent_id ] = esc_html( isset( $parsed_url['path'] ) ? $parsed_url['path'] : '' );
-					}
-					$source = $permalink_cache[ $parent_id ];
+					$permalink_data = $this->get_parent_permalink_data( $post->post_parent );
+					$source         = $permalink_data['path'];
 				}
 
 				$content = json_decode( $post->post_content, true );
@@ -768,8 +769,7 @@ class BeastFeedbacks_Admin {
 	 * @return array Map of field keys to associative array of [ post_id => data_value ].
 	 */
 	public function get_csv_data( array $posts ) {
-		$post_datas      = array();
-		$permalink_cache = array();
+		$post_datas = array();
 
 		$parent_ids = array_values( array_filter( array_map( 'intval', array_unique( wp_list_pluck( $posts, 'post_parent' ) ) ) ) );
 		if ( ! empty( $parent_ids ) ) {
@@ -781,13 +781,8 @@ class BeastFeedbacks_Admin {
 
 			$source = '';
 			if ( $post->post_parent ) {
-				$parent_id = $post->post_parent;
-				if ( ! isset( $permalink_cache[ $parent_id ] ) ) {
-					$form_url                      = get_permalink( $parent_id );
-					$parsed_url                    = wp_parse_url( $form_url );
-					$permalink_cache[ $parent_id ] = esc_html( isset( $parsed_url['path'] ) ? $parsed_url['path'] : '' );
-				}
-				$source = $permalink_cache[ $parent_id ];
+				$permalink_data = $this->get_parent_permalink_data( $post->post_parent );
+				$source         = $permalink_data['path'];
 			}
 
 			$content = json_decode( $post->post_content, true );
