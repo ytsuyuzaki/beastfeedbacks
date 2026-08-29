@@ -50,6 +50,11 @@ class BeastFeedbacks_Public {
 	public function register_beastfeedbacks_form() {
 		check_ajax_referer( 'register_beastfeedbacks_form' );
 
+		$ip_address = $this->get_ip_address();
+		if ( $this->is_rate_limited( $ip_address ) ) {
+			wp_send_json_error( array( 'message' => __( 'Too many requests', 'beastfeedbacks' ) ) );
+		}
+
 		// POSTデータの存在確認と適切なサニタイズ.
 		if ( ! isset( $_POST['id'] ) || ! isset( $_POST['beastfeedbacks_type'] ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid request', 'beastfeedbacks' ) ) );
@@ -70,7 +75,6 @@ class BeastFeedbacks_Public {
 			wp_send_json_error( array( 'message' => __( 'Invalid post ID', 'beastfeedbacks' ) ) );
 		}
 
-		$ip_address  = $this->get_ip_address();
 		$user_agent  = $this->get_user_agent();
 		$time        = current_time( 'mysql' );
 		$title       = "{$ip_address} - {$time}";
@@ -217,6 +221,28 @@ class BeastFeedbacks_Public {
 			'message' => $message,
 			'count'   => $count,
 		);
+	}
+
+	/**
+	 * レートリミットの判定とカウント処理
+	 *
+	 * @param string $ip_address IPアドレス.
+	 * @return bool レートリミット超過の場合は true.
+	 */
+	public function is_rate_limited( string $ip_address ) {
+		$key   = 'bf_rl_' . md5( '' === $ip_address ? 'unknown' : $ip_address );
+		$count = (int) get_transient( $key );
+
+		$max_requests = 10;
+		$window       = 60;
+
+		if ( $count >= $max_requests ) {
+			return true;
+		}
+
+		set_transient( $key, $count + 1, $window );
+
+		return false;
 	}
 
 	/**

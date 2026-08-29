@@ -291,4 +291,34 @@ class BeastFeedbacks_Public_Register_Beastfeedbacks_Form_Test extends BeastFeedb
 		$this->assertFalse( $response['success'] );
 		$this->assertSame( 'Failed to save feedback', $response['data']['message'] );
 	}
+
+	/**
+	 * Verify that register_beastfeedbacks_form rate limits requests after threshold is exceeded.
+	 */
+	public function test_register_beastfeedbacks_form_rate_limiting(): void {
+		$parent_id = $this->create_post();
+		$_SERVER['REMOTE_ADDR'] = '198.51.100.42';
+
+		$_POST    = $this->create_ajax_request( array(), $parent_id, 'like' );
+		$_REQUEST = $_POST;
+
+		// Make 10 successful requests (up to the limit).
+		for ( $i = 0; $i < 10; $i++ ) {
+			$response = $this->call_ajax_handler();
+			$this->assertSame( 1, $response['success'], "Request {$i} should succeed" );
+		}
+
+		// The 11th request should be rate limited.
+		$response = $this->call_ajax_handler();
+		$this->assertSame( 0, $response['success'] );
+		$this->assertSame( 'Too many requests', $response['data']['message'] );
+
+		// A different IP address should not be rate limited.
+		$_SERVER['REMOTE_ADDR'] = '198.51.100.43';
+		$_POST                  = $this->create_ajax_request( array(), $parent_id, 'like' );
+		$_REQUEST               = $_POST;
+
+		$response = $this->call_ajax_handler();
+		$this->assertSame( 1, $response['success'] );
+	}
 }
