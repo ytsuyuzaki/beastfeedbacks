@@ -495,7 +495,7 @@ class BeastFeedbacks_Admin {
 	}
 
 	/**
-	 * Prime parent post caches to prevent N+1 queries in admin list table.
+	 * Prime parent post and post meta caches to prevent N+1 queries in admin list table.
 	 *
 	 * @param array    $posts Array of WP_Post objects.
 	 * @param WP_Query $query WP_Query instance.
@@ -517,6 +517,11 @@ class BeastFeedbacks_Admin {
 			}
 		} elseif ( $this->post_type !== $post_type ) {
 			return $posts;
+		}
+
+		$post_ids = array_values( array_filter( array_map( 'absint', wp_list_pluck( $posts, 'ID' ) ) ) );
+		if ( ! empty( $post_ids ) ) {
+			update_postmeta_cache( $post_ids );
 		}
 
 		$parent_ids = array_values( array_unique( array_filter( array_map( 'absint', wp_list_pluck( $posts, 'post_parent' ) ) ) ) );

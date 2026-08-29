@@ -283,18 +283,31 @@ class BeastFeedbacks_Admin_Manage_Posts_Custom_Column_Test extends BeastFeedback
 			)
 		);
 
+		add_post_meta( $child_id1, 'beastfeedbacks_type', 'survey' );
+		add_post_meta( $child_id2, 'beastfeedbacks_type', 'vote' );
+
+		wp_cache_delete( $child_id1, 'post_meta' );
+		wp_cache_delete( $child_id2, 'post_meta' );
+		$this->assertFalse( wp_cache_get( $child_id1, 'post_meta' ) );
+		$this->assertFalse( wp_cache_get( $child_id2, 'post_meta' ) );
+
 		$posts = array( get_post( $child_id1 ), get_post( $child_id2 ) );
 		$res   = $admin->prime_parent_post_caches( $posts, $query );
 
 		$this->assertSame( $posts, $res );
 		$this->assertNotFalse( wp_cache_get( $parent_id1, 'posts' ) );
 		$this->assertNotFalse( wp_cache_get( $parent_id2, 'posts' ) );
+		$this->assertNotFalse( wp_cache_get( $child_id1, 'post_meta' ) );
+		$this->assertNotFalse( wp_cache_get( $child_id2, 'post_meta' ) );
 
 		clean_post_cache( $parent_id1 );
 		clean_post_cache( $parent_id2 );
+		wp_cache_delete( $child_id1, 'post_meta' );
+		wp_cache_delete( $child_id2, 'post_meta' );
 		set_current_screen( 'front' );
 
 		$admin->prime_parent_post_caches( $posts, $query );
 		$this->assertFalse( wp_cache_get( $parent_id1, 'posts' ) );
+		$this->assertFalse( wp_cache_get( $child_id1, 'post_meta' ) );
 	}
 }
