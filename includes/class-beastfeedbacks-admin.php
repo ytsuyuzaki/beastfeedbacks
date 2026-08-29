@@ -200,7 +200,7 @@ class BeastFeedbacks_Admin {
 	public function manage_posts_custom_column( $column_name, $post_id ) {
 		switch ( $column_name ) {
 			case 'beastfeedbacks_date':
-				$this->render_date_column( $post_id );
+				$this->render_date_column();
 				break;
 			case 'beastfeedbacks_response':
 				$this->render_response_column( $post_id );
@@ -216,10 +216,8 @@ class BeastFeedbacks_Admin {
 
 	/**
 	 * Render date column content.
-	 *
-	 * @param int $post_id The current post ID.
 	 */
-	private function render_date_column( $post_id ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+	private function render_date_column() {
 		echo esc_html( date_i18n( 'Y/m/d', get_the_time( 'U' ) ) );
 	}
 
