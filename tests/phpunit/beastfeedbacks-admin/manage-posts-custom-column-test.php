@@ -101,6 +101,9 @@ class BeastFeedbacks_Admin_Manage_Posts_Custom_Column_Test extends BeastFeedback
 			)
 		);
 
+		// Test when $GLOBALS['post'] is set (list table row context)
+		$GLOBALS['post'] = get_post( $post_id );
+
 		ob_start();
 		$admin->manage_posts_custom_column( 'beastfeedbacks_source', $post_id );
 		$output = ob_get_clean();
@@ -114,6 +117,15 @@ class BeastFeedbacks_Admin_Manage_Posts_Custom_Column_Test extends BeastFeedback
 		);
 
 		$this->assertSame( $expected, $output );
+
+		// Test when $GLOBALS['post'] is not set or mismatched
+		unset( $GLOBALS['post'] );
+
+		ob_start();
+		$admin->manage_posts_custom_column( 'beastfeedbacks_source', $post_id );
+		$output_no_global = ob_get_clean();
+
+		$this->assertSame( $expected, $output_no_global );
 	}
 
 	/** @test */
