@@ -231,26 +231,29 @@ class CSV_Edge_Cases_Test extends BeastFeedbacks_TestCase {
 		$admin = \BeastFeedbacks_Admin::get_instance();
 
 		// Formula triggers at start.
-		$this->assertSame( "'=1+1", $admin->esc_csv( '=1+1' ) );
-		$this->assertSame( "'+10", $admin->esc_csv( '+10' ) );
-		$this->assertSame( "'-10", $admin->esc_csv( '-10' ) );
-		$this->assertSame( "'@cmd", $admin->esc_csv( '@cmd' ) );
-		$this->assertSame( "'|calc", $admin->esc_csv( '|calc' ) );
-		$this->assertSame( "'%cmd", $admin->esc_csv( '%cmd' ) );
-		$this->assertSame( "'\tcmd", $admin->esc_csv( "\tcmd" ) );
-		$this->assertSame( "'\rcmd", $admin->esc_csv( "\rcmd" ) );
-		$this->assertSame( "'\n=1+1", $admin->esc_csv( "\n=1+1" ) );
+		$this->assertSame( "' =1+1", $admin->esc_csv( '=1+1' ) );
+		$this->assertSame( "' +10", $admin->esc_csv( '+10' ) );
+		$this->assertSame( "' -10", $admin->esc_csv( '-10' ) );
+		$this->assertSame( "' @cmd", $admin->esc_csv( '@cmd' ) );
+		$this->assertSame( "' |calc", $admin->esc_csv( '|calc' ) );
+		$this->assertSame( "' %cmd", $admin->esc_csv( '%cmd' ) );
+		$this->assertSame( "' \tcmd", $admin->esc_csv( "\tcmd" ) );
+		$this->assertSame( "' \rcmd", $admin->esc_csv( "\rcmd" ) );
+		$this->assertSame( "' \n=1+1", $admin->esc_csv( "\n=1+1" ) );
 
 		// Whitespace-padded formula triggers.
-		$this->assertSame( "'   =1+1", $admin->esc_csv( '   =1+1' ) );
-		$this->assertSame( "'  +50", $admin->esc_csv( '  +50' ) );
-		$this->assertSame( "' -20", $admin->esc_csv( ' -20' ) );
-		$this->assertSame( "'  @test", $admin->esc_csv( '  @test' ) );
-		$this->assertSame( "'  |calc", $admin->esc_csv( '  |calc' ) );
-		$this->assertSame( "'  %cmd", $admin->esc_csv( '  %cmd' ) );
-		$this->assertSame( "'  \ttab", $admin->esc_csv( "  \ttab" ) );
-		$this->assertSame( "'  \rcr", $admin->esc_csv( "  \rcr" ) );
-		$this->assertSame( "'  \n=1+1", $admin->esc_csv( "  \n=1+1" ) );
+		$this->assertSame( "'    =1+1", $admin->esc_csv( '   =1+1' ) );
+		$this->assertSame( "'   +50", $admin->esc_csv( '  +50' ) );
+		$this->assertSame( "'  -20", $admin->esc_csv( ' -20' ) );
+		$this->assertSame( "'   @test", $admin->esc_csv( '  @test' ) );
+		$this->assertSame( "'   |calc", $admin->esc_csv( '  |calc' ) );
+		$this->assertSame( "'   %cmd", $admin->esc_csv( '  %cmd' ) );
+		$this->assertSame( "'   \ttab", $admin->esc_csv( "  \ttab" ) );
+		$this->assertSame( "'   \rcr", $admin->esc_csv( "  \rcr" ) );
+		$this->assertSame( "'   \n=1+1", $admin->esc_csv( "  \n=1+1" ) );
+
+		// Already escaped value.
+		$this->assertSame( "' =1+1", $admin->esc_csv( "' =1+1" ) );
 
 		// Normal / safe values.
 		$this->assertSame( 'Normal text', $admin->esc_csv( 'Normal text' ) );
@@ -307,11 +310,11 @@ class CSV_Edge_Cases_Test extends BeastFeedbacks_TestCase {
 		$admin->output_csv( 'formula.csv', $posts, $csv_data );
 		$csv_output = ob_get_clean();
 
-		$this->assertStringContainsString( "'=1+1", $csv_output );
-		$this->assertStringContainsString( "'   =SUM(A1:A10)", $csv_output );
-		$this->assertStringContainsString( "'+10", $csv_output );
-		$this->assertStringContainsString( "'-5", $csv_output );
-		$this->assertStringContainsString( "'@CMD", $csv_output );
+		$this->assertStringContainsString( "' =1+1", $csv_output );
+		$this->assertStringContainsString( "'    =SUM(A1:A10)", $csv_output );
+		$this->assertStringContainsString( "' +10", $csv_output );
+		$this->assertStringContainsString( "' -5", $csv_output );
+		$this->assertStringContainsString( "' @CMD", $csv_output );
 		$this->assertStringContainsString( 'Just normal answer', $csv_output );
 		$this->assertStringContainsString( '100', $csv_output );
 	}
@@ -349,8 +352,8 @@ class CSV_Edge_Cases_Test extends BeastFeedbacks_TestCase {
 		fclose( $stream );
 
 		$this->assertIsArray( $header );
-		$this->assertSame( "'=FORMULA_HEADER()", $header[0] );
-		$this->assertSame( "'+PLUS_HEADER", $header[1] );
+		$this->assertSame( "' =FORMULA_HEADER()", $header[0] );
+		$this->assertSame( "' +PLUS_HEADER", $header[1] );
 		$this->assertSame( 'NORMAL_HEADER', $header[2] );
 	}
 }
