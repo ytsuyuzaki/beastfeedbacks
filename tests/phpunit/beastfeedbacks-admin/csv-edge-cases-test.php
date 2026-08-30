@@ -252,6 +252,10 @@ class CSV_Edge_Cases_Test extends BeastFeedbacks_TestCase {
 		$this->assertSame( "'   \rcr", $admin->esc_csv( "  \rcr" ) );
 		$this->assertSame( "'   \n=1+1", $admin->esc_csv( "  \n=1+1" ) );
 
+		// Array input handling.
+		$this->assertSame( 'a,b,c', $admin->esc_csv( array( 'a', 'b', 'c' ) ) );
+		$this->assertSame( "' =1+1,safe", $admin->esc_csv( array( '=1+1', 'safe' ) ) );
+
 		// Already escaped value.
 		$this->assertSame( "' =1+1", $admin->esc_csv( "' =1+1" ) );
 

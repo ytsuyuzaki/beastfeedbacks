@@ -262,20 +262,20 @@ class BeastFeedbacks_Admin {
 			<tbody>
 				<?php if ( 'vote' === $type ) : ?>
 					<tr>
-						<td><?php echo esc_html_e( 'Select', 'beastfeedbacks' ); ?></td>
-						<td><?php echo esc_html( $post_params['selected'] ); ?></td>
+						<td><?php esc_html_e( 'Select', 'beastfeedbacks' ); ?></td>
+						<td><?php echo esc_html( isset( $post_params['selected'] ) && is_scalar( $post_params['selected'] ) ? (string) $post_params['selected'] : '' ); ?></td>
 					</tr>
 				<?php elseif ( 'survey' === $type ) : ?>
 					<?php foreach ( $post_params as $key => $value ) : ?>
 						<tr>
-							<td><?php echo esc_html( $key ); ?></td>
+							<td><?php echo esc_html( is_scalar( $key ) ? (string) $key : '' ); ?></td>
 							<td>
 								<?php if ( is_array( $value ) ) : ?>
 									<?php foreach ( $value as $v ) : ?>
-										<?php echo esc_html( $v ); ?><br />
+										<?php echo esc_html( is_scalar( $v ) ? (string) $v : '' ); ?><br />
 									<?php endforeach; ?>
 								<?php else : ?>
-									<?php echo esc_html( $value ); ?>
+									<?php echo esc_html( is_scalar( $value ) ? (string) $value : '' ); ?>
 								<?php endif ?>
 							</td>
 						</tr>
@@ -900,6 +900,10 @@ class BeastFeedbacks_Admin {
 	 * @return string
 	 */
 	public function esc_csv( $field ) {
+		if ( is_array( $field ) ) {
+			$field = implode( ',', array_map( 'strval', array_filter( $field, 'is_scalar' ) ) );
+		}
+
 		$active_content_triggers = array( '=', '+', '-', '@', '|', '%', "\t", "\r", "\n" );
 
 		$string_field  = (string) $field;
