@@ -141,6 +141,32 @@ describe( 'Vote Block view.js', () => {
 				expect( messageSpan.textContent ).toBe(
 					'Oops! Something went wrong.'
 				);
+				expect( buttons[ 0 ].disabled ).toBe( false );
+			} );
+		} );
+
+		it( 'displays custom error message and re-enables button when server returns rate limit error response', async () => {
+			const { form, buttons } = createFormDOM();
+
+			fetchSpy.mockResolvedValue( {
+				ok: false,
+				status: 429,
+				json: jest.fn().mockResolvedValue( {
+					success: false,
+					data: { message: 'Too many requests' },
+				} ),
+			} );
+
+			require( '../view' );
+
+			dispatchSubmit( form, buttons[ 0 ] );
+
+			await waitFor( () => {
+				const messageSpan = form.nextSibling;
+				expect( messageSpan ).not.toBeNull();
+				expect( messageSpan.tagName ).toBe( 'SPAN' );
+				expect( messageSpan.textContent ).toBe( 'Too many requests' );
+				expect( buttons[ 0 ].disabled ).toBe( false );
 			} );
 		} );
 	} );

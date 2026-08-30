@@ -163,5 +163,38 @@ describe( 'src/like/view.js', () => {
 				'Oops! Something went wrong.'
 			);
 		} );
+
+		it( 'displays custom error message when server returns rate limit error response', async () => {
+			const form = setupDOM();
+
+			jest.spyOn( window, 'fetch' ).mockResolvedValue( {
+				ok: false,
+				status: 429,
+				json: jest.fn().mockResolvedValue( {
+					success: false,
+					data: { message: 'Too many requests' },
+				} ),
+			} );
+
+			jest.isolateModules( () => {
+				require( '../view' );
+			} );
+
+			const submitEvent = new Event( 'submit', {
+				bubbles: true,
+				cancelable: true,
+			} );
+
+			form.dispatchEvent( submitEvent );
+
+			for ( let i = 0; i < 10; i++ ) {
+				await Promise.resolve();
+			}
+
+			const messageElement = form.nextSibling;
+			expect( messageElement ).not.toBeNull();
+			expect( messageElement.tagName ).toBe( 'P' );
+			expect( messageElement.textContent ).toBe( 'Too many requests' );
+		} );
 	} );
 } );
