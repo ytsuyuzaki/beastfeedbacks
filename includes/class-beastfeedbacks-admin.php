@@ -882,7 +882,7 @@ class BeastFeedbacks_Admin {
 		$active_content_triggers = array( '=', '+', '-', '@', '|', '%', "\t", "\r", "\n" );
 
 		$string_field  = (string) $field;
-		$trimmed_field = ltrim( $string_field, " \t\r\n\v\0" );
+		$trimmed_field = ltrim( $string_field, ' ' );
 
 		if ( '' !== $string_field && ( in_array( mb_substr( $string_field, 0, 1 ), $active_content_triggers, true ) || ( '' !== $trimmed_field && in_array( mb_substr( $trimmed_field, 0, 1 ), $active_content_triggers, true ) ) ) ) {
 			$field = "'" . $field;

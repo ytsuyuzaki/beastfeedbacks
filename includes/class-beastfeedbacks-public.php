@@ -52,7 +52,7 @@ class BeastFeedbacks_Public {
 
 		$ip_address = $this->get_ip_address();
 		if ( $this->is_rate_limited( $ip_address ) ) {
-			wp_send_json_error( array( 'message' => __( 'Too many requests', 'beastfeedbacks' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Too many requests', 'beastfeedbacks' ) ), 429 );
 		}
 
 		// POSTデータの存在確認と適切なサニタイズ.
@@ -230,17 +230,37 @@ class BeastFeedbacks_Public {
 	 * @return bool レートリミット超過の場合は true.
 	 */
 	public function is_rate_limited( string $ip_address ) {
-		$key   = 'bf_rl_' . md5( '' === $ip_address ? 'unknown' : $ip_address );
-		$count = (int) get_transient( $key );
+		if ( current_user_can( 'manage_options' ) ) {
+			return false;
+		}
 
-		$max_requests = 10;
-		$window       = 60;
+		$pre = apply_filters( 'beastfeedbacks_pre_is_rate_limited', null, $ip_address );
+		if ( null !== $pre ) {
+			return (bool) $pre;
+		}
 
-		if ( $count >= $max_requests ) {
+		$key          = 'bf_rl_' . md5( '' === $ip_address ? 'unknown' : $ip_address );
+		$entry        = get_transient( $key );
+		$now          = time();
+		$max_requests = (int) apply_filters( 'beastfeedbacks_rate_limit_max_requests', 10 );
+		$window       = (int) apply_filters( 'beastfeedbacks_rate_limit_window', 60 );
+
+		if ( ! is_array( $entry ) || ! isset( $entry['count'], $entry['reset_at'] ) || $now >= $entry['reset_at'] ) {
+			$entry = array(
+				'count'    => 1,
+				'reset_at' => $now + $window,
+			);
+			set_transient( $key, $entry, $window );
+			return false;
+		}
+
+		if ( $entry['count'] >= $max_requests ) {
 			return true;
 		}
 
-		set_transient( $key, $count + 1, $window );
+		++$entry['count'];
+		$ttl = max( 1, $entry['reset_at'] - $now );
+		set_transient( $key, $entry, $ttl );
 
 		return false;
 	}

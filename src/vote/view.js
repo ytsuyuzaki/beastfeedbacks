@@ -8,7 +8,10 @@ const addMessage = ( form, message ) => {
 
 const submit = ( e ) => {
 	e.preventDefault();
-	e.submitter.setAttribute( 'disabled', true );
+	const submitter = e.submitter;
+	if ( submitter ) {
+		submitter.setAttribute( 'disabled', true );
+	}
 
 	const form = e.target;
 	const action = form.getAttribute( 'action' );
@@ -20,7 +23,7 @@ const submit = ( e ) => {
 	}
 
 	const body = new FormData( form );
-	body.append( 'selected', e.submitter.textContent );
+	body.append( 'selected', submitter ? submitter.textContent : '' );
 	body.append( 'select', select );
 
 	fetch( action, {
@@ -28,19 +31,39 @@ const submit = ( e ) => {
 		body,
 	} )
 		.then( ( response ) => {
-			if ( ! response.ok ) {
-				throw new Error( response );
+			if ( typeof response.json === 'function' ) {
+				return Promise.resolve( response.json() )
+					.then( ( data ) => ( { ok: response.ok, data } ) )
+					.catch( () => ( { ok: response.ok, data: {} } ) );
 			}
-			return response.json();
+			if ( ! response.ok ) {
+				throw new Error();
+			}
+			return { ok: response.ok, data: {} };
 		} )
-		.then( ( data ) => {
-			addMessage( form, data.message );
+		.then( ( { ok, data } ) => {
+			if ( ! ok || data?.success === false ) {
+				const errorMessage =
+					data?.data?.message ||
+					data?.message ||
+					__( 'Oops! Something went wrong.', 'beastfeedbacks' );
+				addMessage( form, errorMessage );
+				if ( submitter ) {
+					submitter.removeAttribute( 'disabled' );
+				}
+				return;
+			}
+
+			addMessage( form, data?.message );
 		} )
 		.catch( () => {
 			addMessage(
 				form,
 				__( 'Oops! Something went wrong.', 'beastfeedbacks' )
 			);
+			if ( submitter ) {
+				submitter.removeAttribute( 'disabled' );
+			}
 		} );
 };
 
