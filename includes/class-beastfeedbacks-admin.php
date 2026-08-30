@@ -222,17 +222,31 @@ class BeastFeedbacks_Admin {
 	}
 
 	/**
+	 * Retrieve WP_Post object for column rendering, utilizing global $post when available.
+	 *
+	 * @param int $post_id The post ID.
+	 * @return WP_Post|null
+	 */
+	private function get_post_for_column( $post_id ) {
+		global $post;
+		if ( isset( $post ) && $post instanceof WP_Post && (int) $post->ID === (int) $post_id ) {
+			return $post;
+		}
+		return get_post( $post_id );
+	}
+
+	/**
 	 * Render response column content.
 	 *
 	 * @param int $post_id The current post ID.
 	 */
 	private function render_response_column( $post_id ) {
-		global $post;
-		$current_post = ( isset( $post ) && $post instanceof WP_Post && (int) $post->ID === (int) $post_id ) ? $post : get_post( $post_id );
-		if ( ! $current_post ) {
+		$post = $this->get_post_for_column( $post_id );
+		if ( ! $post ) {
 			return;
 		}
-		$content = json_decode( $current_post->post_content, true );
+
+		$content = json_decode( $post->post_content, true );
 		if ( ! is_array( $content ) ) {
 			return;
 		}
@@ -316,13 +330,12 @@ class BeastFeedbacks_Admin {
 	 * @param int $post_id The current post ID.
 	 */
 	private function render_source_column( $post_id ) {
-		global $post;
-		$current_post = ( isset( $post ) && $post instanceof WP_Post && (int) $post->ID === (int) $post_id ) ? $post : get_post( $post_id );
-		if ( ! $current_post || ! isset( $current_post->post_parent ) || ! $current_post->post_parent ) {
+		$post = $this->get_post_for_column( $post_id );
+		if ( ! $post || ! isset( $post->post_parent ) || ! $post->post_parent ) {
 			return;
 		}
 
-		$permalink_data = $this->get_parent_permalink_data( $current_post->post_parent );
+		$permalink_data = $this->get_parent_permalink_data( $post->post_parent );
 
 		printf(
 			'<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>',
