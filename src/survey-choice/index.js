@@ -7,7 +7,7 @@ import './style.scss';
 import FieldControls from './field-controls';
 import EditListBlock from './edit-list-block';
 
-function GenerateStyle( { layout } ) {
+export function GenerateStyle( { layout } = {} ) {
 	const display = layout?.type ?? 'flex';
 	const flexFlow = layout?.orientation === 'vertical' ? 'column' : null;
 	const justifyContent = layout?.justifyContent;
