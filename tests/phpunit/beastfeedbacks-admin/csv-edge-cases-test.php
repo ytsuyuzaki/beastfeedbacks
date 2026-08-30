@@ -248,8 +248,8 @@ class CSV_Edge_Cases_Test extends BeastFeedbacks_TestCase {
 		$this->assertSame( "'  @test", $admin->esc_csv( '  @test' ) );
 		$this->assertSame( "'  |calc", $admin->esc_csv( '  |calc' ) );
 		$this->assertSame( "'  %cmd", $admin->esc_csv( '  %cmd' ) );
-		$this->assertSame( "'  \t=1+1", $admin->esc_csv( "  \t=1+1" ) );
-		$this->assertSame( "'  \r+1", $admin->esc_csv( "  \r+1" ) );
+		$this->assertSame( "'  \ttab", $admin->esc_csv( "  \ttab" ) );
+		$this->assertSame( "'  \rcr", $admin->esc_csv( "  \rcr" ) );
 		$this->assertSame( "'  \n=1+1", $admin->esc_csv( "  \n=1+1" ) );
 
 		// Normal / safe values.

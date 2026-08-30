@@ -122,6 +122,45 @@ class BeastFeedbacks_Admin_Stream_Csv_Test extends BeastFeedbacks_TestCase {
 			)
 		);
 
+		// Posts 4 to 500: Fill first chunk to test crossing 500-item chunk boundary.
+		for ( $i = 4; $i <= 500; $i++ ) {
+			$this->create_post(
+				array(
+					'post_type'    => 'beastfeedbacks',
+					'post_parent'  => 0,
+					'post_content' => wp_slash(
+						wp_json_encode(
+							array(
+								'type'        => 'like',
+								'ip_address'  => "192.0.2.{$i}",
+								'user_agent'  => "DummyAgent{$i}",
+								'post_params' => array(),
+							)
+						)
+					),
+					'post_date'    => '2025-01-04 00:00:00',
+				)
+			);
+		}
+
+		// Post 501: Second chunk post with unique field 'chunk2_field' to verify multi-chunk header aggregation.
+		$content501 = array(
+			'type'        => 'survey',
+			'ip_address'  => '192.0.2.200',
+			'user_agent'  => 'Chunk2Agent',
+			'post_params' => array(
+				'chunk2_field' => 'Chunk 2 Value',
+			),
+		);
+		$this->create_post(
+			array(
+				'post_type'    => 'beastfeedbacks',
+				'post_parent'  => $parent_id,
+				'post_content' => wp_slash( wp_json_encode( $content501 ) ),
+				'post_date'    => '2025-01-05 10:00:00',
+			)
+		);
+
 		ob_start();
 		$admin->stream_csv( 'stream-test.csv' );
 		$csv_output = ob_get_clean();
@@ -134,15 +173,14 @@ class BeastFeedbacks_Admin_Stream_Csv_Test extends BeastFeedbacks_TestCase {
 		rewind( $stream );
 
 		$header = fgetcsv( $stream );
-		$row1   = fgetcsv( $stream );
-		$row2   = fgetcsv( $stream );
-		$row3   = fgetcsv( $stream );
+		$rows   = array();
+		while ( ( $row = fgetcsv( $stream ) ) !== false ) { // phpcs:ignore Generic.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition
+			$rows[] = $row;
+		}
 		fclose( $stream ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 
 		$this->assertIsArray( $header );
-		$this->assertIsArray( $row1 );
-		$this->assertIsArray( $row2 );
-		$this->assertIsArray( $row3 );
+		$this->assertCount( 501, $rows );
 
 		// Check default and dynamic field headers collected across all chunks.
 		$this->assertContains( 'source', $header );
@@ -155,29 +193,43 @@ class BeastFeedbacks_Admin_Stream_Csv_Test extends BeastFeedbacks_TestCase {
 		$this->assertContains( 'formula', $header );
 		$this->assertContains( 'q2', $header );
 		$this->assertContains( 'selected', $header );
+		$this->assertContains( 'chunk2_field', $header );
 
 		// Verify row 1 mapping (Survey post).
-		$map1 = array_combine( $header, $row1 );
+		$map1 = array_combine( $header, $rows[0] );
 		$this->assertSame( 'survey', $map1['type'] );
 		$this->assertSame( '192.0.2.10', $map1['ip_address'] );
 		$this->assertSame( 'StreamAgent1', $map1['user_agent'] );
 		$this->assertSame( 'Answer 1', $map1['q1'] );
 		$this->assertSame( 'tag1,tag2', $map1['tags'] );
 		$this->assertSame( "'=SUM(1,1)", $map1['formula'] );
+		$this->assertSame( '', $map1['chunk2_field'] );
 
 		// Verify row 2 mapping (Vote post).
-		$map2 = array_combine( $header, $row2 );
+		$map2 = array_combine( $header, $rows[1] );
 		$this->assertSame( 'vote', $map2['type'] );
 		$this->assertSame( '192.0.2.11', $map2['ip_address'] );
 		$this->assertSame( 'StreamAgent2', $map2['user_agent'] );
 		$this->assertSame( 'Option B', $map2['q2'] );
 		$this->assertSame( 'Yes', $map2['selected'] );
+		$this->assertSame( '', $map2['chunk2_field'] );
 
 		// Verify row 3 mapping (Invalid JSON post).
-		$map3 = array_combine( $header, $row3 );
+		$map3 = array_combine( $header, $rows[2] );
 		$this->assertSame( '', $map3['source'] );
 		$this->assertSame( '', $map3['type'] );
 		$this->assertSame( '', $map3['ip_address'] );
 		$this->assertSame( '2025-01-03 14:00:00', $map3['date'] );
+		$this->assertSame( '', $map3['chunk2_field'] );
+
+		// Verify row 501 mapping (Post 501 in chunk 2).
+		$map501         = array_combine( $header, $rows[500] );
+		$permalink_data = $admin->get_parent_permalink_data( $parent_id );
+		$this->assertSame( $permalink_data['path'], $map501['source'] );
+		$this->assertSame( 'survey', $map501['type'] );
+		$this->assertSame( '192.0.2.200', $map501['ip_address'] );
+		$this->assertSame( 'Chunk2Agent', $map501['user_agent'] );
+		$this->assertSame( 'Chunk 2 Value', $map501['chunk2_field'] );
+		$this->assertSame( '', $map501['q1'] );
 	}
 }
