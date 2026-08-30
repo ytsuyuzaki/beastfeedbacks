@@ -200,7 +200,7 @@ class BeastFeedbacks_Admin {
 	public function manage_posts_custom_column( $column_name, $post_id ) {
 		switch ( $column_name ) {
 			case 'beastfeedbacks_date':
-				$this->render_date_column();
+				$this->render_date_column( $post_id );
 				break;
 			case 'beastfeedbacks_response':
 				$this->render_response_column( $post_id );
@@ -216,9 +216,18 @@ class BeastFeedbacks_Admin {
 
 	/**
 	 * Render date column content.
+	 *
+	 * Performance optimization: Accepts $post_id and retrieves the post object directly via get_post_for_column()
+	 * (which reuses $GLOBALS['post'] when available), avoiding the overhead of get_the_time() querying global context.
+	 *
+	 * @param int $post_id The current post ID.
 	 */
-	private function render_date_column() {
-		echo esc_html( date_i18n( 'Y/m/d', get_the_time( 'U' ) ) );
+	private function render_date_column( $post_id ) {
+		$post = $this->get_post_for_column( $post_id );
+		if ( ! $post ) {
+			return;
+		}
+		echo esc_html( mysql2date( 'Y/m/d', $post->post_date ) );
 	}
 
 	/**
