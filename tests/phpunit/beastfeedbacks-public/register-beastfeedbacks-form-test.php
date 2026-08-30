@@ -291,4 +291,95 @@ class BeastFeedbacks_Public_Register_Beastfeedbacks_Form_Test extends BeastFeedb
 		$this->assertFalse( $response['success'] );
 		$this->assertSame( 'Failed to save feedback', $response['data']['message'] );
 	}
+
+	/**
+	 * Verify that register_beastfeedbacks_form rate limits requests after threshold is exceeded.
+	 */
+	public function test_register_beastfeedbacks_form_rate_limiting(): void {
+		$parent_id              = $this->create_post();
+		$_SERVER['REMOTE_ADDR'] = '198.51.100.42';
+
+		$_POST    = $this->create_ajax_request( array(), $parent_id, 'like' );
+		$_REQUEST = $_POST;
+
+		// Make 10 successful requests (up to the limit).
+		for ( $i = 0; $i < 10; $i++ ) {
+			$response = $this->call_ajax_handler();
+			$this->assertSame( 1, $response['success'], "Request {$i} should succeed" );
+		}
+
+		// The 11th request should be rate limited.
+		$response = $this->call_ajax_handler();
+		$this->assertSame( 0, $response['success'] );
+		$this->assertSame( 'Too many requests', $response['data']['message'] );
+
+		// A different IP address should not be rate limited.
+		$_SERVER['REMOTE_ADDR'] = '198.51.100.43';
+		$_POST                  = $this->create_ajax_request( array(), $parent_id, 'like' );
+		$_REQUEST               = $_POST;
+
+		$response = $this->call_ajax_handler();
+		$this->assertSame( 1, $response['success'] );
+	}
+
+	/**
+	 * Verify that rate limit window reset_at is anchored from the first request.
+	 */
+	public function test_is_rate_limited_anchors_reset_window(): void {
+		$public = BeastFeedbacks_Public::get_instance();
+		$ip     = '198.51.100.99';
+		$key    = 'bf_rl_' . md5( $ip );
+
+		$this->assertFalse( $public->is_rate_limited( $ip ) );
+		$entry = get_transient( $key );
+		$this->assertIsArray( $entry );
+		$this->assertSame( 1, $entry['count'] );
+		$initial_reset_at = $entry['reset_at'];
+
+		// Subsequent calls should increment count but keep the same reset_at.
+		$this->assertFalse( $public->is_rate_limited( $ip ) );
+		$entry = get_transient( $key );
+		$this->assertSame( 2, $entry['count'] );
+		$initial_reset_at = $entry['reset_at'];
+	}
+
+	/**
+	 * Verify that is_rate_limited bypasses rate limiting for administrators.
+	 */
+	public function test_is_rate_limited_bypasses_for_admins(): void {
+		$public  = BeastFeedbacks_Public::get_instance();
+		$user_id = $this->create_user( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $user_id );
+
+		$this->assertFalse( $public->is_rate_limited( '198.51.100.50' ) );
+
+		// Even when transient exceeds max requests, admin is not rate limited.
+		$key = 'bf_rl_' . md5( '198.51.100.50' );
+		set_transient(
+			$key,
+			array(
+				'count'    => 100,
+				'reset_at' => time() + 60,
+			),
+			60
+		);
+
+		$this->assertFalse( $public->is_rate_limited( '198.51.100.50' ) );
+	}
+
+	/**
+	 * Verify that pre_is_rate_limited filter can override rate limit check.
+	 */
+	public function test_is_rate_limited_filter_override(): void {
+		$public = BeastFeedbacks_Public::get_instance();
+		$ip     = '198.51.100.77';
+
+		add_filter( 'beastfeedbacks_pre_is_rate_limited', '__return_true' );
+		$this->assertTrue( $public->is_rate_limited( $ip ) );
+		remove_filter( 'beastfeedbacks_pre_is_rate_limited', '__return_true' );
+
+		add_filter( 'beastfeedbacks_pre_is_rate_limited', '__return_false' );
+		$this->assertFalse( $public->is_rate_limited( $ip ) );
+		remove_filter( 'beastfeedbacks_pre_is_rate_limited', '__return_false' );
+	}
 }

@@ -20,20 +20,34 @@ const submit = ( e ) => {
 		body: new FormData( form ),
 	} )
 		.then( ( response ) => {
-			if ( ! response.ok ) {
-				throw new Error( response );
+			if ( typeof response.json === 'function' ) {
+				return Promise.resolve( response.json() )
+					.then( ( data ) => ( { ok: response.ok, data } ) )
+					.catch( () => ( { ok: response.ok, data: {} } ) );
 			}
-			return response.json();
+			if ( ! response.ok ) {
+				throw new Error();
+			}
+			return { ok: response.ok, data: {} };
 		} )
-		.then( ( data ) => {
-			if ( data.count ) {
+		.then( ( { ok, data } ) => {
+			if ( ! ok || data?.success === false ) {
+				const errorMessage =
+					data?.data?.message ||
+					data?.message ||
+					__( 'Oops! Something went wrong.', 'beastfeedbacks' );
+				addMessage( form, errorMessage );
+				return;
+			}
+
+			if ( data?.count ) {
 				const likeCounts = form.querySelectorAll( '.like-count' );
 				for ( const likeCount of likeCounts ) {
 					likeCount.textContent = data.count;
 				}
 			}
 
-			addMessage( form, data.message );
+			addMessage( form, data?.message );
 		} )
 		.catch( () => {
 			addMessage(

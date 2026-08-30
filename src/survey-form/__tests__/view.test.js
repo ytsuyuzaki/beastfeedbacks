@@ -149,5 +149,40 @@ describe( 'Survey Form view script', () => {
 		const messageSpan = container.querySelector( 'span' );
 		expect( messageSpan ).not.toBeNull();
 		expect( messageSpan.textContent ).toBe( 'Oops! Something went wrong.' );
+		expect( submitButton.disabled ).toBe( false );
+	} );
+
+	test( 'should display custom error message and re-enable button when rate limit is returned', async () => {
+		const { container, form, submitButton } = createFormDOM();
+
+		fetchSpy.mockResolvedValue( {
+			ok: false,
+			status: 429,
+			json: jest.fn().mockResolvedValue( {
+				success: false,
+				data: { message: 'Too many requests' },
+			} ),
+		} );
+
+		require( '../view' );
+
+		const event = new Event( 'submit', {
+			bubbles: true,
+			cancelable: true,
+		} );
+		Object.defineProperty( event, 'submitter', {
+			value: submitButton,
+			writable: false,
+		} );
+
+		form.dispatchEvent( event );
+
+		// Flush microtask queue
+		await new Promise( ( resolve ) => setTimeout( resolve, 0 ) );
+
+		const messageSpan = container.querySelector( 'span' );
+		expect( messageSpan ).not.toBeNull();
+		expect( messageSpan.textContent ).toBe( 'Too many requests' );
+		expect( submitButton.disabled ).toBe( false );
 	} );
 } );
