@@ -229,8 +229,12 @@ class BeastFeedbacks_Admin {
 	 * @param int $post_id The current post ID.
 	 */
 	private function render_response_column( $post_id ) {
-		$post    = get_post( $post_id );
-		$content = json_decode( $post->post_content, true );
+		global $post;
+		$current_post = ( isset( $post ) && $post instanceof WP_Post && (int) $post->ID === (int) $post_id ) ? $post : get_post( $post_id );
+		if ( ! $current_post ) {
+			return;
+		}
+		$content = json_decode( $current_post->post_content, true );
 		if ( ! is_array( $content ) ) {
 			return;
 		}
@@ -314,12 +318,13 @@ class BeastFeedbacks_Admin {
 	 * @param int $post_id The current post ID.
 	 */
 	private function render_source_column( $post_id ) {
-		$post = get_post( $post_id );
-		if ( ! isset( $post->post_parent ) || ! $post->post_parent ) {
+		global $post;
+		$current_post = ( isset( $post ) && $post instanceof WP_Post && (int) $post->ID === (int) $post_id ) ? $post : get_post( $post_id );
+		if ( ! $current_post || ! isset( $current_post->post_parent ) || ! $current_post->post_parent ) {
 			return;
 		}
 
-		$permalink_data = $this->get_parent_permalink_data( $post->post_parent );
+		$permalink_data = $this->get_parent_permalink_data( $current_post->post_parent );
 
 		printf(
 			'<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>',
