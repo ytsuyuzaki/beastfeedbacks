@@ -101,6 +101,9 @@ class BeastFeedbacks_Admin_Manage_Posts_Custom_Column_Test extends BeastFeedback
 			)
 		);
 
+		// Test when $GLOBALS['post'] is set (list table row context)
+		$GLOBALS['post'] = get_post( $post_id );
+
 		ob_start();
 		$admin->manage_posts_custom_column( 'beastfeedbacks_source', $post_id );
 		$output = ob_get_clean();
@@ -114,6 +117,15 @@ class BeastFeedbacks_Admin_Manage_Posts_Custom_Column_Test extends BeastFeedback
 		);
 
 		$this->assertSame( $expected, $output );
+
+		// Test when $GLOBALS['post'] is not set or mismatched
+		unset( $GLOBALS['post'] );
+
+		ob_start();
+		$admin->manage_posts_custom_column( 'beastfeedbacks_source', $post_id );
+		$output_no_global = ob_get_clean();
+
+		$this->assertSame( $expected, $output_no_global );
 	}
 
 	/** @test */
@@ -238,6 +250,43 @@ class BeastFeedbacks_Admin_Manage_Posts_Custom_Column_Test extends BeastFeedback
 	}
 
 	/** @test */
+	public function manage_posts_custom_column_uses_global_post_when_matching(): void {
+		$admin        = \BeastFeedbacks_Admin::get_instance();
+		$like_content = array(
+			'type'       => 'like',
+			'ip_address' => '127.0.0.1',
+		);
+		$post_id      = $this->create_post(
+			array(
+				'post_type'    => 'beastfeedbacks',
+				'post_status'  => 'publish',
+				'post_content' => wp_json_encode( $like_content ),
+			)
+		);
+
+		$post            = get_post( $post_id );
+		$GLOBALS['post'] = $post;
+
+		ob_start();
+		$admin->manage_posts_custom_column( 'beastfeedbacks_response', $post_id );
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'IP_Address', $output );
+		$this->assertStringContainsString( '127.0.0.1', $output );
+	}
+
+	/** @test */
+	public function manage_posts_custom_column_handles_non_existent_post_gracefully(): void {
+		$admin = \BeastFeedbacks_Admin::get_instance();
+
+		ob_start();
+		$admin->manage_posts_custom_column( 'beastfeedbacks_response', 9999999 );
+		$output = ob_get_clean();
+
+		$this->assertSame( '', $output );
+	}
+
+	/** @test */
 	public function the_posts_filter_primes_parent_post_caches(): void {
 		$admin = \BeastFeedbacks_Admin::get_instance();
 
@@ -283,18 +332,31 @@ class BeastFeedbacks_Admin_Manage_Posts_Custom_Column_Test extends BeastFeedback
 			)
 		);
 
+		add_post_meta( $child_id1, 'beastfeedbacks_type', 'survey' );
+		add_post_meta( $child_id2, 'beastfeedbacks_type', 'vote' );
+
+		wp_cache_delete( $child_id1, 'post_meta' );
+		wp_cache_delete( $child_id2, 'post_meta' );
+		$this->assertFalse( wp_cache_get( $child_id1, 'post_meta' ) );
+		$this->assertFalse( wp_cache_get( $child_id2, 'post_meta' ) );
+
 		$posts = array( get_post( $child_id1 ), get_post( $child_id2 ) );
 		$res   = $admin->prime_parent_post_caches( $posts, $query );
 
 		$this->assertSame( $posts, $res );
 		$this->assertNotFalse( wp_cache_get( $parent_id1, 'posts' ) );
 		$this->assertNotFalse( wp_cache_get( $parent_id2, 'posts' ) );
+		$this->assertNotFalse( wp_cache_get( $child_id1, 'post_meta' ) );
+		$this->assertNotFalse( wp_cache_get( $child_id2, 'post_meta' ) );
 
 		clean_post_cache( $parent_id1 );
 		clean_post_cache( $parent_id2 );
+		wp_cache_delete( $child_id1, 'post_meta' );
+		wp_cache_delete( $child_id2, 'post_meta' );
 		set_current_screen( 'front' );
 
 		$admin->prime_parent_post_caches( $posts, $query );
 		$this->assertFalse( wp_cache_get( $parent_id1, 'posts' ) );
+		$this->assertFalse( wp_cache_get( $child_id1, 'post_meta' ) );
 	}
 }

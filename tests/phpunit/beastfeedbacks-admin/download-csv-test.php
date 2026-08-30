@@ -19,14 +19,14 @@ class BeastFeedbacks_Admin_Download_Csv_Test extends BeastFeedbacks_TestCase {
 	public function esc_csv_prefixes_when_dangerous_first_char(): void {
 		$admin = \BeastFeedbacks_Admin::get_instance();
 
-		$this->assertSame( "'=SUM(A1:A2)", $admin->esc_csv( '=SUM(A1:A2)' ) );
-		$this->assertSame( "'+1+2", $admin->esc_csv( '+1+2' ) );
-		$this->assertSame( "'-1", $admin->esc_csv( '-1' ) );
-		$this->assertSame( "'@cmd", $admin->esc_csv( '@cmd' ) );
-		$this->assertSame( "'\tcmd", $admin->esc_csv( "\tcmd" ) );
-		$this->assertSame( "'\rcmd", $admin->esc_csv( "\rcmd" ) );
-		$this->assertSame( "' =SUM(A1:A2)", $admin->esc_csv( ' =SUM(A1:A2)' ) );
-		$this->assertSame( "'  +1+2", $admin->esc_csv( '  +1+2' ) );
+		$this->assertSame( "' =SUM(A1:A2)", $admin->esc_csv( '=SUM(A1:A2)' ) );
+		$this->assertSame( "' +1+2", $admin->esc_csv( '+1+2' ) );
+		$this->assertSame( "' -1", $admin->esc_csv( '-1' ) );
+		$this->assertSame( "' @cmd", $admin->esc_csv( '@cmd' ) );
+		$this->assertSame( "' \tcmd", $admin->esc_csv( "\tcmd" ) );
+		$this->assertSame( "' \rcmd", $admin->esc_csv( "\rcmd" ) );
+		$this->assertSame( "'  =SUM(A1:A2)", $admin->esc_csv( ' =SUM(A1:A2)' ) );
+		$this->assertSame( "'   +1+2", $admin->esc_csv( '  +1+2' ) );
 
 		$this->assertSame( 'safe', $admin->esc_csv( 'safe' ) );
 		$this->assertSame( '  space', $admin->esc_csv( '  space' ) );
@@ -228,7 +228,7 @@ class BeastFeedbacks_Admin_Download_Csv_Test extends BeastFeedbacks_TestCase {
 		$this->assertStringContainsString( 'AgentOne', $lines[1] );
 		$this->assertStringContainsString( 'high', $lines[1] );
 		$this->assertStringContainsString( 'fast,reliable', $lines[1] );
-		$this->assertStringContainsString( "'=SUM(1,2)", $lines[1] );
+		$this->assertStringContainsString( "' =SUM(1,2)", $lines[1] );
 
 		// Check Row 2 (Vote feedback)
 		$this->assertStringContainsString( 'vote', $lines[2] );

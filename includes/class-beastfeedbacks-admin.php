@@ -200,7 +200,7 @@ class BeastFeedbacks_Admin {
 	public function manage_posts_custom_column( $column_name, $post_id ) {
 		switch ( $column_name ) {
 			case 'beastfeedbacks_date':
-				$this->render_date_column( $post_id );
+				$this->render_date_column();
 				break;
 			case 'beastfeedbacks_response':
 				$this->render_response_column( $post_id );
@@ -216,11 +216,23 @@ class BeastFeedbacks_Admin {
 
 	/**
 	 * Render date column content.
-	 *
-	 * @param int $post_id The current post ID.
 	 */
-	private function render_date_column( $post_id ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+	private function render_date_column() {
 		echo esc_html( date_i18n( 'Y/m/d', get_the_time( 'U' ) ) );
+	}
+
+	/**
+	 * Retrieve WP_Post object for column rendering, utilizing global $post when available.
+	 *
+	 * @param int $post_id The post ID.
+	 * @return WP_Post|null
+	 */
+	private function get_post_for_column( $post_id ) {
+		global $post;
+		if ( isset( $post ) && $post instanceof WP_Post && (int) $post->ID === (int) $post_id ) {
+			return $post;
+		}
+		return get_post( $post_id );
 	}
 
 	/**
@@ -229,7 +241,11 @@ class BeastFeedbacks_Admin {
 	 * @param int $post_id The current post ID.
 	 */
 	private function render_response_column( $post_id ) {
-		$post    = get_post( $post_id );
+		$post = $this->get_post_for_column( $post_id );
+		if ( ! $post ) {
+			return;
+		}
+
 		$content = json_decode( $post->post_content, true );
 		if ( ! is_array( $content ) ) {
 			return;
@@ -314,8 +330,8 @@ class BeastFeedbacks_Admin {
 	 * @param int $post_id The current post ID.
 	 */
 	private function render_source_column( $post_id ) {
-		$post = get_post( $post_id );
-		if ( ! isset( $post->post_parent ) || ! $post->post_parent ) {
+		$post = $this->get_post_for_column( $post_id );
+		if ( ! $post || ! isset( $post->post_parent ) || ! $post->post_parent ) {
 			return;
 		}
 
@@ -495,7 +511,7 @@ class BeastFeedbacks_Admin {
 	}
 
 	/**
-	 * Prime parent post caches to prevent N+1 queries in admin list table.
+	 * Prime parent post and post meta caches to prevent N+1 queries in admin list table.
 	 *
 	 * @param array    $posts Array of WP_Post objects.
 	 * @param WP_Query $query WP_Query instance.
@@ -517,6 +533,11 @@ class BeastFeedbacks_Admin {
 			}
 		} elseif ( $this->post_type !== $post_type ) {
 			return $posts;
+		}
+
+		$post_ids = array_values( array_filter( array_map( 'absint', wp_list_pluck( $posts, 'ID' ) ) ) );
+		if ( ! empty( $post_ids ) ) {
+			update_postmeta_cache( $post_ids );
 		}
 
 		$parent_ids = array_values( array_unique( array_filter( array_map( 'absint', wp_list_pluck( $posts, 'post_parent' ) ) ) ) );
@@ -885,7 +906,9 @@ class BeastFeedbacks_Admin {
 		$trimmed_field = ltrim( $string_field, " \v\0" );
 
 		if ( '' !== $string_field && ( in_array( mb_substr( $string_field, 0, 1 ), $active_content_triggers, true ) || ( '' !== $trimmed_field && in_array( mb_substr( $trimmed_field, 0, 1 ), $active_content_triggers, true ) ) ) ) {
-			$field = "'" . $field;
+			if ( 0 !== strpos( $string_field, "' " ) ) {
+				$field = "' " . $field;
+			}
 		}
 
 		return $field;
