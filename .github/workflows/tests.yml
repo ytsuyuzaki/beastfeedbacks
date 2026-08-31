@@ -129,7 +129,7 @@ jobs:
         name: PHP ${{ matrix.php }} / WP ${{ matrix.wp }}
 
         runs-on: ubuntu-latest
-        timeout-minutes: 5
+        timeout-minutes: 10
 
         needs: [playwright, unit-js]
 
