@@ -1,23 +1,21 @@
 import { test, expect } from '@wordpress/e2e-test-utils-playwright';
 import {
-	publishAndVisit,
-	insertPublishAndVisit,
+	createPostWithContentAndVisit,
+	POST_BLOCK_CONTENTS,
 	getFeedbackForm,
 } from './helpers';
 
 test.describe( 'Frontend UI Interactions & Edge Cases', () => {
-	test.beforeEach( async ( { admin } ) => {
-		await admin.createNewPost();
-	} );
-
 	test( 'VoteボタンおよびSurvey Form送信ボタンクリック直後にdisabledとなり二重送信が防止されること', async ( {
-		admin,
-		editor,
+		requestUtils,
 		page,
 	} ) => {
 		// --- Vote Block の検証 ---
-		await editor.insertBlock( { name: 'beastfeedbacks/vote' } );
-		await publishAndVisit( { editor, page } );
+		await createPostWithContentAndVisit( {
+			requestUtils,
+			page,
+			content: POST_BLOCK_CONTENTS.VOTE,
+		} );
 
 		const voteForm = getFeedbackForm( page, 'beastfeedbacks_vote_form' );
 		await expect( voteForm ).toBeVisible();
@@ -48,12 +46,10 @@ test.describe( 'Frontend UI Interactions & Edge Cases', () => {
 		expect( voteRequestCount ).toBe( 1 );
 
 		// --- Survey Form Block の検証 ---
-		await page.goto( 'about:blank' );
-		await admin.createNewPost();
-		await insertPublishAndVisit( {
-			editor,
+		await createPostWithContentAndVisit( {
+			requestUtils,
 			page,
-			blockName: 'beastfeedbacks/survey-form',
+			content: POST_BLOCK_CONTENTS.SURVEY,
 		} );
 
 		const surveyForm = getFeedbackForm(
@@ -95,16 +91,14 @@ test.describe( 'Frontend UI Interactions & Edge Cases', () => {
 	} );
 
 	test( '同一ページ内に複数のLikeブロックが設置された場合、クリックしたブロックのカウントのみ更新されること', async ( {
-		editor,
+		requestUtils,
 		page,
 	} ) => {
-		// 1つ目の Like ブロックを挿入
-		await editor.insertBlock( { name: 'beastfeedbacks/like' } );
-		// 2つ目の Like ブロックを挿入
-		await editor.insertBlock( { name: 'beastfeedbacks/like' } );
-
-		// 投稿を公開してフロントエンドページへ遷移
-		await publishAndVisit( { editor, page } );
+		await createPostWithContentAndVisit( {
+			requestUtils,
+			page,
+			content: `${ POST_BLOCK_CONTENTS.LIKE }\n${ POST_BLOCK_CONTENTS.LIKE }`,
+		} );
 
 		const forms = page.locator( 'form[name="beastfeedbacks_like_form"]' );
 		await expect( forms ).toHaveCount( 2 );
@@ -127,7 +121,7 @@ test.describe( 'Frontend UI Interactions & Edge Cases', () => {
 	} );
 
 	test( '通信エラー発生時に画面上にエラーメッセージが表示されること', async ( {
-		editor,
+		requestUtils,
 		page,
 	} ) => {
 		// 意図的な500エラー発生時のブラウザ標準エラーログ出力を抑制
@@ -142,10 +136,10 @@ test.describe( 'Frontend UI Interactions & Edge Cases', () => {
 			} )
 		);
 
-		await insertPublishAndVisit( {
-			editor,
+		await createPostWithContentAndVisit( {
+			requestUtils,
 			page,
-			blockName: 'beastfeedbacks/like',
+			content: POST_BLOCK_CONTENTS.LIKE,
 		} );
 
 		const form = getFeedbackForm( page, 'beastfeedbacks_like_form' );

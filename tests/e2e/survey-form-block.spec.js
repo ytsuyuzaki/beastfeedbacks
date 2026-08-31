@@ -2,22 +2,21 @@ import { test, expect } from '@wordpress/e2e-test-utils-playwright';
 import {
 	insertBlockAndVerify,
 	publishAndVisit,
-	insertPublishAndVisit,
+	createPostWithContentAndVisit,
+	POST_BLOCK_CONTENTS,
 	getFeedbackForm,
 	visitFeedbackAdmin,
 	getLatestFeedbackRow,
 } from './helpers';
 
 test.describe( 'Survey Form Block', () => {
-	test.beforeEach( async ( { admin } ) => {
-		// それぞれのテストの前に新しい投稿を作成する
-		await admin.createNewPost();
-	} );
-
 	test( 'Gutenbergエディタでブロックを設置・保存し、表示画面でフォームが表示されること', async ( {
+		admin,
 		editor,
 		page,
 	} ) => {
+		await admin.createNewPost();
+
 		// エディタ上にフォームブロックが表示されていることを確認
 		await insertBlockAndVerify( {
 			editor,
@@ -39,16 +38,16 @@ test.describe( 'Survey Form Block', () => {
 
 	test( 'フォームを送信するとデータが実行され、データベースに保存されること', async ( {
 		admin,
-		editor,
+		requestUtils,
 		page,
 	} ) => {
 		const feedbackMessage = 'E2Eテストフィードバックメッセージ';
 
-		// ブロックを挿入・公開してフロントエンドページへ移動する
-		await insertPublishAndVisit( {
-			editor,
+		// REST API で投稿を作成してフロントエンドページへ移動する
+		await createPostWithContentAndVisit( {
+			requestUtils,
 			page,
-			blockName: 'beastfeedbacks/survey-form',
+			content: POST_BLOCK_CONTENTS.SURVEY,
 		} );
 
 		const form = getFeedbackForm( page, 'beastfeedbacks_survey_form' );

@@ -1,19 +1,19 @@
 import { test, expect } from '@wordpress/e2e-test-utils-playwright';
 import {
-	insertPublishAndVisit,
+	createPostWithContentAndVisit,
+	POST_BLOCK_CONTENTS,
 	getFeedbackForm,
 	visitFeedbackAdmin,
 	getLatestFeedbackRow,
 } from './helpers';
 
 test.describe( 'Admin Feedback Trash & Untrash', () => {
-	test.beforeEach( async ( { admin, editor, page } ) => {
-		// テストごとに新規投稿を作成し、Likeブロックを設置・公開・投票してフィードバックデータを作成
-		await admin.createNewPost();
-		await insertPublishAndVisit( {
-			editor,
+	test.beforeEach( async ( { requestUtils, page } ) => {
+		// REST API で投稿を作成し、フロントエンドでLike投票を実行してフィードバックデータを作成
+		await createPostWithContentAndVisit( {
+			requestUtils,
 			page,
-			blockName: 'beastfeedbacks/like',
+			content: POST_BLOCK_CONTENTS.LIKE,
 		} );
 
 		const form = getFeedbackForm( page, 'beastfeedbacks_like_form' );

@@ -1,5 +1,9 @@
 import { test, expect } from '@wordpress/e2e-test-utils-playwright';
-import { getFeedbackForm, visitFeedbackAdmin } from './helpers';
+import {
+	POST_BLOCK_CONTENTS,
+	getFeedbackForm,
+	visitFeedbackAdmin,
+} from './helpers';
 
 test.describe( '管理画面 一覧フィルター絞り込み機能', () => {
 	let postAId;
@@ -7,22 +11,17 @@ test.describe( '管理画面 一覧フィルター絞り込み機能', () => {
 	let hrefA;
 	let hrefB;
 
-	test.beforeEach( async ( { admin, editor, page } ) => {
+	test.beforeEach( async ( { requestUtils, page } ) => {
 		// --- 投稿A の作成 ---
-		await admin.createNewPost( { title: 'Post A' } );
-		postAId = await page.evaluate( () =>
-			window.wp.data.select( 'core/editor' ).getCurrentPostId()
-		);
-		await editor.insertBlock( { name: 'beastfeedbacks/like' } );
-		await editor.insertBlock( { name: 'beastfeedbacks/vote' } );
-		await editor.publishPost();
+		const postA = await requestUtils.createPost( {
+			title: 'Post A',
+			status: 'publish',
+			content: `${ POST_BLOCK_CONTENTS.LIKE }\n${ POST_BLOCK_CONTENTS.VOTE }`,
+		} );
+		postAId = postA.id;
+		hrefA = postA.link;
 
 		// 投稿A のフロントエンドページに移動
-		const viewPostLinkA = page
-			.getByRole( 'link', { name: /view post/i } )
-			.first();
-		await expect( viewPostLinkA ).toBeVisible();
-		hrefA = await viewPostLinkA.getAttribute( 'href' );
 		await page.goto( hrefA );
 		await page.waitForLoadState( 'domcontentloaded' );
 
@@ -43,19 +42,15 @@ test.describe( '管理画面 一覧フィルター絞り込み機能', () => {
 		).toBeVisible();
 
 		// --- 投稿B の作成 ---
-		await admin.createNewPost( { title: 'Post B' } );
-		postBId = await page.evaluate( () =>
-			window.wp.data.select( 'core/editor' ).getCurrentPostId()
-		);
-		await editor.insertBlock( { name: 'beastfeedbacks/like' } );
-		await editor.publishPost();
+		const postB = await requestUtils.createPost( {
+			title: 'Post B',
+			status: 'publish',
+			content: POST_BLOCK_CONTENTS.LIKE,
+		} );
+		postBId = postB.id;
+		hrefB = postB.link;
 
 		// 投稿B のフロントエンドページに移動
-		const viewPostLinkB = page
-			.getByRole( 'link', { name: /view post/i } )
-			.first();
-		await expect( viewPostLinkB ).toBeVisible();
-		hrefB = await viewPostLinkB.getAttribute( 'href' );
 		await page.goto( hrefB );
 		await page.waitForLoadState( 'domcontentloaded' );
 
