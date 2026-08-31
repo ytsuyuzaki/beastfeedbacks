@@ -61,8 +61,6 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 2
 
-        needs: [lint]
-
         steps:
             - name: Checkout
               uses: actions/checkout@v5
@@ -92,8 +90,6 @@ jobs:
 
         runs-on: ubuntu-latest
         timeout-minutes: 1
-
-        needs: [lint]
 
         steps:
             - name: Checkout
@@ -129,9 +125,9 @@ jobs:
         name: PHP ${{ matrix.php }} / WP ${{ matrix.wp }}
 
         runs-on: ubuntu-latest
-        timeout-minutes: 5
+        timeout-minutes: 10
 
-        needs: [playwright, unit-js]
+        needs: [playwright]
 
         strategy:
             fail-fast: false

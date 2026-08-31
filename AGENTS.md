@@ -86,8 +86,11 @@ npm run plugin-zip
 ### ローカル環境 (`wp-env`)
 
 ```bash
-# 環境起動 (Xdebug coverage有効)
+# 環境起動 (高速・Xdebug無効)
 npm run wp-env:start
+
+# 環境起動 (Xdebug coverage有効)
+npm run wp-env:start:coverage
 
 # 環境停止
 npm run wp-env:stop
