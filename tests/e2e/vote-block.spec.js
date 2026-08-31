@@ -2,22 +2,21 @@ import { test, expect } from '@wordpress/e2e-test-utils-playwright';
 import {
 	insertBlockAndVerify,
 	publishAndVisit,
-	insertPublishAndVisit,
+	createPostWithContentAndVisit,
+	POST_BLOCK_CONTENTS,
 	getFeedbackForm,
 	visitFeedbackAdmin,
 	getLatestFeedbackRow,
 } from './helpers';
 
 test.describe( 'Vote Block', () => {
-	test.beforeEach( async ( { admin } ) => {
-		// それぞれのテストの前に新しい投稿を作成する
-		await admin.createNewPost();
-	} );
-
 	test( 'Gutenbergエディタでブロックを設置・保存し、表示画面で投票ボタンが表示されること', async ( {
+		admin,
 		editor,
 		page,
 	} ) => {
+		await admin.createNewPost();
+
 		// エディタ上にVoteブロックが表示されていることを確認
 		await insertBlockAndVerify( {
 			editor,
@@ -40,14 +39,14 @@ test.describe( 'Vote Block', () => {
 
 	test( '投票ボタンをクリックすると投票が実行され、データベースに保存されること', async ( {
 		admin,
-		editor,
+		requestUtils,
 		page,
 	} ) => {
-		// ブロックを挿入・公開してフロントエンドページへ移動する
-		await insertPublishAndVisit( {
-			editor,
+		// REST API で投稿を作成してフロントエンドページへ移動する
+		await createPostWithContentAndVisit( {
+			requestUtils,
 			page,
-			blockName: 'beastfeedbacks/vote',
+			content: POST_BLOCK_CONTENTS.VOTE,
 		} );
 
 		const form = getFeedbackForm( page, 'beastfeedbacks_vote_form' );

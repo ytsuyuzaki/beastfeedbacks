@@ -1,6 +1,15 @@
 import { expect } from '@wordpress/e2e-test-utils-playwright';
 
 /**
+ * REST API 経由での投稿作成時に使用するブロックHTMLテンプレート
+ */
+export const POST_BLOCK_CONTENTS = {
+	LIKE: '<!-- wp:beastfeedbacks/like --><div class="wp-block-beastfeedbacks-like"><div class="wp-block-button"><button type="submit" class="wp-block-button__link wp-element-button">Like</button></div></div><!-- /wp:beastfeedbacks/like -->',
+	VOTE: '<!-- wp:beastfeedbacks/vote --><div class="wp-block-beastfeedbacks-vote"><div class="wp-block-button"><button type="submit" class="wp-block-button__link wp-element-button">Yes</button></div><div class="wp-block-button"><button type="submit" class="wp-block-button__link wp-element-button">No</button></div></div><!-- /wp:beastfeedbacks/vote -->',
+	SURVEY: '<!-- wp:beastfeedbacks/survey-form --><div class="wp-block-beastfeedbacks-survey-form"><!-- wp:beastfeedbacks/survey-choice {"items":["Good","Bad"],"label":"Satisfaction","tagType":"radio"} --><div class="wp-block-beastfeedbacks-survey-choice"><p class="beastfeedbacks-survey-choice_label">Satisfaction</p><div class="beastfeedbacks-survey-choice_items"><label class="beastfeedbacks-survey-choice_item"><input type="radio" name="Satisfaction" value="Good"/>Good</label><label class="beastfeedbacks-survey-choice_item"><input type="radio" name="Satisfaction" value="Bad"/>Bad</label></div></div><!-- /wp:beastfeedbacks/survey-choice --><!-- wp:beastfeedbacks/survey-input {"label":"Description","tagType":"textarea"} --><div class="wp-block-beastfeedbacks-survey-input"><label class="beastfeedbacks-survey-input_label">Description</label><textarea name="Description" rows="3"></textarea></div><!-- /wp:beastfeedbacks/survey-input --><!-- wp:button {"tagName":"button","type":"submit"} --><div class="wp-block-button"><button type="submit" class="wp-block-button__link wp-element-button">Submit</button></div><!-- /wp:button --></div><!-- /wp:beastfeedbacks/survey-form -->',
+};
+
+/**
  * ブロックをエディタに挿入し、キャンバス上で表示を確認するヘルパー
  *
  * @param {Object} fixtures           - テストフィクスチャ
@@ -51,6 +60,30 @@ export async function insertPublishAndVisit( {
 } ) {
 	await editor.insertBlock( { name: blockName } );
 	await publishAndVisit( { editor, page } );
+}
+
+/**
+ * REST API 経由でブロックを含む投稿を作成し、フロントエンドページへ遷移する高速ヘルパー
+ *
+ * @param {Object} fixtures              - テストフィクスチャ
+ * @param {Object} fixtures.requestUtils - REST API ユーティリティ
+ * @param {Object} fixtures.page         - Playwright ページオブジェクト
+ * @param {string} fixtures.content      - 投稿本文 (ブロックコメント HTML)
+ * @return {Promise<Object>} 作成された投稿オブジェクト
+ */
+export async function createPostWithContentAndVisit( {
+	requestUtils,
+	page,
+	content,
+} ) {
+	const post = await requestUtils.createPost( {
+		status: 'publish',
+		title: 'Feedback Test Post',
+		content,
+	} );
+	await page.goto( post.link );
+	await page.waitForLoadState( 'domcontentloaded' );
+	return post;
 }
 
 /**

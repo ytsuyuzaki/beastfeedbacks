@@ -202,7 +202,7 @@ class BeastFeedbacks_Admin_Stream_Csv_Test extends BeastFeedbacks_TestCase {
 		$this->assertSame( 'StreamAgent1', $map1['user_agent'] );
 		$this->assertSame( 'Answer 1', $map1['q1'] );
 		$this->assertSame( 'tag1,tag2', $map1['tags'] );
-		$this->assertSame( "'=SUM(1,1)", $map1['formula'] );
+		$this->assertSame( "' =SUM(1,1)", $map1['formula'] );
 		$this->assertSame( '', $map1['chunk2_field'] );
 
 		// Verify row 2 mapping (Vote post).

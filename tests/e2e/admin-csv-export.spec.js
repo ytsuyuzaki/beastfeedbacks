@@ -1,18 +1,18 @@
 import { test, expect } from '@wordpress/e2e-test-utils-playwright';
 import {
-	insertPublishAndVisit,
+	createPostWithContentAndVisit,
+	POST_BLOCK_CONTENTS,
 	getFeedbackForm,
 	visitFeedbackAdmin,
 } from './helpers';
 
 test.describe( 'CSV Export in Admin Feedback Page', () => {
-	test.beforeEach( async ( { admin, editor, page } ) => {
+	test.beforeEach( async ( { requestUtils, page } ) => {
 		// 1. Create a post with Like block and submit feedback
-		await admin.createNewPost();
-		await insertPublishAndVisit( {
-			editor,
+		await createPostWithContentAndVisit( {
+			requestUtils,
 			page,
-			blockName: 'beastfeedbacks/like',
+			content: POST_BLOCK_CONTENTS.LIKE,
 		} );
 		const likeForm = getFeedbackForm( page, 'beastfeedbacks_like_form' );
 		await expect( likeForm ).toBeVisible();
@@ -22,11 +22,10 @@ test.describe( 'CSV Export in Admin Feedback Page', () => {
 		).toBeVisible();
 
 		// 2. Create a post with Vote block and submit feedback
-		await admin.createNewPost();
-		await insertPublishAndVisit( {
-			editor,
+		await createPostWithContentAndVisit( {
+			requestUtils,
 			page,
-			blockName: 'beastfeedbacks/vote',
+			content: POST_BLOCK_CONTENTS.VOTE,
 		} );
 		const voteForm = getFeedbackForm( page, 'beastfeedbacks_vote_form' );
 		await expect( voteForm ).toBeVisible();
@@ -36,11 +35,10 @@ test.describe( 'CSV Export in Admin Feedback Page', () => {
 		).toBeVisible();
 
 		// 3. Create a post with Survey Form block and submit feedback
-		await admin.createNewPost();
-		await insertPublishAndVisit( {
-			editor,
+		await createPostWithContentAndVisit( {
+			requestUtils,
 			page,
-			blockName: 'beastfeedbacks/survey-form',
+			content: POST_BLOCK_CONTENTS.SURVEY,
 		} );
 		const surveyForm = getFeedbackForm(
 			page,
