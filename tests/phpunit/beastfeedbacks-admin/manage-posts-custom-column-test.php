@@ -159,6 +159,49 @@ class BeastFeedbacks_Admin_Manage_Posts_Custom_Column_Test extends BeastFeedback
 	}
 
 	/** @test */
+	public function manage_posts_custom_column_handles_missing_or_non_scalar_selected_in_vote(): void {
+		$admin        = \BeastFeedbacks_Admin::get_instance();
+		$vote_content = array(
+			'type'        => 'vote',
+			'post_params' => array(
+				'selected' => array( 'Option 1', 'Option 2' ),
+			),
+		);
+		$vote_post_id = $this->create_post(
+			array(
+				'post_type'    => 'beastfeedbacks',
+				'post_status'  => 'publish',
+				'post_content' => wp_json_encode( $vote_content ),
+			)
+		);
+
+		ob_start();
+		$admin->manage_posts_custom_column( 'beastfeedbacks_response', $vote_post_id );
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'Select', $output );
+
+		// Test with missing selected key
+		$vote_content_missing = array(
+			'type'        => 'vote',
+			'post_params' => array(),
+		);
+		$vote_missing_post_id = $this->create_post(
+			array(
+				'post_type'    => 'beastfeedbacks',
+				'post_status'  => 'publish',
+				'post_content' => wp_json_encode( $vote_content_missing ),
+			)
+		);
+
+		ob_start();
+		$admin->manage_posts_custom_column( 'beastfeedbacks_response', $vote_missing_post_id );
+		$output_missing = ob_get_clean();
+
+		$this->assertStringContainsString( 'Select', $output_missing );
+	}
+
+	/** @test */
 	public function manage_posts_custom_column_outputs_response_data_for_vote(): void {
 		$admin        = \BeastFeedbacks_Admin::get_instance();
 		$vote_content = array(
