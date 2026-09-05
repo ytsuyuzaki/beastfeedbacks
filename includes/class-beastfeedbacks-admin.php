@@ -76,7 +76,10 @@ class BeastFeedbacks_Admin {
 		add_action( 'pre_get_posts', array( $this, 'source_filter_result' ) );
 		add_filter( 'the_posts', array( $this, 'prime_parent_post_caches' ), 10, 2 );
 
-		add_action( 'clean_post_cache', array( $this, 'clear_source_filter_cache' ), 10, 2 );
+		add_action( "save_post_{$this->post_type}", array( $this, 'clear_source_filter_cache' ), 10, 2 );
+		add_action( 'deleted_post', array( $this, 'clear_source_filter_cache' ), 10, 2 );
+		add_action( 'trashed_post', array( $this, 'clear_source_filter_cache' ), 10, 1 );
+		add_action( 'untrashed_post', array( $this, 'clear_source_filter_cache' ), 10, 1 );
 
 		add_action( "wp_ajax_{$this->export_action_name}", array( $this, 'download_csv' ) );
 	}
@@ -500,19 +503,21 @@ class BeastFeedbacks_Admin {
 	}
 
 	/**
-	 * Clear parent ids cache for source filter when a feedback post cache is cleaned.
+	 * Clear parent ids cache for source filter when a feedback post is created, updated, or deleted.
 	 *
 	 * @param int          $post_id Post ID.
 	 * @param WP_Post|null $post    Post object.
 	 * @return void
 	 */
-	public function clear_source_filter_cache( $post_id, $post = null ) {
+	public function clear_source_filter_cache( $post_id = 0, $post = null ) {
 		if ( $post instanceof WP_Post ) {
 			if ( $post->post_type !== $this->post_type ) {
 				return;
 			}
-		} elseif ( get_post_type( $post_id ) !== $this->post_type ) {
-			return;
+		} elseif ( $post_id ) {
+			if ( get_post_type( $post_id ) !== $this->post_type ) {
+				return;
+			}
 		}
 
 		wp_cache_delete( 'source_filter_parent_ids', 'beastfeedbacks' );
@@ -658,44 +663,27 @@ class BeastFeedbacks_Admin {
 	}
 
 	/**
-	 * Stream CSV export directly to output in chunks to minimize memory usage.
+	 * Send HTTP headers for CSV attachment download.
 	 *
 	 * @param string $filename CSV file name.
 	 * @return void
 	 */
-	public function stream_csv( $filename ) {
-		$args = array(
-			'posts_per_page'         => -1,
-			'post_type'              => 'beastfeedbacks',
-			'post_status'            => array( 'publish' ),
-			'order'                  => 'ASC',
-			'suppress_filters'       => false,
-			'date_query'             => array(),
-			'fields'                 => 'ids',
-			'update_post_term_cache' => false,
-			'update_post_meta_cache' => false,
-		);
-
-		$post_ids = get_posts( $args );
-
+	private function send_csv_headers( $filename ) {
 		if ( ! headers_sent() ) {
 			header( 'Content-Disposition: attachment; filename=' . $filename );
 			header( 'Pragma: no-cache' );
 			header( 'Expires: 0' );
 			header( 'Content-Type: text/csv; charset=utf-8' );
 		}
+	}
 
-		$output = fopen( 'php://output', 'w' );
-
-		if ( empty( $post_ids ) ) {
-			fclose( $output ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
-			return;
-		}
-
-		$chunk_size = 500;
-		$chunks     = array_chunk( $post_ids, $chunk_size );
-
-		// Pass 1: Collect all unique field keys across all posts.
+	/**
+	 * Collect all unique field keys across all feedback post chunks.
+	 *
+	 * @param array $chunks Array of post ID chunks.
+	 * @return array List of field names for the CSV columns.
+	 */
+	private function collect_csv_fields( array $chunks ) {
 		$fields     = array( 'source', 'date', 'type', 'ip_address', 'user_agent' );
 		$fields_map = array_fill_keys( $fields, true );
 
@@ -729,11 +717,67 @@ class BeastFeedbacks_Admin {
 			}
 		}
 
-		// Output CSV headers.
-		$escaped_fields = array_map( array( $this, 'esc_csv' ), $fields );
-		fputcsv( $output, $escaped_fields );
+		return $fields;
+	}
 
-		// Pass 2: Stream rows.
+	/**
+	 * Build CSV row values for a single post based on expected CSV fields.
+	 *
+	 * @param WP_Post $post   Feedback post object.
+	 * @param array   $fields Array of field column names.
+	 * @return array Escaped CSV row values.
+	 */
+	private function build_csv_row_for_post( $post, array $fields ) {
+		$source = '';
+		if ( $post->post_parent ) {
+			$permalink_data = $this->get_parent_permalink_data( $post->post_parent );
+			$source         = $permalink_data['path'];
+		}
+
+		$content = json_decode( $post->post_content, true );
+		if ( ! is_array( $content ) ) {
+			$content = array();
+		}
+
+		$type        = isset( $content['type'] ) ? $content['type'] : '';
+		$post_params = isset( $content['post_params'] ) && is_array( $content['post_params'] )
+			? $content['post_params']
+			: array();
+
+		$ip_address = isset( $content['ip_address'] ) ? $content['ip_address'] : '';
+		$user_agent = isset( $content['user_agent'] ) ? $content['user_agent'] : '';
+
+		$row_data = array(
+			'source'     => $source,
+			'date'       => $post->post_date,
+			'type'       => $type,
+			'ip_address' => $ip_address,
+			'user_agent' => $user_agent,
+		);
+
+		$row_data = array_merge( $row_data, $post_params );
+
+		$current_row = array();
+		foreach ( $fields as $single_field_name ) {
+			$value = isset( $row_data[ $single_field_name ] ) ? $row_data[ $single_field_name ] : '';
+			if ( is_array( $value ) ) {
+				$value = implode( ',', $value );
+			}
+			$current_row[] = $this->esc_csv( $value );
+		}
+
+		return $current_row;
+	}
+
+	/**
+	 * Stream post data rows to the output resource in chunks.
+	 *
+	 * @param resource $output Stream output handle.
+	 * @param array    $chunks Array of post ID chunks.
+	 * @param array    $fields List of field names.
+	 * @return void
+	 */
+	private function stream_csv_rows( $output, array $chunks, array $fields ) {
 		foreach ( $chunks as $chunk ) {
 			$posts = get_posts(
 				array(
@@ -753,43 +797,7 @@ class BeastFeedbacks_Admin {
 			}
 
 			foreach ( $posts as $post ) {
-				$source = '';
-				if ( $post->post_parent ) {
-					$permalink_data = $this->get_parent_permalink_data( $post->post_parent );
-					$source         = $permalink_data['path'];
-				}
-
-				$content = json_decode( $post->post_content, true );
-				if ( ! is_array( $content ) ) {
-					$content = array();
-				}
-
-				$type        = isset( $content['type'] ) ? $content['type'] : '';
-				$post_params = isset( $content['post_params'] ) && is_array( $content['post_params'] )
-					? $content['post_params']
-					: array();
-
-				$ip_address = isset( $content['ip_address'] ) ? $content['ip_address'] : '';
-				$user_agent = isset( $content['user_agent'] ) ? $content['user_agent'] : '';
-
-				$row_data = array(
-					'source'     => $source,
-					'date'       => $post->post_date,
-					'type'       => $type,
-					'ip_address' => $ip_address,
-					'user_agent' => $user_agent,
-				);
-
-				$row_data = array_merge( $row_data, $post_params );
-
-				$current_row = array();
-				foreach ( $fields as $single_field_name ) {
-					$value = isset( $row_data[ $single_field_name ] ) ? $row_data[ $single_field_name ] : '';
-					if ( is_array( $value ) ) {
-						$value = implode( ',', $value );
-					}
-					$current_row[] = $this->esc_csv( $value );
-				}
+				$current_row = $this->build_csv_row_for_post( $post, $fields );
 				fputcsv( $output, $current_row );
 			}
 
@@ -797,6 +805,48 @@ class BeastFeedbacks_Admin {
 				clean_post_cache( $id );
 			}
 		}
+	}
+
+	/**
+	 * Stream CSV export directly to output in chunks to minimize memory usage.
+	 *
+	 * @param string $filename CSV file name.
+	 * @return void
+	 */
+	public function stream_csv( $filename ) {
+		$args = array(
+			'posts_per_page'         => -1,
+			'post_type'              => 'beastfeedbacks',
+			'post_status'            => array( 'publish' ),
+			'order'                  => 'ASC',
+			'suppress_filters'       => false,
+			'date_query'             => array(),
+			'fields'                 => 'ids',
+			'update_post_term_cache' => false,
+			'update_post_meta_cache' => false,
+		);
+
+		$post_ids = get_posts( $args );
+
+		$this->send_csv_headers( $filename );
+
+		$output = fopen( 'php://output', 'w' );
+
+		if ( empty( $post_ids ) ) {
+			fclose( $output ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+			return;
+		}
+
+		$chunk_size = 500;
+		$chunks     = array_chunk( $post_ids, $chunk_size );
+
+		$fields = $this->collect_csv_fields( $chunks );
+
+		// Output CSV headers.
+		$escaped_fields = array_map( array( $this, 'esc_csv' ), $fields );
+		fputcsv( $output, $escaped_fields );
+
+		$this->stream_csv_rows( $output, $chunks, $fields );
 
 		fclose( $output ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 	}
@@ -945,13 +995,31 @@ class BeastFeedbacks_Admin {
 
 		$active_content_triggers = array( '=', '+', '-', '@', '|', '%', "\t", "\r", "\n" );
 
-		$string_field  = (string) $field;
-		$trimmed_field = ltrim( $string_field, " \v\0" );
+		$string_field = (string) $field;
 
-		if ( '' !== $string_field && ( in_array( mb_substr( $string_field, 0, 1 ), $active_content_triggers, true ) || ( '' !== $trimmed_field && in_array( mb_substr( $trimmed_field, 0, 1 ), $active_content_triggers, true ) ) ) ) {
-			if ( 0 !== strpos( $string_field, "' " ) ) {
-				$field = "' " . $field;
+		if ( '' === $string_field ) {
+			return $field;
+		}
+
+		$needs_escaping = false;
+
+		$trimmed_field = ltrim( $string_field, " \v\0\x0C" );
+		if ( in_array( mb_substr( $string_field, 0, 1 ), $active_content_triggers, true ) ||
+			( '' !== $trimmed_field && in_array( mb_substr( $trimmed_field, 0, 1 ), $active_content_triggers, true ) ) ) {
+			$needs_escaping = true;
+		} else {
+			$lines = preg_split( '/(\r\n|\r|\n)/', $string_field );
+			foreach ( $lines as $line ) {
+				$trimmed_line = ltrim( $line, " \v\0\x0C" );
+				if ( '' !== $line && ( in_array( mb_substr( $line, 0, 1 ), $active_content_triggers, true ) || ( '' !== $trimmed_line && in_array( mb_substr( $trimmed_line, 0, 1 ), $active_content_triggers, true ) ) ) ) {
+					$needs_escaping = true;
+					break;
+				}
 			}
+		}
+
+		if ( $needs_escaping && 0 !== strpos( $string_field, "' " ) ) {
+			$field = "' " . $field;
 		}
 
 		return $field;

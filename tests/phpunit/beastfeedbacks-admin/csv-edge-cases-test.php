@@ -240,6 +240,11 @@ class CSV_Edge_Cases_Test extends BeastFeedbacks_TestCase {
 		$this->assertSame( "' \tcmd", $admin->esc_csv( "\tcmd" ) );
 		$this->assertSame( "' \rcmd", $admin->esc_csv( "\rcmd" ) );
 		$this->assertSame( "' \n=1+1", $admin->esc_csv( "\n=1+1" ) );
+		$this->assertSame( "' \x0C=1+1", $admin->esc_csv( "\x0C=1+1" ) );
+
+		// Multiline formula triggers on subsequent lines.
+		$this->assertSame( "' Hello\n=1+1", $admin->esc_csv( "Hello\n=1+1" ) );
+		$this->assertSame( "' First Line\r\n   +10", $admin->esc_csv( "First Line\r\n   +10" ) );
 
 		// Whitespace-padded formula triggers.
 		$this->assertSame( "'    =1+1", $admin->esc_csv( '   =1+1' ) );
@@ -251,6 +256,7 @@ class CSV_Edge_Cases_Test extends BeastFeedbacks_TestCase {
 		$this->assertSame( "'   \ttab", $admin->esc_csv( "  \ttab" ) );
 		$this->assertSame( "'   \rcr", $admin->esc_csv( "  \rcr" ) );
 		$this->assertSame( "'   \n=1+1", $admin->esc_csv( "  \n=1+1" ) );
+		$this->assertSame( "'   \x0C=1+1", $admin->esc_csv( "  \x0C=1+1" ) );
 
 		// Array input handling.
 		$this->assertSame( 'a,b,c', $admin->esc_csv( array( 'a', 'b', 'c' ) ) );

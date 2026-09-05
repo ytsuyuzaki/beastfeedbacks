@@ -81,37 +81,61 @@ class BeastFeedbacks_Admin_Add_Source_Filter_Test extends BeastFeedbacks_TestCas
 	}
 
 	/** @test */
-	public function clear_source_filter_cache_invalidates_cache_for_beastfeedbacks_posts(): void {
+	public function post_mutations_invalidate_source_filter_cache(): void {
 		\BeastFeedbacks_Admin::get_instance()->init();
 
-		wp_cache_set( 'source_filter_parent_ids', array( 1, 2, 3 ), 'beastfeedbacks' );
-		$this->assertNotFalse( wp_cache_get( 'source_filter_parent_ids', 'beastfeedbacks' ) );
-
-		$page_id = $this->create_post(
+		$parent_id = $this->create_post(
 			array(
-				'post_title' => 'Sample Page',
+				'post_title' => 'Parent Page',
 				'post_type'  => 'page',
 			)
 		);
 
-		// Non-beastfeedbacks post cache clean should NOT invalidate source filter cache.
-		clean_post_cache( $page_id );
+		// 1. Create a feedback post
+		wp_cache_set( 'source_filter_parent_ids', array( $parent_id ), 'beastfeedbacks' );
 		$this->assertNotFalse( wp_cache_get( 'source_filter_parent_ids', 'beastfeedbacks' ) );
 
 		$feedback_id = $this->create_post(
 			array(
-				'post_title'  => 'Feedback 2',
+				'post_title'  => 'Feedback Post',
 				'post_type'   => 'beastfeedbacks',
-				'post_parent' => $page_id,
+				'post_parent' => $parent_id,
+			)
+		);
+		$this->assertFalse( wp_cache_get( 'source_filter_parent_ids', 'beastfeedbacks' ) );
+
+		// 2. Trashing feedback post
+		wp_cache_set( 'source_filter_parent_ids', array( $parent_id ), 'beastfeedbacks' );
+		wp_trash_post( $feedback_id );
+		$this->assertFalse( wp_cache_get( 'source_filter_parent_ids', 'beastfeedbacks' ) );
+
+		// 3. Untrashing feedback post
+		wp_cache_set( 'source_filter_parent_ids', array( $parent_id ), 'beastfeedbacks' );
+		wp_untrash_post( $feedback_id );
+		$this->assertFalse( wp_cache_get( 'source_filter_parent_ids', 'beastfeedbacks' ) );
+
+		// 4. Deleting feedback post
+		wp_cache_set( 'source_filter_parent_ids', array( $parent_id ), 'beastfeedbacks' );
+		wp_delete_post( $feedback_id, true );
+		$this->assertFalse( wp_cache_get( 'source_filter_parent_ids', 'beastfeedbacks' ) );
+	}
+
+	/** @test */
+	public function clean_post_cache_does_not_evict_source_filter_cache(): void {
+		\BeastFeedbacks_Admin::get_instance()->init();
+
+		$feedback_id = $this->create_post(
+			array(
+				'post_title' => 'Feedback Post',
+				'post_type'  => 'beastfeedbacks',
 			)
 		);
 
-		// Repopulate cache to verify clean_post_cache invalidates it.
-		wp_cache_set( 'source_filter_parent_ids', array( 1, 2, 3 ), 'beastfeedbacks' );
-		$this->assertNotFalse( wp_cache_get( 'source_filter_parent_ids', 'beastfeedbacks' ) );
+		wp_cache_set( 'source_filter_parent_ids', array( 10, 20 ), 'beastfeedbacks' );
 
-		// Beastfeedbacks post cache clean SHOULD invalidate source filter cache.
+		// Simulating clean_post_cache() as invoked during stream_csv() memory cleanup.
 		clean_post_cache( $feedback_id );
-		$this->assertFalse( wp_cache_get( 'source_filter_parent_ids', 'beastfeedbacks' ) );
+
+		$this->assertSame( array( 10, 20 ), wp_cache_get( 'source_filter_parent_ids', 'beastfeedbacks' ) );
 	}
 }
