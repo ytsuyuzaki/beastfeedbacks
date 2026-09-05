@@ -76,6 +76,8 @@ class BeastFeedbacks_Admin {
 		add_action( 'pre_get_posts', array( $this, 'source_filter_result' ) );
 		add_filter( 'the_posts', array( $this, 'prime_parent_post_caches' ), 10, 2 );
 
+		add_action( 'clean_post_cache', array( $this, 'clear_source_filter_cache' ), 10, 2 );
+
 		add_action( "wp_ajax_{$this->export_action_name}", array( $this, 'download_csv' ) );
 	}
 
@@ -452,16 +454,25 @@ class BeastFeedbacks_Admin {
 		$nonce_verified     = isset( $_GET['_beastfeedbacks_nonce'] ) && wp_verify_nonce( sanitize_key( wp_unslash( $_GET['_beastfeedbacks_nonce'] ) ), 'beastfeedbacks_filter' );
 		$selected_parent_id = intval( $nonce_verified && isset( $_GET['beastfeedbacks_parent_id'] ) ? sanitize_key( wp_unslash( $_GET['beastfeedbacks_parent_id'] ) ) : 0 );
 
-		global $wpdb;
+		$cache_key   = 'source_filter_parent_ids';
+		$cache_group = 'beastfeedbacks';
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$raw_parent_ids = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT DISTINCT post_parent FROM {$wpdb->posts} WHERE post_type = %s AND post_status = %s",
-				$this->post_type,
-				'publish'
-			)
-		);
+		$raw_parent_ids = wp_cache_get( $cache_key, $cache_group );
+
+		if ( false === $raw_parent_ids ) {
+			global $wpdb;
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+			$raw_parent_ids = $wpdb->get_col(
+				$wpdb->prepare(
+					"SELECT DISTINCT post_parent FROM {$wpdb->posts} WHERE post_type = %s AND post_status = %s",
+					$this->post_type,
+					'publish'
+				)
+			);
+
+			wp_cache_set( $cache_key, $raw_parent_ids, $cache_group );
+		}
 
 		$parent_ids = ! empty( $raw_parent_ids ) ? array_values( array_filter( array_map( 'absint', $raw_parent_ids ) ) ) : array();
 
@@ -486,6 +497,25 @@ class BeastFeedbacks_Admin {
 			<?php endforeach; ?>
 		</select>
 		<?php
+	}
+
+	/**
+	 * Clear parent ids cache for source filter when a feedback post cache is cleaned.
+	 *
+	 * @param int          $post_id Post ID.
+	 * @param WP_Post|null $post    Post object.
+	 * @return void
+	 */
+	public function clear_source_filter_cache( $post_id, $post = null ) {
+		if ( $post instanceof WP_Post ) {
+			if ( $post->post_type !== $this->post_type ) {
+				return;
+			}
+		} elseif ( get_post_type( $post_id ) !== $this->post_type ) {
+			return;
+		}
+
+		wp_cache_delete( 'source_filter_parent_ids', 'beastfeedbacks' );
 	}
 
 	/**
