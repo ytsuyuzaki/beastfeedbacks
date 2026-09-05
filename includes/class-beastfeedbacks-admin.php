@@ -915,13 +915,31 @@ class BeastFeedbacks_Admin {
 
 		$active_content_triggers = array( '=', '+', '-', '@', '|', '%', "\t", "\r", "\n" );
 
-		$string_field  = (string) $field;
-		$trimmed_field = ltrim( $string_field, " \v\0" );
+		$string_field = (string) $field;
 
-		if ( '' !== $string_field && ( in_array( mb_substr( $string_field, 0, 1 ), $active_content_triggers, true ) || ( '' !== $trimmed_field && in_array( mb_substr( $trimmed_field, 0, 1 ), $active_content_triggers, true ) ) ) ) {
-			if ( 0 !== strpos( $string_field, "' " ) ) {
-				$field = "' " . $field;
+		if ( '' === $string_field ) {
+			return $field;
+		}
+
+		$needs_escaping = false;
+
+		$trimmed_field = ltrim( $string_field, " \v\0\x0C" );
+		if ( in_array( mb_substr( $string_field, 0, 1 ), $active_content_triggers, true ) ||
+			( '' !== $trimmed_field && in_array( mb_substr( $trimmed_field, 0, 1 ), $active_content_triggers, true ) ) ) {
+			$needs_escaping = true;
+		} else {
+			$lines = preg_split( '/(\r\n|\r|\n)/', $string_field );
+			foreach ( $lines as $line ) {
+				$trimmed_line = ltrim( $line, " \v\0\x0C" );
+				if ( '' !== $line && ( in_array( mb_substr( $line, 0, 1 ), $active_content_triggers, true ) || ( '' !== $trimmed_line && in_array( mb_substr( $trimmed_line, 0, 1 ), $active_content_triggers, true ) ) ) ) {
+					$needs_escaping = true;
+					break;
+				}
 			}
+		}
+
+		if ( $needs_escaping && 0 !== strpos( $string_field, "' " ) ) {
+			$field = "' " . $field;
 		}
 
 		return $field;

@@ -27,6 +27,8 @@ class BeastFeedbacks_Admin_Download_Csv_Test extends BeastFeedbacks_TestCase {
 		$this->assertSame( "' \rcmd", $admin->esc_csv( "\rcmd" ) );
 		$this->assertSame( "'  =SUM(A1:A2)", $admin->esc_csv( ' =SUM(A1:A2)' ) );
 		$this->assertSame( "'   +1+2", $admin->esc_csv( '  +1+2' ) );
+		$this->assertSame( "' \x0C=SUM(A1:A2)", $admin->esc_csv( "\x0C=SUM(A1:A2)" ) );
+		$this->assertSame( "' Line1\n=SUM(A1:A2)", $admin->esc_csv( "Line1\n=SUM(A1:A2)" ) );
 
 		$this->assertSame( 'safe', $admin->esc_csv( 'safe' ) );
 		$this->assertSame( '  space', $admin->esc_csv( '  space' ) );
