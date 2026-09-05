@@ -245,6 +245,34 @@ class BeastFeedbacks_Admin {
 	}
 
 	/**
+	 * Extract structured content data from post_content JSON.
+	 *
+	 * @param string $post_content JSON string stored in post_content.
+	 * @return array Associative array containing 'type', 'post_params', 'ip_address', and 'user_agent'.
+	 */
+	private function extract_post_content_data( $post_content ) {
+		$content = json_decode( $post_content, true );
+		if ( ! is_array( $content ) ) {
+			$content = array();
+		}
+
+		$type        = isset( $content['type'] ) ? $content['type'] : '';
+		$post_params = isset( $content['post_params'] ) && is_array( $content['post_params'] )
+			? $content['post_params']
+			: array();
+
+		$ip_address = isset( $content['ip_address'] ) ? $content['ip_address'] : '';
+		$user_agent = isset( $content['user_agent'] ) ? $content['user_agent'] : '';
+
+		return array(
+			'type'        => $type,
+			'post_params' => $post_params,
+			'ip_address'  => $ip_address,
+			'user_agent'  => $user_agent,
+		);
+	}
+
+	/**
 	 * Render response column content.
 	 *
 	 * @param int $post_id The current post ID.
@@ -260,12 +288,9 @@ class BeastFeedbacks_Admin {
 			return;
 		}
 
-		$type        = isset( $content['type'] )
-			? $content['type']
-			: '';
-		$post_params = isset( $content['post_params'] )
-			? $content['post_params']
-			: array();
+		$content_data = $this->extract_post_content_data( $post->post_content );
+		$type         = $content_data['type'];
+		$post_params  = $content_data['post_params'];
 		?>
 		<table>
 			<tbody>
@@ -295,16 +320,16 @@ class BeastFeedbacks_Admin {
 		<table>
 			<tbody>
 				<hr />
-				<?php if ( isset( $content['ip_address'] ) ) : ?>
+				<?php if ( '' !== $content_data['ip_address'] ) : ?>
 					<tr>
 						<td>IP_Address</td>
-						<td><?php echo esc_html( $content['ip_address'] ); ?></td>
+						<td><?php echo esc_html( $content_data['ip_address'] ); ?></td>
 					</tr>
 				<?php endif ?>
-				<?php if ( isset( $content['user_agent'] ) ) : ?>
+				<?php if ( '' !== $content_data['user_agent'] ) : ?>
 					<tr>
 						<td>UserAgent</td>
-						<td><?php echo esc_html( $content['user_agent'] ); ?></td>
+						<td><?php echo esc_html( $content_data['user_agent'] ); ?></td>
 					</tr>
 				<?php endif ?>
 			</tbody>
@@ -683,13 +708,11 @@ class BeastFeedbacks_Admin {
 			);
 
 			foreach ( $posts as $post ) {
-				$content = json_decode( $post->post_content, true );
-				if ( is_array( $content ) && isset( $content['post_params'] ) && is_array( $content['post_params'] ) ) {
-					foreach ( $content['post_params'] as $key => $val ) {
-						if ( ! isset( $fields_map[ $key ] ) ) {
-							$fields_map[ $key ] = true;
-							$fields[]           = $key;
-						}
+				$content_data = $this->extract_post_content_data( $post->post_content );
+				foreach ( $content_data['post_params'] as $key => $val ) {
+					if ( ! isset( $fields_map[ $key ] ) ) {
+						$fields_map[ $key ] = true;
+						$fields[]           = $key;
 					}
 				}
 			}
@@ -729,28 +752,17 @@ class BeastFeedbacks_Admin {
 					$source         = $permalink_data['path'];
 				}
 
-				$content = json_decode( $post->post_content, true );
-				if ( ! is_array( $content ) ) {
-					$content = array();
-				}
-
-				$type        = isset( $content['type'] ) ? $content['type'] : '';
-				$post_params = isset( $content['post_params'] ) && is_array( $content['post_params'] )
-					? $content['post_params']
-					: array();
-
-				$ip_address = isset( $content['ip_address'] ) ? $content['ip_address'] : '';
-				$user_agent = isset( $content['user_agent'] ) ? $content['user_agent'] : '';
+				$content_data = $this->extract_post_content_data( $post->post_content );
 
 				$row_data = array(
 					'source'     => $source,
 					'date'       => $post->post_date,
-					'type'       => $type,
-					'ip_address' => $ip_address,
-					'user_agent' => $user_agent,
+					'type'       => $content_data['type'],
+					'ip_address' => $content_data['ip_address'],
+					'user_agent' => $content_data['user_agent'],
 				);
 
-				$row_data = array_merge( $row_data, $post_params );
+				$row_data = array_merge( $row_data, $content_data['post_params'] );
 
 				$current_row = array();
 				foreach ( $fields as $single_field_name ) {
@@ -815,30 +827,17 @@ class BeastFeedbacks_Admin {
 				$source         = $permalink_data['path'];
 			}
 
-			$content = json_decode( $post->post_content, true );
-			if ( ! is_array( $content ) ) {
-				$content = array();
-			}
-
-			$type        = isset( $content['type'] )
-				? $content['type']
-				: '';
-			$post_params = isset( $content['post_params'] )
-				? $content['post_params']
-				: array();
-
-			$ip_address = isset( $content['ip_address'] ) ? $content['ip_address'] : '';
-			$user_agent = isset( $content['user_agent'] ) ? $content['user_agent'] : '';
+			$content_data = $this->extract_post_content_data( $post->post_content );
 
 			$add_data = array(
 				'source'     => $source,
 				'date'       => $post->post_date,
-				'type'       => $type,
-				'ip_address' => $ip_address,
-				'user_agent' => $user_agent,
+				'type'       => $content_data['type'],
+				'ip_address' => $content_data['ip_address'],
+				'user_agent' => $content_data['user_agent'],
 			);
 
-			$add_data = array_merge( $add_data, $post_params );
+			$add_data = array_merge( $add_data, $content_data['post_params'] );
 
 			foreach ( $add_data as $key => $value ) {
 				$data = $value;
