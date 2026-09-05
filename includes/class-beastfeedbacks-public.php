@@ -284,6 +284,9 @@ class BeastFeedbacks_Public {
 	/**
 	 * IPアドレスの取得
 	 *
+	 * Uses strictly REMOTE_ADDR by default to prevent IP spoofing via untrusted HTTP headers.
+	 * Provides a filter hook 'beastfeedbacks_ip_address' for trusted reverse proxy / CDN setups.
+	 *
 	 * @return string
 	 */
 	public function get_ip_address() {
@@ -291,6 +294,22 @@ class BeastFeedbacks_Public {
 			? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) )
 			: '';
 
-		return false !== filter_var( $ip, FILTER_VALIDATE_IP ) ? $ip : '';
+		if ( false === filter_var( $ip, FILTER_VALIDATE_IP ) ) {
+			$ip = '';
+		}
+
+		/**
+		 * Filter the client IP address.
+		 *
+		 * Allows site administrators operating behind trusted reverse proxies or CDNs
+		 * to customize client IP resolution safely.
+		 *
+		 * @since 0.1.6
+		 *
+		 * @param string $ip The client IP address from REMOTE_ADDR.
+		 */
+		$ip = apply_filters( 'beastfeedbacks_ip_address', $ip );
+
+		return false !== filter_var( $ip, FILTER_VALIDATE_IP ) ? (string) $ip : '';
 	}
 }

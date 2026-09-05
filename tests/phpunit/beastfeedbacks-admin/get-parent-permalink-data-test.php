@@ -39,7 +39,7 @@ class BeastFeedbacks_Admin_Get_Parent_Permalink_Data_Test extends BeastFeedbacks
 	}
 
 	/**
-	 * Test static caching behavior for repeated calls with the same parent ID.
+	 * Test static caching behavior for repeated calls with the same parent ID by observing cache hits.
 	 *
 	 * @test
 	 */
@@ -51,9 +51,24 @@ class BeastFeedbacks_Admin_Get_Parent_Permalink_Data_Test extends BeastFeedbacks
 			)
 		);
 
-		$admin  = \BeastFeedbacks_Admin::get_instance();
-		$first  = $admin->get_parent_permalink_data( $post_id );
+		$filter_call_count = 0;
+		$filter            = static function ( $permalink ) use ( &$filter_call_count ) {
+			$filter_call_count++;
+			return $permalink;
+		};
+
+		add_filter( 'post_link', $filter );
+
+		$admin = \BeastFeedbacks_Admin::get_instance();
+		$first = $admin->get_parent_permalink_data( $post_id );
+
+		$this->assertSame( 1, $filter_call_count, 'post_link filter should be called once on initial cache miss.' );
+
 		$second = $admin->get_parent_permalink_data( $post_id );
+
+		$this->assertSame( 1, $filter_call_count, 'post_link filter should not be called on static cache hit.' );
+
+		remove_filter( 'post_link', $filter );
 
 		$this->assertSame( $first, $second );
 	}
