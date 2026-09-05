@@ -665,45 +665,11 @@ class BeastFeedbacks_Admin {
 		$chunk_size = 500;
 		$chunks     = array_chunk( $post_ids, $chunk_size );
 
-		// Pass 1: Collect all unique field keys across all posts.
 		$fields     = array( 'source', 'date', 'type', 'ip_address', 'user_agent' );
 		$fields_map = array_fill_keys( $fields, true );
 
-		foreach ( $chunks as $chunk ) {
-			$posts = get_posts(
-				array(
-					'post_type'              => 'beastfeedbacks',
-					'post__in'               => $chunk,
-					'orderby'                => 'post__in',
-					'posts_per_page'         => count( $chunk ),
-					'suppress_filters'       => false,
-					'update_post_term_cache' => false,
-					'update_post_meta_cache' => false,
-				)
-			);
+		$temp_stream = fopen( 'php://temp', 'r+' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
 
-			foreach ( $posts as $post ) {
-				$content = json_decode( $post->post_content, true );
-				if ( is_array( $content ) && isset( $content['post_params'] ) && is_array( $content['post_params'] ) ) {
-					foreach ( $content['post_params'] as $key => $val ) {
-						if ( ! isset( $fields_map[ $key ] ) ) {
-							$fields_map[ $key ] = true;
-							$fields[]           = $key;
-						}
-					}
-				}
-			}
-
-			foreach ( $chunk as $id ) {
-				clean_post_cache( $id );
-			}
-		}
-
-		// Output CSV headers.
-		$escaped_fields = array_map( array( $this, 'esc_csv' ), $fields );
-		fputcsv( $output, $escaped_fields );
-
-		// Pass 2: Stream rows.
 		foreach ( $chunks as $chunk ) {
 			$posts = get_posts(
 				array(
@@ -750,23 +716,51 @@ class BeastFeedbacks_Admin {
 					'user_agent' => $user_agent,
 				);
 
-				$row_data = array_merge( $row_data, $post_params );
-
-				$current_row = array();
-				foreach ( $fields as $single_field_name ) {
-					$value = isset( $row_data[ $single_field_name ] ) ? $row_data[ $single_field_name ] : '';
-					if ( is_array( $value ) ) {
-						$value = implode( ',', $value );
+				foreach ( $post_params as $key => $val ) {
+					if ( ! isset( $fields_map[ $key ] ) ) {
+						$fields_map[ $key ] = true;
+						$fields[]           = $key;
 					}
-					$current_row[] = $this->esc_csv( $value );
+					$row_data[ $key ] = $val;
 				}
-				fputcsv( $output, $current_row );
+
+				fwrite( $temp_stream, wp_json_encode( $row_data ) . "\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite
 			}
 
 			foreach ( $chunk as $id ) {
 				clean_post_cache( $id );
 			}
 		}
+
+		// Output CSV headers.
+		$escaped_fields = array_map( array( $this, 'esc_csv' ), $fields );
+		fputcsv( $output, $escaped_fields );
+
+		// Stream rows from temp buffer.
+		rewind( $temp_stream );
+
+		while ( true ) {
+			$line = fgets( $temp_stream ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fgets
+			if ( false === $line ) {
+				break;
+			}
+			$row_data = json_decode( trim( $line ), true );
+			if ( ! is_array( $row_data ) ) {
+				continue;
+			}
+
+			$current_row = array();
+			foreach ( $fields as $single_field_name ) {
+				$value = isset( $row_data[ $single_field_name ] ) ? $row_data[ $single_field_name ] : '';
+				if ( is_array( $value ) ) {
+					$value = implode( ',', $value );
+				}
+				$current_row[] = $this->esc_csv( $value );
+			}
+			fputcsv( $output, $current_row );
+		}
+
+		fclose( $temp_stream ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 
 		fclose( $output ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 	}
