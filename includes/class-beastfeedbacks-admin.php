@@ -668,7 +668,12 @@ class BeastFeedbacks_Admin {
 		$fields     = array( 'source', 'date', 'type', 'ip_address', 'user_agent' );
 		$fields_map = array_fill_keys( $fields, true );
 
-		$temp_stream = fopen( 'php://temp', 'r+' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
+		$temp_stream = $this->open_temp_stream();
+
+		if ( ! $temp_stream ) {
+			fclose( $output ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+			return;
+		}
 
 		foreach ( $chunks as $chunk ) {
 			$posts = get_posts(
@@ -724,7 +729,14 @@ class BeastFeedbacks_Admin {
 					$row_data[ $key ] = $val;
 				}
 
-				fwrite( $temp_stream, wp_json_encode( $row_data ) . "\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite
+				$json_line   = wp_json_encode( $row_data ) . "\n";
+				$bytes_wrote = fwrite( $temp_stream, $json_line ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite
+
+				if ( false === $bytes_wrote || $bytes_wrote < strlen( $json_line ) ) {
+					fclose( $temp_stream ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+					fclose( $output ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+					return;
+				}
 			}
 
 			foreach ( $chunk as $id ) {
@@ -886,6 +898,15 @@ class BeastFeedbacks_Admin {
 		}
 
 		fclose( $output ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+	}
+
+	/**
+	 * Open temporary stream buffer for CSV export.
+	 *
+	 * @return resource|false
+	 */
+	protected function open_temp_stream() {
+		return fopen( 'php://temp', 'r+' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
 	}
 
 	/**
