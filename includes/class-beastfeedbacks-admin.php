@@ -460,6 +460,9 @@ class BeastFeedbacks_Admin {
 
 		$nonce_verified = isset( $_GET['_beastfeedbacks_nonce'] ) && wp_verify_nonce( sanitize_key( wp_unslash( $_GET['_beastfeedbacks_nonce'] ) ), 'beastfeedbacks_filter' );
 		$selected_type  = $nonce_verified && isset( $_GET['beastfeedbacks_type'] ) ? sanitize_key( wp_unslash( $_GET['beastfeedbacks_type'] ) ) : '';
+		if ( ! in_array( $selected_type, BeastFeedbacks_Block::TYPES, true ) ) {
+			$selected_type = '';
+		}
 
 		wp_nonce_field( 'beastfeedbacks_filter', '_beastfeedbacks_nonce' );
 		?>
@@ -570,7 +573,7 @@ class BeastFeedbacks_Admin {
 			|| ( isset( $_REQUEST['_wpnonce'] ) && wp_verify_nonce( sanitize_key( wp_unslash( $_REQUEST['_wpnonce'] ) ), 'beastfeedbacks_csv_export' ) );
 		$selected_type  = $nonce_verified && isset( $_REQUEST['beastfeedbacks_type'] ) ? sanitize_key( wp_unslash( $_REQUEST['beastfeedbacks_type'] ) ) : '';
 
-		if ( ! $selected_type || 'beastfeedbacks' !== $query->query_vars['post_type'] ) {
+		if ( ! $selected_type || ! in_array( $selected_type, BeastFeedbacks_Block::TYPES, true ) || 'beastfeedbacks' !== $query->query_vars['post_type'] ) {
 			return;
 		}
 
@@ -705,7 +708,8 @@ class BeastFeedbacks_Admin {
 	 */
 	private function send_csv_headers( $filename ) {
 		if ( ! headers_sent() ) {
-			header( 'Content-Disposition: attachment; filename=' . $filename );
+			$safe_filename = sanitize_file_name( $filename );
+			header( 'Content-Disposition: attachment; filename="' . $safe_filename . '"' );
 			header( 'Pragma: no-cache' );
 			header( 'Expires: 0' );
 			header( 'Content-Type: text/csv; charset=utf-8' );
@@ -928,12 +932,7 @@ class BeastFeedbacks_Admin {
 	public function output_csv( $filename, array $posts, array $post_datas ) {
 		$fields = array_keys( $post_datas );
 
-		if ( ! headers_sent() ) {
-			header( 'Content-Disposition: attachment; filename=' . $filename );
-			header( 'Pragma: no-cache' );
-			header( 'Expires: 0' );
-			header( 'Content-Type: text/csv; charset=utf-8' );
-		}
+		$this->send_csv_headers( $filename );
 
 		$output = fopen( 'php://output', 'w' );
 
