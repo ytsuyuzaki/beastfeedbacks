@@ -984,25 +984,40 @@ class BeastFeedbacks_Admin {
 			$field = implode( ',', array_map( 'strval', array_filter( $field, 'is_scalar' ) ) );
 		}
 
-		$active_content_triggers = array( '=', '+', '-', '@', '|', '%', "\t", "\r", "\n" );
-
 		$string_field = (string) $field;
 
 		if ( '' === $string_field ) {
 			return $field;
 		}
 
+		// Fast path: Check if any active content trigger character is present anywhere in the string.
+		if ( false === strpbrk( $string_field, "=+-@|%\t\r\n" ) ) {
+			return $field;
+		}
+
+		static $active_content_triggers = array(
+			'='  => true,
+			'+'  => true,
+			'-'  => true,
+			'@'  => true,
+			'|'  => true,
+			'%'  => true,
+			"\t" => true,
+			"\r" => true,
+			"\n" => true,
+		);
+
 		$needs_escaping = false;
 
 		$trimmed_field = ltrim( $string_field, " \v\0\x0C" );
-		if ( in_array( mb_substr( $string_field, 0, 1 ), $active_content_triggers, true ) ||
-			( '' !== $trimmed_field && in_array( mb_substr( $trimmed_field, 0, 1 ), $active_content_triggers, true ) ) ) {
+		if ( isset( $active_content_triggers[ mb_substr( $string_field, 0, 1 ) ] ) ||
+			( '' !== $trimmed_field && isset( $active_content_triggers[ mb_substr( $trimmed_field, 0, 1 ) ] ) ) ) {
 			$needs_escaping = true;
 		} else {
 			$lines = preg_split( '/(\r\n|\r|\n)/', $string_field );
 			foreach ( $lines as $line ) {
 				$trimmed_line = ltrim( $line, " \v\0\x0C" );
-				if ( '' !== $line && ( in_array( mb_substr( $line, 0, 1 ), $active_content_triggers, true ) || ( '' !== $trimmed_line && in_array( mb_substr( $trimmed_line, 0, 1 ), $active_content_triggers, true ) ) ) ) {
+				if ( '' !== $line && ( isset( $active_content_triggers[ mb_substr( $line, 0, 1 ) ] ) || ( '' !== $trimmed_line && isset( $active_content_triggers[ mb_substr( $trimmed_line, 0, 1 ) ] ) ) ) ) {
 					$needs_escaping = true;
 					break;
 				}
