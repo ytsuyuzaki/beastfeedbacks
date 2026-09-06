@@ -76,6 +76,11 @@ class BeastFeedbacks_Admin {
 		add_action( 'pre_get_posts', array( $this, 'source_filter_result' ) );
 		add_filter( 'the_posts', array( $this, 'prime_parent_post_caches' ), 10, 2 );
 
+		add_action( "save_post_{$this->post_type}", array( $this, 'clear_source_filter_cache' ), 10, 2 );
+		add_action( 'deleted_post', array( $this, 'clear_source_filter_cache' ), 10, 2 );
+		add_action( 'trashed_post', array( $this, 'clear_source_filter_cache' ), 10, 1 );
+		add_action( 'untrashed_post', array( $this, 'clear_source_filter_cache' ), 10, 1 );
+
 		add_action( "wp_ajax_{$this->export_action_name}", array( $this, 'download_csv' ) );
 	}
 
@@ -245,6 +250,45 @@ class BeastFeedbacks_Admin {
 	}
 
 	/**
+	 * Extract structured content data from post_content JSON.
+	 *
+	 * @param string $post_content JSON string stored in post_content.
+	 * @return array Associative array containing parsed JSON fields and key-presence booleans.
+	 */
+	private function extract_post_content_data( $post_content ) {
+		$content = json_decode( $post_content, true );
+		if ( ! is_array( $content ) ) {
+			return array(
+				'is_valid'       => false,
+				'type'           => '',
+				'post_params'    => array(),
+				'ip_address'     => '',
+				'user_agent'     => '',
+				'has_ip_address' => false,
+				'has_user_agent' => false,
+			);
+		}
+
+		$type        = isset( $content['type'] ) ? $content['type'] : '';
+		$post_params = isset( $content['post_params'] ) && is_array( $content['post_params'] )
+			? $content['post_params']
+			: array();
+
+		$ip_address = isset( $content['ip_address'] ) ? $content['ip_address'] : '';
+		$user_agent = isset( $content['user_agent'] ) ? $content['user_agent'] : '';
+
+		return array(
+			'is_valid'       => true,
+			'type'           => $type,
+			'post_params'    => $post_params,
+			'ip_address'     => $ip_address,
+			'user_agent'     => $user_agent,
+			'has_ip_address' => isset( $content['ip_address'] ),
+			'has_user_agent' => isset( $content['user_agent'] ),
+		);
+	}
+
+	/**
 	 * Render response column content.
 	 *
 	 * @param int $post_id The current post ID.
@@ -255,17 +299,13 @@ class BeastFeedbacks_Admin {
 			return;
 		}
 
-		$content = json_decode( $post->post_content, true );
-		if ( ! is_array( $content ) ) {
+		$content_data = $this->extract_post_content_data( $post->post_content );
+		if ( ! $content_data['is_valid'] ) {
 			return;
 		}
 
-		$type        = isset( $content['type'] )
-			? $content['type']
-			: '';
-		$post_params = isset( $content['post_params'] )
-			? $content['post_params']
-			: array();
+		$type        = $content_data['type'];
+		$post_params = $content_data['post_params'];
 		?>
 		<table>
 			<tbody>
@@ -295,16 +335,16 @@ class BeastFeedbacks_Admin {
 		<table>
 			<tbody>
 				<hr />
-				<?php if ( isset( $content['ip_address'] ) ) : ?>
+				<?php if ( $content_data['has_ip_address'] ) : ?>
 					<tr>
 						<td>IP_Address</td>
-						<td><?php echo esc_html( $content['ip_address'] ); ?></td>
+						<td><?php echo esc_html( $content_data['ip_address'] ); ?></td>
 					</tr>
 				<?php endif ?>
-				<?php if ( isset( $content['user_agent'] ) ) : ?>
+				<?php if ( $content_data['has_user_agent'] ) : ?>
 					<tr>
 						<td>UserAgent</td>
-						<td><?php echo esc_html( $content['user_agent'] ); ?></td>
+						<td><?php echo esc_html( $content_data['user_agent'] ); ?></td>
 					</tr>
 				<?php endif ?>
 			</tbody>
@@ -452,16 +492,25 @@ class BeastFeedbacks_Admin {
 		$nonce_verified     = isset( $_GET['_beastfeedbacks_nonce'] ) && wp_verify_nonce( sanitize_key( wp_unslash( $_GET['_beastfeedbacks_nonce'] ) ), 'beastfeedbacks_filter' );
 		$selected_parent_id = intval( $nonce_verified && isset( $_GET['beastfeedbacks_parent_id'] ) ? sanitize_key( wp_unslash( $_GET['beastfeedbacks_parent_id'] ) ) : 0 );
 
-		global $wpdb;
+		$cache_key   = 'source_filter_parent_ids';
+		$cache_group = 'beastfeedbacks';
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$raw_parent_ids = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT DISTINCT post_parent FROM {$wpdb->posts} WHERE post_type = %s AND post_status = %s",
-				$this->post_type,
-				'publish'
-			)
-		);
+		$raw_parent_ids = wp_cache_get( $cache_key, $cache_group );
+
+		if ( false === $raw_parent_ids ) {
+			global $wpdb;
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+			$raw_parent_ids = $wpdb->get_col(
+				$wpdb->prepare(
+					"SELECT DISTINCT post_parent FROM {$wpdb->posts} WHERE post_type = %s AND post_status = %s",
+					$this->post_type,
+					'publish'
+				)
+			);
+
+			wp_cache_set( $cache_key, $raw_parent_ids, $cache_group );
+		}
 
 		$parent_ids = ! empty( $raw_parent_ids ) ? array_values( array_filter( array_map( 'absint', $raw_parent_ids ) ) ) : array();
 
@@ -486,6 +535,27 @@ class BeastFeedbacks_Admin {
 			<?php endforeach; ?>
 		</select>
 		<?php
+	}
+
+	/**
+	 * Clear parent ids cache for source filter when a feedback post is created, updated, or deleted.
+	 *
+	 * @param int          $post_id Post ID.
+	 * @param WP_Post|null $post    Post object.
+	 * @return void
+	 */
+	public function clear_source_filter_cache( $post_id = 0, $post = null ) {
+		if ( $post instanceof WP_Post ) {
+			if ( $post->post_type !== $this->post_type ) {
+				return;
+			}
+		} elseif ( $post_id ) {
+			if ( get_post_type( $post_id ) !== $this->post_type ) {
+				return;
+			}
+		}
+
+		wp_cache_delete( 'source_filter_parent_ids', 'beastfeedbacks' );
 	}
 
 	/**
@@ -628,6 +698,21 @@ class BeastFeedbacks_Admin {
 	}
 
 	/**
+	 * Send HTTP headers for CSV attachment download.
+	 *
+	 * @param string $filename CSV file name.
+	 * @return void
+	 */
+	private function send_csv_headers( $filename ) {
+		if ( ! headers_sent() ) {
+			header( 'Content-Disposition: attachment; filename=' . $filename );
+			header( 'Pragma: no-cache' );
+			header( 'Expires: 0' );
+			header( 'Content-Type: text/csv; charset=utf-8' );
+		}
+	}
+
+	/**
 	 * Stream CSV export directly to output in chunks to minimize memory usage.
 	 *
 	 * @param string $filename CSV file name.
@@ -648,12 +733,7 @@ class BeastFeedbacks_Admin {
 
 		$post_ids = get_posts( $args );
 
-		if ( ! headers_sent() ) {
-			header( 'Content-Disposition: attachment; filename=' . $filename );
-			header( 'Pragma: no-cache' );
-			header( 'Expires: 0' );
-			header( 'Content-Type: text/csv; charset=utf-8' );
-		}
+		$this->send_csv_headers( $filename );
 
 		$output = fopen( 'php://output', 'w' );
 
@@ -700,28 +780,17 @@ class BeastFeedbacks_Admin {
 					$source         = $permalink_data['path'];
 				}
 
-				$content = json_decode( $post->post_content, true );
-				if ( ! is_array( $content ) ) {
-					$content = array();
-				}
-
-				$type        = isset( $content['type'] ) ? $content['type'] : '';
-				$post_params = isset( $content['post_params'] ) && is_array( $content['post_params'] )
-					? $content['post_params']
-					: array();
-
-				$ip_address = isset( $content['ip_address'] ) ? $content['ip_address'] : '';
-				$user_agent = isset( $content['user_agent'] ) ? $content['user_agent'] : '';
+				$content_data = $this->extract_post_content_data( $post->post_content );
 
 				$row_data = array(
 					'source'     => $source,
 					'date'       => $post->post_date,
-					'type'       => $type,
-					'ip_address' => $ip_address,
-					'user_agent' => $user_agent,
+					'type'       => $content_data['type'],
+					'ip_address' => $content_data['ip_address'],
+					'user_agent' => $content_data['user_agent'],
 				);
 
-				foreach ( $post_params as $key => $val ) {
+				foreach ( $content_data['post_params'] as $key => $val ) {
 					if ( ! isset( $fields_map[ $key ] ) ) {
 						$fields_map[ $key ] = true;
 						$fields[]           = $key;
@@ -821,30 +890,17 @@ class BeastFeedbacks_Admin {
 				$source         = $permalink_data['path'];
 			}
 
-			$content = json_decode( $post->post_content, true );
-			if ( ! is_array( $content ) ) {
-				$content = array();
-			}
-
-			$type        = isset( $content['type'] )
-				? $content['type']
-				: '';
-			$post_params = isset( $content['post_params'] )
-				? $content['post_params']
-				: array();
-
-			$ip_address = isset( $content['ip_address'] ) ? $content['ip_address'] : '';
-			$user_agent = isset( $content['user_agent'] ) ? $content['user_agent'] : '';
+			$content_data = $this->extract_post_content_data( $post->post_content );
 
 			$add_data = array(
 				'source'     => $source,
 				'date'       => $post->post_date,
-				'type'       => $type,
-				'ip_address' => $ip_address,
-				'user_agent' => $user_agent,
+				'type'       => $content_data['type'],
+				'ip_address' => $content_data['ip_address'],
+				'user_agent' => $content_data['user_agent'],
 			);
 
-			$add_data = array_merge( $add_data, $post_params );
+			$add_data = array_merge( $add_data, $content_data['post_params'] );
 
 			foreach ( $add_data as $key => $value ) {
 				$data = $value;
@@ -930,13 +986,31 @@ class BeastFeedbacks_Admin {
 
 		$active_content_triggers = array( '=', '+', '-', '@', '|', '%', "\t", "\r", "\n" );
 
-		$string_field  = (string) $field;
-		$trimmed_field = ltrim( $string_field, " \v\0" );
+		$string_field = (string) $field;
 
-		if ( '' !== $string_field && ( in_array( mb_substr( $string_field, 0, 1 ), $active_content_triggers, true ) || ( '' !== $trimmed_field && in_array( mb_substr( $trimmed_field, 0, 1 ), $active_content_triggers, true ) ) ) ) {
-			if ( 0 !== strpos( $string_field, "' " ) ) {
-				$field = "' " . $field;
+		if ( '' === $string_field ) {
+			return $field;
+		}
+
+		$needs_escaping = false;
+
+		$trimmed_field = ltrim( $string_field, " \v\0\x0C" );
+		if ( in_array( mb_substr( $string_field, 0, 1 ), $active_content_triggers, true ) ||
+			( '' !== $trimmed_field && in_array( mb_substr( $trimmed_field, 0, 1 ), $active_content_triggers, true ) ) ) {
+			$needs_escaping = true;
+		} else {
+			$lines = preg_split( '/(\r\n|\r|\n)/', $string_field );
+			foreach ( $lines as $line ) {
+				$trimmed_line = ltrim( $line, " \v\0\x0C" );
+				if ( '' !== $line && ( in_array( mb_substr( $line, 0, 1 ), $active_content_triggers, true ) || ( '' !== $trimmed_line && in_array( mb_substr( $trimmed_line, 0, 1 ), $active_content_triggers, true ) ) ) ) {
+					$needs_escaping = true;
+					break;
+				}
 			}
+		}
+
+		if ( $needs_escaping && 0 !== strpos( $string_field, "' " ) ) {
+			$field = "' " . $field;
 		}
 
 		return $field;

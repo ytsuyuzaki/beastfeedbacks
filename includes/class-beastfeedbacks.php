@@ -62,6 +62,8 @@ class BeastFeedbacks {
 	/**
 	 * Like数の取得 (非推奨: BeastFeedbacks_Utils::get_like_count に移行)
 	 *
+	 * @deprecated 0.1.4 Use BeastFeedbacks_Utils::get_like_count() instead.
+	 *
 	 * @param integer $post_id Like登録に使用したpostを渡す.
 	 * @return int
 	 */
