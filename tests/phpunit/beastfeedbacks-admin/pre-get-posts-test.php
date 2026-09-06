@@ -64,6 +64,17 @@ class BeastFeedbacks_Admin_Pre_Get_Posts_Test extends BeastFeedbacks_TestCase {
 	}
 
 	/** @test */
+	public function type_filter_result_ignores_when_type_invalid(): void {
+		$_GET['_beastfeedbacks_nonce'] = wp_create_nonce( 'beastfeedbacks_filter' );
+		$_GET['beastfeedbacks_type']   = 'invalid_type';
+		$_REQUEST                      = $_GET;
+		$q                             = $this->fake_query( array( 'post_type' => 'beastfeedbacks' ) );
+
+		\BeastFeedbacks_Admin::get_instance()->type_filter_result( $q );
+		$this->assertArrayNotHasKey( 'meta_query', $q->query_vars );
+	}
+
+	/** @test */
 	public function type_filter_result_ignores_when_other_post_type(): void {
 		$_GET['_beastfeedbacks_nonce'] = wp_create_nonce( 'beastfeedbacks_filter' );
 		$_GET['beastfeedbacks_type']   = 'survey';

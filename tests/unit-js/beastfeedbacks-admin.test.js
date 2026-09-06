@@ -163,6 +163,44 @@ describe( 'beastfeedbacks-admin.js', () => {
 			expect( btn.disabled ).toBe( false );
 		} );
 
+		test( 'ダブルクォートで囲まれた Content-Disposition ヘッダーからクォートが除外されたファイル名が抽出されること', () => {
+			require( '../../public/js/beastfeedbacks-admin.js' );
+			document.dispatchEvent( new Event( 'DOMContentLoaded' ) );
+
+			btn.click();
+
+			const postCallback = mockPost.mock.calls[ 0 ][ 2 ];
+			const mockXhr = {
+				getResponseHeader: jest.fn( ( header ) =>
+					header === 'content-disposition'
+						? 'attachment; filename="export-quoted.csv"'
+						: ''
+				),
+			};
+
+			jest.spyOn(
+				window.HTMLAnchorElement.prototype,
+				'click'
+			).mockImplementation( () => {} );
+
+			let createdAnchor = null;
+			const origCreateElement = document.createElement.bind( document );
+			jest.spyOn( document, 'createElement' ).mockImplementation(
+				( tagName, options ) => {
+					const el = origCreateElement( tagName, options );
+					if ( tagName === 'a' ) {
+						createdAnchor = el;
+					}
+					return el;
+				}
+			);
+
+			postCallback( 'csv,data\n1,2', 'success', mockXhr );
+
+			expect( createdAnchor ).not.toBeNull();
+			expect( createdAnchor.download ).toBe( 'export-quoted.csv' );
+		} );
+
 		test( 'ヘッダーにファイル名が存在しない場合、デフォルトファイル名 Beastfeedbacks-Export.csv が使用されること', () => {
 			require( '../../public/js/beastfeedbacks-admin.js' );
 			document.dispatchEvent( new Event( 'DOMContentLoaded' ) );

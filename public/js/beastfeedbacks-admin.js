@@ -44,10 +44,19 @@ document.addEventListener( 'DOMContentLoaded', () => {
 						const contentDispositionHeader = xhr.getResponseHeader(
 							'content-disposition'
 						);
-						a.download =
-							contentDispositionHeader.split(
-								'filename='
-							)[ 1 ] || 'Beastfeedbacks-Export.csv';
+						let filename = 'Beastfeedbacks-Export.csv';
+						if ( contentDispositionHeader ) {
+							const rawFilename =
+								contentDispositionHeader.split(
+									'filename='
+								)[ 1 ];
+							if ( rawFilename ) {
+								filename = rawFilename
+									.trim()
+									.replace( /^"+|"$/g, '' );
+							}
+						}
+						a.download = filename;
 
 						document.body.appendChild( a );
 						a.click();
