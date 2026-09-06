@@ -232,4 +232,36 @@ class BeastFeedbacks_Admin_Stream_Csv_Test extends BeastFeedbacks_TestCase {
 		$this->assertSame( 'Chunk 2 Value', $map501['chunk2_field'] );
 		$this->assertSame( '', $map501['q1'] );
 	}
+
+	/**
+	 * Test stream_csv aborts export when writing to temporary stream fails.
+	 *
+	 * @test
+	 */
+	public function stream_csv_aborts_when_write_fails(): void {
+		$this->delete_all_feedback_posts();
+
+		$admin = \BeastFeedbacks_Admin::get_instance();
+
+		$this->create_post(
+			array(
+				'post_type'    => 'beastfeedbacks',
+				'post_content' => wp_slash( wp_json_encode( array( 'type' => 'like' ) ) ),
+				'post_date'    => '2025-01-01 10:00:00',
+			)
+		);
+
+		// Create a subclass override that uses a read-only temp stream to simulate write failure.
+		$failing_admin = new class extends \BeastFeedbacks_Admin {
+			protected function open_temp_stream() {
+				return fopen( 'php://temp', 'r' ); // Read-only stream causes fwrite to return 0 or false.
+			}
+		};
+
+		ob_start();
+		$failing_admin->stream_csv( 'failed-export.csv' );
+		$output = ob_get_clean();
+
+		$this->assertSame( '', $output );
+	}
 }
