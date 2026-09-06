@@ -5,3 +5,7 @@
 ## 2026-08-28 - Centralized Parent Permalink Caching in WP Admin
 **Learning:** In `BeastFeedbacks_Admin`, both `add_source_filter()` and `render_source_column()` (as well as CSV export functions) independently invoke `get_permalink()` and `wp_parse_url()` for parent post IDs during the same request lifecycle.
 **Action:** Centralize parent post permalink resolution in a shared helper method `get_parent_permalink_data()` using static memory caching so that permalinks and parsed URL paths computed during filter dropdown rendering are reused instantly when rendering table rows and exporting CSVs.
+
+## 2026-08-29 - Fast-Path strpbrk and Static Map for CSV Escaping in WP Admin
+**Learning:** In `BeastFeedbacks_Admin::esc_csv()`, every exported cell value and header string was evaluated using `ltrim`, `mb_substr`, sequential `in_array()` calls, and `preg_split()` regex matching against active content trigger characters (`=`, `+`, `-`, `@`, `|`, `%`, `\t`, `\r`, `\n`), causing significant overhead for thousands of safe string calls during CSV exports.
+**Action:** Use `strpbrk( $string, "=+-@|%\t\r\n" )` as an early return check for safe strings without formula triggers, and replace `in_array()` searches with $O(1)$ `isset()` lookups on a `static` associative map.
