@@ -717,47 +717,15 @@ class BeastFeedbacks_Admin {
 	}
 
 	/**
-	 * Stream CSV export directly to output in chunks to minimize memory usage.
+	 * Process post chunks and write row data into temporary stream buffer while collecting dynamic field names.
 	 *
-	 * @param string $filename CSV file name.
-	 * @return void
+	 * @param array    $chunks      Array of post ID chunks.
+	 * @param resource $temp_stream Temporary stream handle.
+	 * @return array|false Array of field names on success, false on write error.
 	 */
-	public function stream_csv( $filename ) {
-		$args = array(
-			'posts_per_page'         => -1,
-			'post_type'              => 'beastfeedbacks',
-			'post_status'            => array( 'publish' ),
-			'order'                  => 'ASC',
-			'suppress_filters'       => false,
-			'date_query'             => array(),
-			'fields'                 => 'ids',
-			'update_post_term_cache' => false,
-			'update_post_meta_cache' => false,
-		);
-
-		$post_ids = get_posts( $args );
-
-		$this->send_csv_headers( $filename );
-
-		$output = fopen( 'php://output', 'w' );
-
-		if ( empty( $post_ids ) ) {
-			fclose( $output ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
-			return;
-		}
-
-		$chunk_size = 500;
-		$chunks     = array_chunk( $post_ids, $chunk_size );
-
+	private function process_csv_post_chunks( array $chunks, $temp_stream ) {
 		$fields     = array( 'source', 'date', 'type', 'ip_address', 'user_agent' );
 		$fields_map = array_fill_keys( $fields, true );
-
-		$temp_stream = $this->open_temp_stream();
-
-		if ( ! $temp_stream ) {
-			fclose( $output ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
-			return;
-		}
 
 		foreach ( $chunks as $chunk ) {
 			$posts = get_posts(
@@ -806,9 +774,7 @@ class BeastFeedbacks_Admin {
 				$bytes_wrote = fwrite( $temp_stream, $json_line ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite
 
 				if ( false === $bytes_wrote || $bytes_wrote < strlen( $json_line ) ) {
-					fclose( $temp_stream ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
-					fclose( $output ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
-					return;
+					return false;
 				}
 			}
 
@@ -817,6 +783,18 @@ class BeastFeedbacks_Admin {
 			}
 		}
 
+		return $fields;
+	}
+
+	/**
+	 * Read JSON row data from temporary stream buffer and write formatted CSV to output stream.
+	 *
+	 * @param resource $temp_stream Temporary stream handle.
+	 * @param resource $output      Output stream handle.
+	 * @param array    $fields      List of field names.
+	 * @return void
+	 */
+	private function write_temp_stream_to_csv( $temp_stream, $output, array $fields ) {
 		// Output CSV headers.
 		$escaped_fields = array_map( array( $this, 'esc_csv' ), $fields );
 		fputcsv( $output, $escaped_fields );
@@ -844,9 +822,59 @@ class BeastFeedbacks_Admin {
 			}
 			fputcsv( $output, $current_row );
 		}
+	}
+
+	/**
+	 * Stream CSV export directly to output in chunks to minimize memory usage.
+	 *
+	 * @param string $filename CSV file name.
+	 * @return void
+	 */
+	public function stream_csv( $filename ) {
+		$args = array(
+			'posts_per_page'         => -1,
+			'post_type'              => 'beastfeedbacks',
+			'post_status'            => array( 'publish' ),
+			'order'                  => 'ASC',
+			'suppress_filters'       => false,
+			'date_query'             => array(),
+			'fields'                 => 'ids',
+			'update_post_term_cache' => false,
+			'update_post_meta_cache' => false,
+		);
+
+		$post_ids = get_posts( $args );
+
+		$this->send_csv_headers( $filename );
+
+		$output = fopen( 'php://output', 'w' );
+
+		if ( empty( $post_ids ) ) {
+			fclose( $output ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+			return;
+		}
+
+		$chunk_size = 500;
+		$chunks     = array_chunk( $post_ids, $chunk_size );
+
+		$temp_stream = $this->open_temp_stream();
+
+		if ( ! $temp_stream ) {
+			fclose( $output ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+			return;
+		}
+
+		$fields = $this->process_csv_post_chunks( $chunks, $temp_stream );
+
+		if ( false === $fields ) {
+			fclose( $temp_stream ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+			fclose( $output ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+			return;
+		}
+
+		$this->write_temp_stream_to_csv( $temp_stream, $output, $fields );
 
 		fclose( $temp_stream ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
-
 		fclose( $output ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 	}
 
