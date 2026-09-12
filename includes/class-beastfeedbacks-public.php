@@ -126,26 +126,62 @@ class BeastFeedbacks_Public {
 				if ( '' === $sanitized_key ) {
 					continue;
 				}
-				$post_value = wp_unslash( $post_data[ $post_key ] );
-				if ( is_array( $post_value ) ) {
-					$post_params[ $sanitized_key ] = array_map(
-						function ( $item ) {
-							if ( is_array( $item ) ) {
-								return '';
-							}
-							$sanitized_item = sanitize_text_field( $item );
-							return mb_substr( $sanitized_item, 0, 2000 );
-						},
-						$post_value
-					);
-					continue;
-				}
-				$sanitized_val                 = sanitize_text_field( $post_value );
-				$post_params[ $sanitized_key ] = mb_substr( $sanitized_val, 0, 2000 );
+				$post_value                    = wp_unslash( $post_data[ $post_key ] );
+				$post_params[ $sanitized_key ] = $this->sanitize_param_value( $post_value );
 			}
 		}
 
 		return $post_params;
+	}
+
+	/**
+	 * Recursively sanitize parameter values with depth and length limits.
+	 *
+	 * Security: Prevents stack overflow, resource exhaustion, and key/value injection from deeply nested POST structures.
+	 *
+	 * @param mixed $value         The value to sanitize.
+	 * @param int   $current_depth Current recursion depth.
+	 * @param int   $max_depth     Maximum allowed recursion depth.
+	 * @return mixed Sanitized string or array.
+	 */
+	private function sanitize_param_value( $value, int $current_depth = 1, int $max_depth = 2 ) {
+		if ( $current_depth > $max_depth ) {
+			return '';
+		}
+
+		if ( is_array( $value ) ) {
+			if ( $current_depth === $max_depth ) {
+				return '';
+			}
+
+			$sanitized_array = array();
+			$max_items       = 50;
+			$item_count      = 0;
+
+			foreach ( $value as $key => $item ) {
+				if ( $item_count >= $max_items ) {
+					break;
+				}
+
+				$sanitized_item_key = sanitize_text_field( (string) $key );
+				$sanitized_item_key = mb_substr( $sanitized_item_key, 0, 100 );
+				if ( '' === $sanitized_item_key ) {
+					continue;
+				}
+
+				$sanitized_array[ $sanitized_item_key ] = $this->sanitize_param_value( $item, $current_depth + 1, $max_depth );
+				++$item_count;
+			}
+
+			return $sanitized_array;
+		}
+
+		if ( is_object( $value ) ) {
+			return '';
+		}
+
+		$sanitized_val = sanitize_text_field( (string) $value );
+		return mb_substr( $sanitized_val, 0, 2000 );
 	}
 
 	/**

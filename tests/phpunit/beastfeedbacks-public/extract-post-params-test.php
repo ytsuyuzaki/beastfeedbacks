@@ -47,6 +47,28 @@ class BeastFeedbacks_Public_Extract_Post_Params_Test extends BeastFeedbacks_Test
 	}
 
 	/** @test */
+	public function extract_post_params_handles_deeply_nested_arrays_and_objects_safely(): void {
+		$raw_data = array(
+			'level1' => array(
+				'level2' => array(
+					'level3' => 'too_deep',
+				),
+			),
+			'array_with_script_key' => array(
+				'<script>alert(1)</script>' => 'val',
+			),
+			'object_val' => (object) array( 'foo' => 'bar' ),
+		);
+
+		$result = \BeastFeedbacks_Public::get_instance()->extract_post_params( $raw_data );
+
+		$this->assertSame( array( 'level2' => '' ), $result['level1'] );
+		$this->assertArrayHasKey( 'array_with_script_key', $result );
+		$this->assertArrayNotHasKey( '<script>alert(1)</script>', $result['array_with_script_key'] );
+		$this->assertSame( '', $result['object_val'] );
+	}
+
+	/** @test */
 	public function extract_post_params_enforces_max_parameters_and_length_limits(): void {
 		$raw_data = array();
 
