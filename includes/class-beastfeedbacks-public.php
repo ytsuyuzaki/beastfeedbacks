@@ -14,7 +14,18 @@
  */
 class BeastFeedbacks_Public {
 
-
+	/**
+	 * 除外するPOSTキー一覧
+	 *
+	 * @var array
+	 */
+	public const IGNORE_KEYS = array(
+		'id',
+		'beastfeedbacks_type',
+		'action',
+		'_wp_http_referer',
+		'_wpnonce',
+	);
 
 	/**
 	 * Self class
@@ -100,13 +111,6 @@ class BeastFeedbacks_Public {
 	 */
 	public function extract_post_params( array $post_data ) {
 		$post_params = array();
-		$ignore_keys = array(
-			'id',
-			'beastfeedbacks_type',
-			'action',
-			'_wp_http_referer',
-			'_wpnonce',
-		);
 
 		// Security: Enforce maximum parameter limit to prevent resource exhaustion via post parameter flooding.
 		$max_params = 50;
@@ -116,7 +120,7 @@ class BeastFeedbacks_Public {
 				break;
 			}
 
-			if ( in_array( $post_key, $ignore_keys, true ) ) {
+			if ( in_array( $post_key, self::IGNORE_KEYS, true ) ) {
 				continue;
 			}
 			if ( isset( $post_data[ $post_key ] ) ) {
