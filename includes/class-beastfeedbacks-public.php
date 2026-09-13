@@ -14,7 +14,18 @@
  */
 class BeastFeedbacks_Public {
 
-
+	/**
+	 * 除外するPOSTキー一覧
+	 *
+	 * @var array
+	 */
+	public const IGNORE_KEYS = array(
+		'id',
+		'beastfeedbacks_type',
+		'action',
+		'_wp_http_referer',
+		'_wpnonce',
+	);
 
 	/**
 	 * Self class
@@ -100,13 +111,6 @@ class BeastFeedbacks_Public {
 	 */
 	public function extract_post_params( array $post_data ) {
 		$post_params = array();
-		$ignore_keys = array(
-			'id',
-			'beastfeedbacks_type',
-			'action',
-			'_wp_http_referer',
-			'_wpnonce',
-		);
 
 		// Security: Enforce maximum parameter limit to prevent resource exhaustion via post parameter flooding.
 		$max_params = 50;
@@ -116,17 +120,17 @@ class BeastFeedbacks_Public {
 				break;
 			}
 
-			if ( in_array( $post_key, $ignore_keys, true ) ) {
+			if ( in_array( $post_key, self::IGNORE_KEYS, true ) ) {
 				continue;
 			}
 			if ( isset( $post_data[ $post_key ] ) ) {
-				$sanitized_key = sanitize_text_field( (string) $post_key );
+				$sanitized_key = sanitize_text_field( wp_unslash( (string) $post_key ) );
 				// Security: Truncate oversized keys to prevent DoS/storage bloat.
 				$sanitized_key = mb_substr( $sanitized_key, 0, 100 );
 				if ( '' === $sanitized_key ) {
 					continue;
 				}
-				$post_value                    = wp_unslash( $post_data[ $post_key ] );
+				$post_value                    = $post_data[ $post_key ];
 				$post_params[ $sanitized_key ] = $this->sanitize_param_value( $post_value );
 			}
 		}
@@ -138,6 +142,7 @@ class BeastFeedbacks_Public {
 	 * Recursively sanitize parameter values with depth and length limits.
 	 *
 	 * Security: Prevents stack overflow, resource exhaustion, and key/value injection from deeply nested POST structures.
+	 * Unslashing is performed inside bounded traversal so rejected deep/excess branches are never unslashed.
 	 *
 	 * @param mixed $value         The value to sanitize.
 	 * @param int   $current_depth Current recursion depth.
@@ -163,7 +168,7 @@ class BeastFeedbacks_Public {
 					break;
 				}
 
-				$sanitized_item_key = sanitize_text_field( (string) $key );
+				$sanitized_item_key = sanitize_text_field( wp_unslash( (string) $key ) );
 				$sanitized_item_key = mb_substr( $sanitized_item_key, 0, 100 );
 				if ( '' === $sanitized_item_key ) {
 					continue;
@@ -180,7 +185,8 @@ class BeastFeedbacks_Public {
 			return '';
 		}
 
-		$sanitized_val = sanitize_text_field( (string) $value );
+		$unslashed_val = wp_unslash( (string) $value );
+		$sanitized_val = sanitize_text_field( $unslashed_val );
 		return mb_substr( $sanitized_val, 0, 2000 );
 	}
 

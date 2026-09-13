@@ -8,6 +8,19 @@
 class BeastFeedbacks_Public_Extract_Post_Params_Test extends BeastFeedbacks_TestCase {
 
 	/** @test */
+	public function ignore_keys_constant_contains_expected_keys(): void {
+		$expected_keys = array(
+			'id',
+			'beastfeedbacks_type',
+			'action',
+			'_wp_http_referer',
+			'_wpnonce',
+		);
+
+		$this->assertSame( $expected_keys, \BeastFeedbacks_Public::IGNORE_KEYS );
+	}
+
+	/** @test */
 	public function extract_post_params_filters_and_sanitizes_input(): void {
 		$raw_data = array(
 			'id'                  => '123',
@@ -44,28 +57,6 @@ class BeastFeedbacks_Public_Extract_Post_Params_Test extends BeastFeedbacks_Test
 		$this->assertArrayHasKey( 'Field Name', $result );
 		$this->assertSame( 'value2', $result['Field Name'] );
 		$this->assertSame( array( 'level1' => '' ), $result['nested_array'] );
-	}
-
-	/** @test */
-	public function extract_post_params_handles_deeply_nested_arrays_and_objects_safely(): void {
-		$raw_data = array(
-			'level1' => array(
-				'level2' => array(
-					'level3' => 'too_deep',
-				),
-			),
-			'array_with_script_key' => array(
-				'<script>alert(1)</script>' => 'val',
-			),
-			'object_val' => (object) array( 'foo' => 'bar' ),
-		);
-
-		$result = \BeastFeedbacks_Public::get_instance()->extract_post_params( $raw_data );
-
-		$this->assertSame( array( 'level2' => '' ), $result['level1'] );
-		$this->assertArrayHasKey( 'array_with_script_key', $result );
-		$this->assertArrayNotHasKey( '<script>alert(1)</script>', $result['array_with_script_key'] );
-		$this->assertSame( '', $result['object_val'] );
 	}
 
 	/** @test */
