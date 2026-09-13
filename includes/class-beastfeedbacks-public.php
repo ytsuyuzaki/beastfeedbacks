@@ -66,6 +66,9 @@ class BeastFeedbacks_Public {
 			wp_send_json_error( array( 'message' => __( 'Too many requests', 'beastfeedbacks' ) ), 429 );
 		}
 
+		// Security: Verify nonce explicitly before reading or processing $_POST data.
+		check_ajax_referer( 'register_beastfeedbacks_form' );
+
 		// POSTデータの存在確認と適切なサニタイズ.
 		if ( ! isset( $_POST['id'] ) || ! isset( $_POST['beastfeedbacks_type'] ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid request', 'beastfeedbacks' ) ) );
