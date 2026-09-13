@@ -58,16 +58,4 @@ class BeastFeedbacks {
 		require_once BEASTFEEDBACKS_DIR . 'includes/class-beastfeedbacks-public.php';
 		require_once BEASTFEEDBACKS_DIR . 'includes/class-beastfeedbacks-block.php';
 	}
-
-	/**
-	 * Like数の取得 (非推奨: BeastFeedbacks_Utils::get_like_count に移行)
-	 *
-	 * @deprecated 0.1.4 Use BeastFeedbacks_Utils::get_like_count() instead.
-	 *
-	 * @param integer $post_id Like登録に使用したpostを渡す.
-	 * @return int
-	 */
-	public function get_like_count( $post_id ) {
-		return BeastFeedbacks_Utils::get_like_count( $post_id );
-	}
 }
