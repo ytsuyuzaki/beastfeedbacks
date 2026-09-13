@@ -41,6 +41,21 @@ class BeastFeedbacks_Admin_Add_Source_Filter_Test extends BeastFeedbacks_TestCas
 	}
 
 	/** @test */
+	public function add_source_filter_sanitizes_non_numeric_selected_parent_id(): void {
+		set_current_screen( 'edit-beastfeedbacks' );
+
+		$_GET['_beastfeedbacks_nonce']    = wp_create_nonce( 'beastfeedbacks_filter' );
+		$_GET['beastfeedbacks_parent_id'] = '<script>alert(1)</script>';
+
+		ob_start();
+		\BeastFeedbacks_Admin::get_instance()->add_source_filter();
+		$html = ob_get_clean();
+
+		$this->assertStringNotContainsString( '<script>', $html );
+		$this->assertStringContainsString( 'name="beastfeedbacks_parent_id"', $html );
+	}
+
+	/** @test */
 	public function add_source_filter_has_no_output_on_other_screen(): void {
 		set_current_screen( 'edit-post' );
 		ob_start();
