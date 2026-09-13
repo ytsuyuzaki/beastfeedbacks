@@ -154,6 +154,23 @@ class BeastFeedbacks_Admin_Pre_Get_Posts_Test extends BeastFeedbacks_TestCase {
 	}
 
 	/** @test */
+	public function source_filter_result_sanitizes_non_numeric_parent_id(): void {
+		$_GET['_beastfeedbacks_nonce']    = wp_create_nonce( 'beastfeedbacks_filter' );
+		$_GET['beastfeedbacks_parent_id'] = 'invalid-55-abc';
+		$_REQUEST                         = $_GET;
+		$q                                = $this->fake_query(
+			array(
+				'post_type' => 'beastfeedbacks',
+				'fields'    => '',
+			)
+		);
+
+		\BeastFeedbacks_Admin::get_instance()->source_filter_result( $q );
+
+		$this->assertArrayNotHasKey( 'post_parent', $q->query_vars );
+	}
+
+	/** @test */
 	public function source_filter_result_ignores_when_fields_is_id_parent(): void {
 		$_GET['_beastfeedbacks_nonce']    = wp_create_nonce( 'beastfeedbacks_filter' );
 		$_GET['beastfeedbacks_parent_id'] = '55';
