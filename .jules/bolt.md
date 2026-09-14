@@ -9,3 +9,7 @@
 ## 2026-08-29 - Fast-Path strpbrk and Static Map for CSV Escaping in WP Admin
 **Learning:** In `BeastFeedbacks_Admin::esc_csv()`, every exported cell value and header string was evaluated using `ltrim`, `mb_substr`, sequential `in_array()` calls, and `preg_split()` regex matching against active content trigger characters (`=`, `+`, `-`, `@`, `|`, `%`, `\t`, `\r`, `\n`), causing significant overhead for thousands of safe string calls during CSV exports.
 **Action:** Use `strpbrk( $string, "=+-@|%\t\r\n" )` as an early return check for safe strings without formula triggers, and replace `in_array()` searches with $O(1)$ `isset()` lookups on a `static` associative map.
+
+## 2026-09-13 - WordPress Object Caching for Post Count Utilities
+**Learning:** Calling `BeastFeedbacks_Utils::get_like_count()` on every page render containing a Like block executes a `WP_Query` with JOINs on `wp_posts` and `wp_postmeta`.
+**Action:** Use `wp_cache_get()` / `wp_cache_set()` in utility queries and invalidate parent post cache keys on specific mutation hooks (`save_post_beastfeedbacks`, `deleted_post`, `trashed_post`, `untrashed_post`).

@@ -39,6 +39,8 @@ class BeastFeedbacks {
 	public function init() {
 		$this->load_dependencies();
 
+		BeastFeedbacks_Utils::init();
+
 		if ( is_admin() ) {
 			BeastFeedbacks_Admin::get_instance()->init();
 		}

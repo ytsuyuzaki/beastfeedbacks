@@ -60,4 +60,123 @@ class BeastFeedbacks_Utils_Get_Like_Count_Test extends BeastFeedbacks_TestCase {
 		$count = \BeastFeedbacks_Utils::get_like_count( $parent_id );
 		$this->assertSame( 3, $count, 'like が3件なら 3 を返すべき' );
 	}
+
+	/** @test */
+	public function get_like_count_uses_object_cache(): void {
+		$parent_id = $this->create_post(
+			array(
+				'post_title' => 'parent',
+			)
+		);
+
+		$this->create_like_post( $parent_id );
+
+		// Initial query populates object cache.
+		$count1 = \BeastFeedbacks_Utils::get_like_count( $parent_id );
+		$this->assertSame( 1, $count1 );
+
+		// Verify object cache stores the count.
+		$cached = wp_cache_get( 'like_count_' . $parent_id, 'beastfeedbacks' );
+		$this->assertSame( 1, $cached );
+
+		// Manually override cache to prove get_like_count reads from cache instead of querying DB.
+		wp_cache_set( 'like_count_' . $parent_id, 99, 'beastfeedbacks' );
+		$count2 = \BeastFeedbacks_Utils::get_like_count( $parent_id );
+		$this->assertSame( 99, $count2 );
+	}
+
+	/** @test */
+	public function saving_like_post_invalidates_cache(): void {
+		\BeastFeedbacks_Utils::init();
+
+		$parent_id = $this->create_post(
+			array(
+				'post_title' => 'parent',
+			)
+		);
+
+		$this->create_like_post( $parent_id );
+
+		// Prime cache.
+		$count1 = \BeastFeedbacks_Utils::get_like_count( $parent_id );
+		$this->assertSame( 1, $count1 );
+
+		// Adding another like post triggers save_post_beastfeedbacks and invalidates cache.
+		$this->create_like_post( $parent_id );
+
+		$count2 = \BeastFeedbacks_Utils::get_like_count( $parent_id );
+		$this->assertSame( 2, $count2 );
+	}
+
+	/** @test */
+	public function deleting_like_post_invalidates_cache(): void {
+		\BeastFeedbacks_Utils::init();
+
+		$parent_id = $this->create_post(
+			array(
+				'post_title' => 'parent',
+			)
+		);
+
+		$like_id = $this->create_like_post( $parent_id );
+
+		// Prime cache.
+		$count1 = \BeastFeedbacks_Utils::get_like_count( $parent_id );
+		$this->assertSame( 1, $count1 );
+
+		// Delete like post.
+		wp_delete_post( $like_id, true );
+
+		$count2 = \BeastFeedbacks_Utils::get_like_count( $parent_id );
+		$this->assertSame( 0, $count2 );
+	}
+
+	/** @test */
+	public function updating_like_post_parent_invalidates_former_and_new_parent_cache(): void {
+		\BeastFeedbacks_Utils::init();
+
+		$parent_a = $this->create_post( array( 'post_title' => 'parent A' ) );
+		$parent_b = $this->create_post( array( 'post_title' => 'parent B' ) );
+
+		$like_id = $this->create_like_post( $parent_a );
+
+		// Prime caches for parent A and parent B.
+		$this->assertSame( 1, \BeastFeedbacks_Utils::get_like_count( $parent_a ) );
+		$this->assertSame( 0, \BeastFeedbacks_Utils::get_like_count( $parent_b ) );
+
+		// Move like post from parent A to parent B.
+		wp_update_post(
+			array(
+				'ID'          => $like_id,
+				'post_parent' => $parent_b,
+			)
+		);
+
+		// Both parent A and parent B caches must be invalidated and updated.
+		$this->assertSame( 0, \BeastFeedbacks_Utils::get_like_count( $parent_a ) );
+		$this->assertSame( 1, \BeastFeedbacks_Utils::get_like_count( $parent_b ) );
+	}
+
+	/** @test */
+	public function detaching_like_post_parent_invalidates_former_parent_cache(): void {
+		\BeastFeedbacks_Utils::init();
+
+		$parent_a = $this->create_post( array( 'post_title' => 'parent A' ) );
+
+		$like_id = $this->create_like_post( $parent_a );
+
+		// Prime cache for parent A.
+		$this->assertSame( 1, \BeastFeedbacks_Utils::get_like_count( $parent_a ) );
+
+		// Detach like post from parent A (set parent to 0).
+		wp_update_post(
+			array(
+				'ID'          => $like_id,
+				'post_parent' => 0,
+			)
+		);
+
+		// Former parent cache must be invalidated.
+		$this->assertSame( 0, \BeastFeedbacks_Utils::get_like_count( $parent_a ) );
+	}
 }
