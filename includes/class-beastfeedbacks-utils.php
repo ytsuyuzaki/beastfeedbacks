@@ -22,6 +22,7 @@ class BeastFeedbacks_Utils {
 		add_action( 'deleted_post', array( __CLASS__, 'clear_like_count_cache' ), 10, 2 );
 		add_action( 'trashed_post', array( __CLASS__, 'clear_like_count_cache' ), 10, 1 );
 		add_action( 'untrashed_post', array( __CLASS__, 'clear_like_count_cache' ), 10, 1 );
+		add_action( 'post_updated', array( __CLASS__, 'on_post_updated' ), 10, 3 );
 	}
 
 	/**
@@ -62,9 +63,22 @@ class BeastFeedbacks_Utils {
 		$query = new WP_Query( $args );
 		$count = (int) $query->found_posts;
 
-		wp_cache_set( $cache_key, $count, $cache_group );
+		wp_cache_set( $cache_key, $count, $cache_group, DAY_IN_SECONDS );
 
 		return $count;
+	}
+
+	/**
+	 * Delete like count cache for a specific parent post ID.
+	 *
+	 * @param int $parent_id Parent post ID.
+	 * @return void
+	 */
+	public static function clear_parent_like_count_cache( $parent_id ) {
+		$parent_id = (int) $parent_id;
+		if ( $parent_id > 0 ) {
+			wp_cache_delete( 'like_count_' . $parent_id, 'beastfeedbacks' );
+		}
 	}
 
 	/**
@@ -80,6 +94,31 @@ class BeastFeedbacks_Utils {
 			return;
 		}
 
-		wp_cache_delete( 'like_count_' . (int) $post->post_parent, 'beastfeedbacks' );
+		self::clear_parent_like_count_cache( $post->post_parent );
+	}
+
+	/**
+	 * Clear like count cache when a feedback post is updated, handling parent reassignment.
+	 *
+	 * @param int     $post_id     Post ID.
+	 * @param WP_Post $post_after  Post object after update.
+	 * @param WP_Post $post_before Post object before update.
+	 * @return void
+	 */
+	public static function on_post_updated( $post_id, $post_after, $post_before ) {
+		$is_after_feedback  = $post_after instanceof WP_Post && 'beastfeedbacks' === $post_after->post_type;
+		$is_before_feedback = $post_before instanceof WP_Post && 'beastfeedbacks' === $post_before->post_type;
+
+		if ( ! $is_after_feedback && ! $is_before_feedback ) {
+			return;
+		}
+
+		if ( $is_before_feedback && ! empty( $post_before->post_parent ) ) {
+			self::clear_parent_like_count_cache( $post_before->post_parent );
+		}
+
+		if ( $is_after_feedback && ! empty( $post_after->post_parent ) ) {
+			self::clear_parent_like_count_cache( $post_after->post_parent );
+		}
 	}
 }
