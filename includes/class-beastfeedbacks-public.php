@@ -196,6 +196,10 @@ class BeastFeedbacks_Public {
 	/**
 	 * フィードバック本文をJSON形式でフォーマットする
 	 *
+	 * Performance & Security: Avoid wrapping wp_json_encode() with wp_kses(),
+	 * as HTML parsing on serialized JSON strings is redundant and risks corrupting valid JSON payloads.
+	 * Input parameters are already sanitized prior to serialization.
+	 *
 	 * @param string $user_agent ユーザーエージェント.
 	 * @param string $ip_address IPアドレス.
 	 * @param string $type       フィードバック種別.
@@ -204,17 +208,14 @@ class BeastFeedbacks_Public {
 	 */
 	public function format_feedback_content( string $user_agent, string $ip_address, string $type, array $post_params ) {
 		return addslashes(
-			wp_kses(
-				wp_json_encode(
-					array(
-						'user_agent'  => $user_agent,
-						'ip_address'  => $ip_address,
-						'type'        => $type,
-						'post_params' => $post_params,
-					),
-					JSON_UNESCAPED_UNICODE
+			wp_json_encode(
+				array(
+					'user_agent'  => $user_agent,
+					'ip_address'  => $ip_address,
+					'type'        => $type,
+					'post_params' => $post_params,
 				),
-				array()
+				JSON_UNESCAPED_UNICODE
 			)
 		);
 	}
