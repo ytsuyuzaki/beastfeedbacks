@@ -203,18 +203,17 @@ class BeastFeedbacks_Public {
 	 * @return string
 	 */
 	public function format_feedback_content( string $user_agent, string $ip_address, string $type, array $post_params ) {
+		// Performance optimization: wp_json_encode() produces a clean JSON payload.
+		// Passing JSON to wp_kses() runs unnecessary HTML parsing & regex sanitization over stringified JSON.
 		return addslashes(
-			wp_kses(
-				wp_json_encode(
-					array(
-						'user_agent'  => $user_agent,
-						'ip_address'  => $ip_address,
-						'type'        => $type,
-						'post_params' => $post_params,
-					),
-					JSON_UNESCAPED_UNICODE
+			wp_json_encode(
+				array(
+					'user_agent'  => $user_agent,
+					'ip_address'  => $ip_address,
+					'type'        => $type,
+					'post_params' => $post_params,
 				),
-				array()
+				JSON_UNESCAPED_UNICODE
 			)
 		);
 	}
