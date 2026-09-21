@@ -189,12 +189,18 @@ class BeastFeedbacks_Public {
 		}
 
 		$unslashed_val = wp_unslash( (string) $value );
-		$sanitized_val = sanitize_text_field( $unslashed_val );
+		$no_script_val = preg_replace( '@<(script|style)[^>]*?>.*?</\1>@si', '', $unslashed_val );
+		$no_tags_val   = wp_kses( $no_script_val, array() );
+		$sanitized_val = wp_specialchars_decode( sanitize_text_field( $no_tags_val ), ENT_QUOTES );
 		return mb_substr( $sanitized_val, 0, 2000 );
 	}
 
 	/**
 	 * フィードバック本文をJSON形式でフォーマットする
+	 *
+	 * Performance & Security: Avoid wrapping wp_json_encode() with wp_kses(),
+	 * as HTML parsing on serialized JSON strings is redundant and risks corrupting valid JSON payloads.
+	 * Input parameters are already sanitized prior to serialization.
 	 *
 	 * @param string $user_agent ユーザーエージェント.
 	 * @param string $ip_address IPアドレス.
@@ -213,7 +219,7 @@ class BeastFeedbacks_Public {
 					'type'        => $type,
 					'post_params' => $post_params,
 				),
-				JSON_UNESCAPED_UNICODE
+				JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP
 			)
 		);
 	}

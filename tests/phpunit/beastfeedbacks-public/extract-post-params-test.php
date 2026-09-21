@@ -44,6 +44,19 @@ class BeastFeedbacks_Public_Extract_Post_Params_Test extends BeastFeedbacks_Test
 	}
 
 	/** @test */
+	public function extract_post_params_preserves_comparison_operators_while_stripping_tags(): void {
+		$raw_data = array(
+			'comparison' => 'x < y',
+			'script_tag' => 'Support<script>alert(1)</script>',
+		);
+
+		$result = \BeastFeedbacks_Public::get_instance()->extract_post_params( $raw_data );
+
+		$this->assertSame( 'x < y', $result['comparison'] );
+		$this->assertSame( 'Support', $result['script_tag'] );
+	}
+
+	/** @test */
 	public function extract_post_params_sanitizes_keys_and_handles_nested_arrays(): void {
 		$raw_data = array(
 			'<script>alert("key")</script>' => 'value1',
