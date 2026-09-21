@@ -39,6 +39,7 @@ class BeastFeedbacks_Public_Register_Beastfeedbacks_Form_Test extends BeastFeedb
 			array(
 				'Satisfaction' => 'Very satisfied',
 				'Features'     => array( 'Speed', 'Support<script>' ),
+				'Comparison'   => 'x < y',
 			),
 			$parent_id,
 			'survey'
@@ -63,13 +64,14 @@ class BeastFeedbacks_Public_Register_Beastfeedbacks_Form_Test extends BeastFeedb
 		$this->assertCount( 1, $stored );
 		$this->created_ids[] = $stored[0]->ID;
 
-		$content = json_decode( stripslashes( $stored[0]->post_content ), true );
+		$content = json_decode( $stored[0]->post_content, true );
 
 		$this->assertSame( 'survey', $content['type'] );
 		$this->assertSame( '192.0.2.10', $content['ip_address'] );
 		$this->assertSame( 'Unit Test Agent', $content['user_agent'] );
 		$this->assertSame( 'Very satisfied', $content['post_params']['Satisfaction'] );
 		$this->assertSame( array( 'Speed', 'Support' ), $content['post_params']['Features'] );
+		$this->assertSame( 'x < y', $content['post_params']['Comparison'] );
 		$this->assertArrayNotHasKey( 'action', $content['post_params'] );
 		$this->assertArrayNotHasKey( '_wp_http_referer', $content['post_params'] );
 		$this->assertSame( 'survey', get_post_meta( $stored[0]->ID, 'beastfeedbacks_type', true ) );
