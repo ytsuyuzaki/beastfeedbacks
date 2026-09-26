@@ -84,8 +84,7 @@ class BeastFeedbacks_Public {
 		$post    = get_post( $id );
 		$post_id = $post ? (int) $post->ID : 0;
 
-		// Security: Require target post to exist, be published, and not be a feedback item itself.
-		if ( ! $post_id || $post_id <= 0 || 'publish' !== get_post_status( $post_id ) || 'beastfeedbacks' === get_post_type( $post_id ) ) {
+		if ( ! $this->is_valid_target_post( $post_id ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid post ID', 'beastfeedbacks' ) ) );
 		}
 
@@ -271,6 +270,30 @@ class BeastFeedbacks_Public {
 			'message' => $message,
 			'count'   => $count,
 		);
+	}
+
+	/**
+	 * Target post validation check.
+	 *
+	 * Security: Requires target post to exist, be published, and not be a feedback item itself.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return bool True if valid, false otherwise.
+	 */
+	public function is_valid_target_post( int $post_id ) {
+		if ( $post_id <= 0 ) {
+			return false;
+		}
+
+		if ( 'publish' !== get_post_status( $post_id ) ) {
+			return false;
+		}
+
+		if ( 'beastfeedbacks' === get_post_type( $post_id ) ) {
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
