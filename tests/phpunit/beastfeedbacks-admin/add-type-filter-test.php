@@ -33,4 +33,19 @@ class BeastFeedbacks_Admin_Add_Type_Filter_Test extends BeastFeedbacks_TestCase 
 		$this->assertStringContainsString( 'name="_beastfeedbacks_nonce"', $html );
 		$this->assertStringContainsString( '<select name="beastfeedbacks_type">', $html );
 	}
+
+	/** @test */
+	public function add_type_filter_selects_type_when_nonce_verified(): void {
+		set_current_screen( 'edit-beastfeedbacks' );
+
+		$_GET['_beastfeedbacks_nonce'] = wp_create_nonce( 'beastfeedbacks_filter' );
+		$_GET['beastfeedbacks_type']   = 'survey';
+		$_REQUEST                      = $_GET;
+
+		ob_start();
+		\BeastFeedbacks_Admin::get_instance()->add_type_filter();
+		$html = ob_get_clean();
+
+		$this->assertStringContainsString( 'value="survey"' . "\n" . '					selected', $html );
+	}
 }
