@@ -185,4 +185,73 @@ class BeastFeedbacks_Admin_Pre_Get_Posts_Test extends BeastFeedbacks_TestCase {
 
 		$this->assertArrayNotHasKey( 'post_parent', $q->query_vars );
 	}
+
+	/** @test */
+	public function source_filter_result_ignores_when_other_post_type(): void {
+		$_GET['_beastfeedbacks_nonce']    = wp_create_nonce( 'beastfeedbacks_filter' );
+		$_GET['beastfeedbacks_parent_id'] = '55';
+		$_REQUEST                         = $_GET;
+		$q                                = $this->fake_query( array( 'post_type' => 'post' ) );
+
+		\BeastFeedbacks_Admin::get_instance()->source_filter_result( $q );
+
+		$this->assertArrayNotHasKey( 'post_parent', $q->query_vars );
+	}
+
+	/** @test */
+	public function source_filter_result_ignores_when_parent_id_is_zero_or_missing(): void {
+		$_GET['_beastfeedbacks_nonce']    = wp_create_nonce( 'beastfeedbacks_filter' );
+		$_GET['beastfeedbacks_parent_id'] = '0';
+		$_REQUEST                         = $_GET;
+		$q                                = $this->fake_query( array( 'post_type' => 'beastfeedbacks' ) );
+
+		\BeastFeedbacks_Admin::get_instance()->source_filter_result( $q );
+
+		$this->assertArrayNotHasKey( 'post_parent', $q->query_vars );
+	}
+
+	/** @test */
+	public function source_filter_result_with_real_wp_query_instance(): void {
+		$_GET['_beastfeedbacks_nonce']    = wp_create_nonce( 'beastfeedbacks_filter' );
+		$_GET['beastfeedbacks_parent_id'] = '77';
+		$_REQUEST                         = $_GET;
+
+		$query                          = new \WP_Query();
+		$query->query_vars['post_type'] = 'beastfeedbacks';
+		$query->query_vars['fields']    = 'ids';
+
+		\BeastFeedbacks_Admin::get_instance()->source_filter_result( $query );
+
+		$this->assertSame( 77, $query->get( 'post_parent' ) );
+	}
+
+	/** @test */
+	public function source_filter_result_filters_get_posts_when_hooked_to_pre_get_posts(): void {
+		$parent_a = $this->create_post();
+		$parent_b = $this->create_post();
+
+		$fb_a = $this->create_like_post( $parent_a );
+		$fb_b = $this->create_like_post( $parent_b );
+
+		add_action( 'pre_get_posts', array( \BeastFeedbacks_Admin::get_instance(), 'source_filter_result' ) );
+
+		try {
+			$_GET['_beastfeedbacks_nonce']    = wp_create_nonce( 'beastfeedbacks_filter' );
+			$_GET['beastfeedbacks_parent_id'] = (string) $parent_a;
+			$_REQUEST                         = $_GET;
+
+			$results = get_posts(
+				array(
+					'post_type'        => 'beastfeedbacks',
+					'suppress_filters' => false,
+					'fields'           => 'ids',
+				)
+			);
+
+			$this->assertContains( $fb_a, $results );
+			$this->assertNotContains( $fb_b, $results );
+		} finally {
+			remove_action( 'pre_get_posts', array( \BeastFeedbacks_Admin::get_instance(), 'source_filter_result' ) );
+		}
+	}
 }
