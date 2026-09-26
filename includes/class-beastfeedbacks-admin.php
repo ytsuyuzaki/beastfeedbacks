@@ -501,16 +501,22 @@ class BeastFeedbacks_Admin {
 		$raw_parent_ids = wp_cache_get( $cache_key, $cache_group );
 
 		if ( false === $raw_parent_ids ) {
-			global $wpdb;
-
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-			$raw_parent_ids = $wpdb->get_col(
-				$wpdb->prepare(
-					"SELECT DISTINCT post_parent FROM {$wpdb->posts} WHERE post_type = %s AND post_status = %s",
-					$this->post_type,
-					'publish'
+			$query = new WP_Query(
+				array(
+					'post_type'              => $this->post_type,
+					'post_status'            => 'publish',
+					'posts_per_page'         => -1,
+					'no_found_rows'          => true,
+					'fields'                 => 'id=>parent',
+					'suppress_filters'       => true,
+					'update_post_term_cache' => false,
+					'update_post_meta_cache' => false,
 				)
 			);
+
+			$raw_parent_ids = ! empty( $query->posts )
+				? array_values( array_unique( array_map( 'strval', wp_list_pluck( $query->posts, 'post_parent' ) ) ) )
+				: array();
 
 			wp_cache_set( $cache_key, $raw_parent_ids, $cache_group );
 		}
