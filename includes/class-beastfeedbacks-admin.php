@@ -687,7 +687,7 @@ class BeastFeedbacks_Admin {
 		check_admin_referer( 'beastfeedbacks_csv_export' );
 
 		// Security: Verify user capability to prevent unauthorized data export.
-		if ( ! current_user_can( 'edit_pages' ) ) {
+		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'beastfeedbacks' ), 403 );
 		}
 
