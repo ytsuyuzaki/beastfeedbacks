@@ -42,15 +42,14 @@ class BeastFeedbacks_Utils_Clear_Parent_Like_Count_Cache_Test extends BeastFeedb
 	 * @param mixed $invalid_parent_id Invalid parent ID input.
 	 */
 	public function clear_parent_like_count_cache_ignores_non_positive_or_invalid_parent_ids( $invalid_parent_id ): void {
-		$valid_parent_id = 789;
-		$valid_cache_key = 'like_count_' . $valid_parent_id;
-		$cache_group     = 'beastfeedbacks';
+		$derived_key = 'like_count_' . (int) $invalid_parent_id;
+		$cache_group = 'beastfeedbacks';
 
-		wp_cache_set( $valid_cache_key, 42, $cache_group );
+		wp_cache_set( $derived_key, 42, $cache_group );
 
 		\BeastFeedbacks_Utils::clear_parent_like_count_cache( $invalid_parent_id );
 
-		$this->assertSame( 42, wp_cache_get( $valid_cache_key, $cache_group ), 'Unrelated valid cache should remain intact when invalid parent ID is passed.' );
+		$this->assertSame( 42, wp_cache_get( $derived_key, $cache_group ), 'Cache for invalid parent ID cast key should remain untouched.' );
 	}
 
 	/**
