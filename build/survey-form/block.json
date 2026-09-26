@@ -1,0 +1,30 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "beastfeedbacks/survey-form",
+  "version": "0.1.0",
+  "title": "Survey Form",
+  "category": "beastfeedbacks",
+  "description": "Creating a survey form to conduct a survey",
+  "example": {},
+  "supports": {
+    "color": {
+      "link": true,
+      "gradients": true
+    },
+    "html": false,
+    "spacing": {
+      "padding": true,
+      "margin": true
+    },
+    "align": [
+      "wide",
+      "full"
+    ]
+  },
+  "textdomain": "beastfeedbacks",
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "style": "file:./style-index.css",
+  "viewScript": "file:./view.js"
+}

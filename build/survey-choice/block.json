@@ -1,0 +1,26 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "beastfeedbacks/survey-choice",
+  "version": "0.1.0",
+  "title": "Survey Choice",
+  "parent": [
+    "beastfeedbacks/survey-form"
+  ],
+  "category": "beastfeedbacks",
+  "description": "Choice forms that can be used with Survey Form",
+  "example": {},
+  "supports": {
+    "html": false,
+    "layout": {
+      "allowSwitching": false,
+      "default": {
+        "type": "flex"
+      }
+    }
+  },
+  "textdomain": "beastfeedbacks",
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "style": "file:./style-index.css"
+}
