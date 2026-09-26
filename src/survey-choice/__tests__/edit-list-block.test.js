@@ -150,4 +150,107 @@ describe( 'EditListBlock component', () => {
 
 		expect( setAttributes ).not.toHaveBeenCalled();
 	} );
+
+	it( 'passes custom style prop to wrapper element', () => {
+		const setAttributes = jest.fn();
+		const style = { margin: '10px', display: 'flex' };
+		const { container } = render(
+			<EditListBlock
+				style={ style }
+				attributes={ defaultAttributes }
+				setAttributes={ setAttributes }
+				isSelected={ false }
+			/>
+		);
+
+		const wrapper = container.querySelector(
+			'.beastfeedbacks-survey-choice_items'
+		);
+		expect( wrapper ).toHaveStyle( { margin: '10px', display: 'flex' } );
+	} );
+
+	it( 'does not update items when text is changed to empty or whitespace-only', () => {
+		const setAttributes = jest.fn();
+		render(
+			<EditListBlock
+				attributes={ defaultAttributes }
+				setAttributes={ setAttributes }
+				isSelected={ true }
+			/>
+		);
+
+		const inputs = screen.getAllByTestId( 'mock-rich-text-input' );
+		fireEvent.change( inputs[ 0 ], {
+			target: { value: '' },
+		} );
+		fireEvent.change( inputs[ 0 ], {
+			target: { value: '   \n  \n' },
+		} );
+
+		expect( setAttributes ).not.toHaveBeenCalled();
+	} );
+
+	it( 'does not split item when isOriginal is false', () => {
+		const setAttributes = jest.fn();
+		render(
+			<EditListBlock
+				attributes={ defaultAttributes }
+				setAttributes={ setAttributes }
+				isSelected={ true }
+			/>
+		);
+
+		const splitFalseButtons = screen.getAllByTestId(
+			'mock-rich-text-split-false'
+		);
+		fireEvent.click( splitFalseButtons[ 0 ] );
+
+		expect( setAttributes ).not.toHaveBeenCalled();
+	} );
+
+	it( 'does not split item when both value and split value are empty', () => {
+		const setAttributes = jest.fn();
+		render(
+			<EditListBlock
+				attributes={ { ...defaultAttributes, items: [ '' ] } }
+				setAttributes={ setAttributes }
+				isSelected={ true }
+			/>
+		);
+
+		const splitButtons = screen.getAllByTestId( 'mock-rich-text-split' );
+		fireEvent.click( splitButtons[ 0 ] );
+
+		expect( setAttributes ).not.toHaveBeenCalled();
+	} );
+
+	it( 'handles focus management with setFocus timers and cursor selection', () => {
+		jest.useFakeTimers();
+		const setAttributes = jest.fn();
+		render(
+			<EditListBlock
+				attributes={ defaultAttributes }
+				setAttributes={ setAttributes }
+				isSelected={ true }
+			/>
+		);
+
+		const inputs = screen.getAllByTestId( 'mock-rich-text-input' );
+		fireEvent.change( inputs[ 1 ], {
+			target: { value: 'Updated Option 2' },
+		} );
+
+		jest.runAllTimers();
+
+		const removeButtons = screen.getAllByTestId( 'mock-rich-text-remove' );
+		fireEvent.click( removeButtons[ 2 ] );
+
+		jest.runAllTimers();
+
+		expect( setAttributes ).toHaveBeenCalledWith( {
+			items: [ 'Option 1', 'Option 2' ],
+		} );
+
+		jest.useRealTimers();
+	} );
 } );
