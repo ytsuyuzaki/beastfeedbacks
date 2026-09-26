@@ -453,10 +453,10 @@ class BeastFeedbacks_Admin {
 	 */
 	private function verify_admin_nonce() {
 		$filter_nonce = '';
-		if ( isset( $_REQUEST['_beastfeedbacks_nonce'] ) ) {
-			$filter_nonce = $_REQUEST['_beastfeedbacks_nonce'];
-		} elseif ( isset( $_GET['_beastfeedbacks_nonce'] ) ) {
-			$filter_nonce = $_GET['_beastfeedbacks_nonce'];
+		if ( isset( $_REQUEST['_beastfeedbacks_nonce'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$filter_nonce = $_REQUEST['_beastfeedbacks_nonce']; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		} elseif ( isset( $_GET['_beastfeedbacks_nonce'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$filter_nonce = $_GET['_beastfeedbacks_nonce']; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		}
 
 		if ( is_string( $filter_nonce ) && '' !== $filter_nonce && wp_verify_nonce( wp_unslash( $filter_nonce ), 'beastfeedbacks_filter' ) ) {
@@ -464,12 +464,12 @@ class BeastFeedbacks_Admin {
 		}
 
 		$export_nonce = '';
-		if ( isset( $_REQUEST['_wpnonce'] ) ) {
-			$export_nonce = $_REQUEST['_wpnonce'];
-		} elseif ( isset( $_GET['_wpnonce'] ) ) {
-			$export_nonce = $_GET['_wpnonce'];
-		} elseif ( isset( $_POST['_wpnonce'] ) ) {
-			$export_nonce = $_POST['_wpnonce'];
+		if ( isset( $_REQUEST['_wpnonce'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$export_nonce = $_REQUEST['_wpnonce']; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		} elseif ( isset( $_GET['_wpnonce'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$export_nonce = $_GET['_wpnonce']; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		} elseif ( isset( $_POST['_wpnonce'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			$export_nonce = $_POST['_wpnonce']; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		}
 
 		if ( is_string( $export_nonce ) && '' !== $export_nonce && wp_verify_nonce( wp_unslash( $export_nonce ), 'beastfeedbacks_csv_export' ) ) {
@@ -492,7 +492,7 @@ class BeastFeedbacks_Admin {
 		}
 
 		$nonce_verified = $this->verify_admin_nonce();
-		$selected_type  = $nonce_verified && isset( $_GET['beastfeedbacks_type'] ) ? sanitize_key( wp_unslash( $_GET['beastfeedbacks_type'] ) ) : '';
+		$selected_type  = $nonce_verified && isset( $_GET['beastfeedbacks_type'] ) ? sanitize_key( wp_unslash( $_GET['beastfeedbacks_type'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( ! in_array( $selected_type, BeastFeedbacks_Block::TYPES, true ) ) {
 			$selected_type = '';
 		}
@@ -526,7 +526,7 @@ class BeastFeedbacks_Admin {
 		}
 
 		$nonce_verified     = $this->verify_admin_nonce();
-		$selected_parent_id = $nonce_verified && isset( $_GET['beastfeedbacks_parent_id'] ) ? absint( wp_unslash( $_GET['beastfeedbacks_parent_id'] ) ) : 0;
+		$selected_parent_id = $nonce_verified && isset( $_GET['beastfeedbacks_parent_id'] ) ? absint( wp_unslash( $_GET['beastfeedbacks_parent_id'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 		$cache_key   = 'source_filter_parent_ids';
 		$cache_group = 'beastfeedbacks';
@@ -603,7 +603,7 @@ class BeastFeedbacks_Admin {
 	 */
 	public function type_filter_result( $query ) {
 		$nonce_verified = $this->verify_admin_nonce();
-		$selected_type  = $nonce_verified && isset( $_REQUEST['beastfeedbacks_type'] ) ? sanitize_key( wp_unslash( $_REQUEST['beastfeedbacks_type'] ) ) : '';
+		$selected_type  = $nonce_verified && isset( $_REQUEST['beastfeedbacks_type'] ) ? sanitize_key( wp_unslash( $_REQUEST['beastfeedbacks_type'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 		if ( ! $selected_type || ! in_array( $selected_type, BeastFeedbacks_Block::TYPES, true ) || 'beastfeedbacks' !== $query->query_vars['post_type'] ) {
 			return;
@@ -671,7 +671,7 @@ class BeastFeedbacks_Admin {
 	 */
 	public function source_filter_result( $query ) {
 		$nonce_verified     = $this->verify_admin_nonce();
-		$selected_parent_id = $nonce_verified && isset( $_REQUEST['beastfeedbacks_parent_id'] ) ? absint( wp_unslash( $_REQUEST['beastfeedbacks_parent_id'] ) ) : 0;
+		$selected_parent_id = $nonce_verified && isset( $_REQUEST['beastfeedbacks_parent_id'] ) ? absint( wp_unslash( $_REQUEST['beastfeedbacks_parent_id'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 		if ( ! $selected_parent_id || 'beastfeedbacks' !== $query->query_vars['post_type'] ) {
 			return;
