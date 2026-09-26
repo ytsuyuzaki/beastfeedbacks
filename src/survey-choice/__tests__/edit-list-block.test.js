@@ -227,7 +227,24 @@ describe( 'EditListBlock component', () => {
 	it( 'handles focus management with setFocus timers and cursor selection', () => {
 		jest.useFakeTimers();
 		const setAttributes = jest.fn();
-		render(
+
+		const mockRange = {
+			selectNodeContents: jest.fn(),
+			collapse: jest.fn(),
+		};
+		const mockSelection = {
+			removeAllRanges: jest.fn(),
+			addRange: jest.fn(),
+		};
+
+		const createRangeSpy = jest
+			.spyOn( document, 'createRange' )
+			.mockReturnValue( mockRange );
+		const getSelectionSpy = jest
+			.spyOn( document.defaultView, 'getSelection' )
+			.mockReturnValue( mockSelection );
+
+		const { container } = render(
 			<EditListBlock
 				attributes={ defaultAttributes }
 				setAttributes={ setAttributes }
@@ -235,12 +252,16 @@ describe( 'EditListBlock component', () => {
 			/>
 		);
 
+		const textboxes = container.querySelectorAll( '[role=textbox]' );
+
 		const inputs = screen.getAllByTestId( 'mock-rich-text-input' );
 		fireEvent.change( inputs[ 1 ], {
 			target: { value: 'Updated Option 2' },
 		} );
 
 		jest.runAllTimers();
+
+		expect( document.activeElement ).toBe( textboxes[ 1 ] );
 
 		const removeButtons = screen.getAllByTestId( 'mock-rich-text-remove' );
 		fireEvent.click( removeButtons[ 2 ] );
@@ -251,6 +272,16 @@ describe( 'EditListBlock component', () => {
 			items: [ 'Option 1', 'Option 2' ],
 		} );
 
+		expect( document.activeElement ).toBe( textboxes[ 1 ] );
+		expect( mockRange.selectNodeContents ).toHaveBeenCalledWith(
+			textboxes[ 1 ]
+		);
+		expect( mockRange.collapse ).toHaveBeenCalledWith( false );
+		expect( mockSelection.removeAllRanges ).toHaveBeenCalled();
+		expect( mockSelection.addRange ).toHaveBeenCalledWith( mockRange );
+
+		createRangeSpy.mockRestore();
+		getSelectionSpy.mockRestore();
 		jest.useRealTimers();
 	} );
 } );

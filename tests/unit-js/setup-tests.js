@@ -73,6 +73,7 @@ jest.mock( '@wordpress/block-editor', () => {
 					<Tag
 						className={ className }
 						role={ role }
+						tabIndex={ 0 }
 						data-testid="mock-rich-text"
 						data-value={ value }
 						onClick={ () =>
