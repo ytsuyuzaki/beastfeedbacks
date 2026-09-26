@@ -884,7 +884,6 @@ class BeastFeedbacks_Admin {
 	 * @return array List of WP_Post objects.
 	 */
 	public function get_export_posts() {
-		// NOTE: POST情報にフィルター設定を載せて検索する.
 		$args = array(
 			'posts_per_page'         => -1,
 			'post_type'              => 'beastfeedbacks',
