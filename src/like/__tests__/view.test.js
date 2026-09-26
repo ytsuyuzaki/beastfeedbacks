@@ -196,5 +196,125 @@ describe( 'src/like/view.js', () => {
 			expect( messageElement.tagName ).toBe( 'P' );
 			expect( messageElement.textContent ).toBe( 'Too many requests' );
 		} );
+
+		it( 'displays error message when response.json() rejects on a non-ok response', async () => {
+			const form = setupDOM();
+
+			jest.spyOn( window, 'fetch' ).mockResolvedValue( {
+				ok: false,
+				json: jest
+					.fn()
+					.mockRejectedValue( new Error( 'Invalid JSON' ) ),
+			} );
+
+			jest.isolateModules( () => {
+				require( '../view' );
+			} );
+
+			const submitEvent = new Event( 'submit', {
+				bubbles: true,
+				cancelable: true,
+			} );
+
+			form.dispatchEvent( submitEvent );
+
+			for ( let i = 0; i < 10; i++ ) {
+				await Promise.resolve();
+			}
+
+			const messageElement = form.nextSibling;
+			expect( messageElement ).not.toBeNull();
+			expect( messageElement.tagName ).toBe( 'P' );
+			expect( messageElement.textContent ).toBe(
+				'Oops! Something went wrong.'
+			);
+		} );
+
+		it( 'handles response.json() rejection gracefully on an ok response', async () => {
+			const form = setupDOM();
+
+			jest.spyOn( window, 'fetch' ).mockResolvedValue( {
+				ok: true,
+				json: jest
+					.fn()
+					.mockRejectedValue( new Error( 'Invalid JSON' ) ),
+			} );
+
+			jest.isolateModules( () => {
+				require( '../view' );
+			} );
+
+			const submitEvent = new Event( 'submit', {
+				bubbles: true,
+				cancelable: true,
+			} );
+
+			form.dispatchEvent( submitEvent );
+
+			for ( let i = 0; i < 10; i++ ) {
+				await Promise.resolve();
+			}
+
+			const messageElement = form.nextSibling;
+			expect( messageElement ).not.toBeNull();
+			expect( messageElement.tagName ).toBe( 'P' );
+		} );
+
+		it( 'throws error and displays fallback message when response lacks json method and ok is false', async () => {
+			const form = setupDOM();
+
+			jest.spyOn( window, 'fetch' ).mockResolvedValue( {
+				ok: false,
+			} );
+
+			jest.isolateModules( () => {
+				require( '../view' );
+			} );
+
+			const submitEvent = new Event( 'submit', {
+				bubbles: true,
+				cancelable: true,
+			} );
+
+			form.dispatchEvent( submitEvent );
+
+			for ( let i = 0; i < 10; i++ ) {
+				await Promise.resolve();
+			}
+
+			const messageElement = form.nextSibling;
+			expect( messageElement ).not.toBeNull();
+			expect( messageElement.tagName ).toBe( 'P' );
+			expect( messageElement.textContent ).toBe(
+				'Oops! Something went wrong.'
+			);
+		} );
+
+		it( 'handles response without json method when response is ok', async () => {
+			const form = setupDOM();
+
+			jest.spyOn( window, 'fetch' ).mockResolvedValue( {
+				ok: true,
+			} );
+
+			jest.isolateModules( () => {
+				require( '../view' );
+			} );
+
+			const submitEvent = new Event( 'submit', {
+				bubbles: true,
+				cancelable: true,
+			} );
+
+			form.dispatchEvent( submitEvent );
+
+			for ( let i = 0; i < 10; i++ ) {
+				await Promise.resolve();
+			}
+
+			const messageElement = form.nextSibling;
+			expect( messageElement ).not.toBeNull();
+			expect( messageElement.tagName ).toBe( 'P' );
+		} );
 	} );
 } );
