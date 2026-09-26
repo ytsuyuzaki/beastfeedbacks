@@ -659,6 +659,10 @@ class BeastFeedbacks_Admin {
 	 * @return void
 	 */
 	public function add_export_button() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
 		$screen = get_current_screen();
 		if ( ! $screen || ! isset( $screen->id ) || 'edit-beastfeedbacks' !== $screen->id ) {
 			return;
