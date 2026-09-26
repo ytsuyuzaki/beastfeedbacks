@@ -447,6 +447,39 @@ class BeastFeedbacks_Admin {
 	}
 
 	/**
+	 * Verify admin nonce for filtering or CSV export.
+	 *
+	 * @return bool True if a valid nonce is present in request data, false otherwise.
+	 */
+	private function verify_admin_nonce() {
+		$filter_nonce = '';
+		if ( isset( $_REQUEST['_beastfeedbacks_nonce'] ) ) {
+			$filter_nonce = $_REQUEST['_beastfeedbacks_nonce'];
+		} elseif ( isset( $_GET['_beastfeedbacks_nonce'] ) ) {
+			$filter_nonce = $_GET['_beastfeedbacks_nonce'];
+		}
+
+		if ( is_string( $filter_nonce ) && '' !== $filter_nonce && wp_verify_nonce( wp_unslash( $filter_nonce ), 'beastfeedbacks_filter' ) ) {
+			return true;
+		}
+
+		$export_nonce = '';
+		if ( isset( $_REQUEST['_wpnonce'] ) ) {
+			$export_nonce = $_REQUEST['_wpnonce'];
+		} elseif ( isset( $_GET['_wpnonce'] ) ) {
+			$export_nonce = $_GET['_wpnonce'];
+		} elseif ( isset( $_POST['_wpnonce'] ) ) {
+			$export_nonce = $_POST['_wpnonce'];
+		}
+
+		if ( is_string( $export_nonce ) && '' !== $export_nonce && wp_verify_nonce( wp_unslash( $export_nonce ), 'beastfeedbacks_csv_export' ) ) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
 	 * Add a post filter dropdown at the top of the admin page.
 	 *
 	 * @return void
@@ -458,7 +491,7 @@ class BeastFeedbacks_Admin {
 			return;
 		}
 
-		$nonce_verified = isset( $_GET['_beastfeedbacks_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_beastfeedbacks_nonce'] ) ), 'beastfeedbacks_filter' );
+		$nonce_verified = $this->verify_admin_nonce();
 		$selected_type  = $nonce_verified && isset( $_GET['beastfeedbacks_type'] ) ? sanitize_key( wp_unslash( $_GET['beastfeedbacks_type'] ) ) : '';
 		if ( ! in_array( $selected_type, BeastFeedbacks_Block::TYPES, true ) ) {
 			$selected_type = '';
@@ -492,7 +525,7 @@ class BeastFeedbacks_Admin {
 			return;
 		}
 
-		$nonce_verified     = isset( $_GET['_beastfeedbacks_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_beastfeedbacks_nonce'] ) ), 'beastfeedbacks_filter' );
+		$nonce_verified     = $this->verify_admin_nonce();
 		$selected_parent_id = $nonce_verified && isset( $_GET['beastfeedbacks_parent_id'] ) ? absint( wp_unslash( $_GET['beastfeedbacks_parent_id'] ) ) : 0;
 
 		$cache_key   = 'source_filter_parent_ids';
@@ -569,8 +602,7 @@ class BeastFeedbacks_Admin {
 	 * @return void
 	 */
 	public function type_filter_result( $query ) {
-		$nonce_verified = ( isset( $_REQUEST['_beastfeedbacks_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_REQUEST['_beastfeedbacks_nonce'] ) ), 'beastfeedbacks_filter' ) )
-			|| ( isset( $_REQUEST['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_REQUEST['_wpnonce'] ) ), 'beastfeedbacks_csv_export' ) );
+		$nonce_verified = $this->verify_admin_nonce();
 		$selected_type  = $nonce_verified && isset( $_REQUEST['beastfeedbacks_type'] ) ? sanitize_key( wp_unslash( $_REQUEST['beastfeedbacks_type'] ) ) : '';
 
 		if ( ! $selected_type || ! in_array( $selected_type, BeastFeedbacks_Block::TYPES, true ) || 'beastfeedbacks' !== $query->query_vars['post_type'] ) {
@@ -638,8 +670,7 @@ class BeastFeedbacks_Admin {
 	 * @return void
 	 */
 	public function source_filter_result( $query ) {
-		$nonce_verified     = ( isset( $_REQUEST['_beastfeedbacks_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_REQUEST['_beastfeedbacks_nonce'] ) ), 'beastfeedbacks_filter' ) )
-			|| ( isset( $_REQUEST['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_REQUEST['_wpnonce'] ) ), 'beastfeedbacks_csv_export' ) );
+		$nonce_verified     = $this->verify_admin_nonce();
 		$selected_parent_id = $nonce_verified && isset( $_REQUEST['beastfeedbacks_parent_id'] ) ? absint( wp_unslash( $_REQUEST['beastfeedbacks_parent_id'] ) ) : 0;
 
 		if ( ! $selected_parent_id || 'beastfeedbacks' !== $query->query_vars['post_type'] ) {
