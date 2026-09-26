@@ -191,7 +191,9 @@ describe( 'Survey Form view script', () => {
 
 		fetchSpy.mockResolvedValue( {
 			ok: false,
-			json: jest.fn().mockRejectedValue( new Error( 'JSON Parse Error' ) ),
+			json: jest
+				.fn()
+				.mockRejectedValue( new Error( 'JSON Parse Error' ) ),
 		} );
 
 		require( '../view' );
