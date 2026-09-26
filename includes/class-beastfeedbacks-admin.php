@@ -454,11 +454,11 @@ class BeastFeedbacks_Admin {
 	 * @return bool True if filter nonce or CSV export nonce is verified, false otherwise.
 	 */
 	private function is_filter_nonce_verified() {
-		if ( isset( $_REQUEST['_beastfeedbacks_nonce'] ) && wp_verify_nonce( wp_unslash( $_REQUEST['_beastfeedbacks_nonce'] ), 'beastfeedbacks_filter' ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		if ( isset( $_REQUEST['_beastfeedbacks_nonce'] ) && is_scalar( $_REQUEST['_beastfeedbacks_nonce'] ) && wp_verify_nonce( wp_unslash( $_REQUEST['_beastfeedbacks_nonce'] ), 'beastfeedbacks_filter' ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			return true;
 		}
 
-		if ( isset( $_REQUEST['_wpnonce'] ) && wp_verify_nonce( wp_unslash( $_REQUEST['_wpnonce'] ), 'beastfeedbacks_csv_export' ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		if ( isset( $_REQUEST['_wpnonce'] ) && is_scalar( $_REQUEST['_wpnonce'] ) && wp_verify_nonce( wp_unslash( $_REQUEST['_wpnonce'] ), 'beastfeedbacks_csv_export' ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			return true;
 		}
 
