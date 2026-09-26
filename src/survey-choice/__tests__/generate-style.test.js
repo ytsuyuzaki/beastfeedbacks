@@ -13,6 +13,15 @@ describe( 'GenerateStyle', () => {
 		expect( GenerateStyle( {} ) ).toEqual( expectedDefaults );
 	} );
 
+	it( 'returns default styles when layout is explicitly null', () => {
+		expect( GenerateStyle( { layout: null } ) ).toEqual( {
+			display: 'flex',
+			flexFlow: null,
+			justifyContent: undefined,
+			flexWrap: 'wrap',
+		} );
+	} );
+
 	it( 'uses layout defaults when layout is an empty object', () => {
 		expect( GenerateStyle( { layout: {} } ) ).toEqual( {
 			display: 'flex',
@@ -67,5 +76,21 @@ describe( 'GenerateStyle', () => {
 			flexWrap: 'wrap',
 			width: '100%',
 		} );
+	} );
+
+	it( 'does not set width property when justifyContent is not space-between', () => {
+		const result = GenerateStyle( {
+			layout: {
+				justifyContent: 'center',
+			},
+		} );
+
+		expect( result ).toEqual( {
+			display: 'flex',
+			flexFlow: null,
+			justifyContent: 'center',
+			flexWrap: 'wrap',
+		} );
+		expect( result.width ).toBeUndefined();
 	} );
 } );
