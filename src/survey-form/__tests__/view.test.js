@@ -185,4 +185,66 @@ describe( 'Survey Form view script', () => {
 		expect( messageSpan.textContent ).toBe( 'Too many requests' );
 		expect( submitButton.disabled ).toBe( false );
 	} );
+
+	test( 'should catch response.json() rejection when parsing json fails, fall back to default error message and re-enable submit button', async () => {
+		const { container, form, submitButton } = createFormDOM();
+
+		fetchSpy.mockResolvedValue( {
+			ok: false,
+			json: jest.fn().mockRejectedValue( new Error( 'JSON Parse Error' ) ),
+		} );
+
+		require( '../view' );
+
+		const event = new Event( 'submit', {
+			bubbles: true,
+			cancelable: true,
+		} );
+		Object.defineProperty( event, 'submitter', {
+			value: submitButton,
+			writable: false,
+		} );
+
+		form.dispatchEvent( event );
+
+		// Flush microtask queue
+		await new Promise( ( resolve ) => setTimeout( resolve, 0 ) );
+
+		const messageSpan = container.querySelector( 'span' );
+		expect( messageSpan ).not.toBeNull();
+		expect( messageSpan.textContent ).toBe( 'Oops! Something went wrong.' );
+		expect( submitButton.hasAttribute( 'disabled' ) ).toBe( false );
+	} );
+
+	test( 'should display fallback error message when response data contains success: false without a custom message', async () => {
+		const { container, form, submitButton } = createFormDOM();
+
+		fetchSpy.mockResolvedValue( {
+			ok: true,
+			json: jest.fn().mockResolvedValue( {
+				success: false,
+			} ),
+		} );
+
+		require( '../view' );
+
+		const event = new Event( 'submit', {
+			bubbles: true,
+			cancelable: true,
+		} );
+		Object.defineProperty( event, 'submitter', {
+			value: submitButton,
+			writable: false,
+		} );
+
+		form.dispatchEvent( event );
+
+		// Flush microtask queue
+		await new Promise( ( resolve ) => setTimeout( resolve, 0 ) );
+
+		const messageSpan = container.querySelector( 'span' );
+		expect( messageSpan ).not.toBeNull();
+		expect( messageSpan.textContent ).toBe( 'Oops! Something went wrong.' );
+		expect( submitButton.hasAttribute( 'disabled' ) ).toBe( false );
+	} );
 } );
