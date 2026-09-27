@@ -53,15 +53,15 @@ class BeastFeedbacks_Admin_Download_Csv_Test extends BeastFeedbacks_TestCase {
 	}
 
 	/** @test */
-	public function download_csv_fails_without_edit_pages_capability(): void {
-		$subscriber_id = wp_insert_user(
+	public function download_csv_fails_without_manage_options_capability(): void {
+		$editor_id = wp_insert_user(
 			array(
-				'user_login' => 'test_subscriber_' . uniqid(),
+				'user_login' => 'test_editor_' . uniqid(),
 				'user_pass'  => 'password',
-				'role'       => 'subscriber',
+				'role'       => 'editor',
 			)
 		);
-		wp_set_current_user( $subscriber_id );
+		wp_set_current_user( $editor_id );
 
 		$nonce                = wp_create_nonce( 'beastfeedbacks_csv_export' );
 		$_REQUEST['_wpnonce'] = $nonce;
@@ -79,13 +79,13 @@ class BeastFeedbacks_Admin_Download_Csv_Test extends BeastFeedbacks_TestCase {
 
 		try {
 			\BeastFeedbacks_Admin::get_instance()->download_csv();
-			$this->fail( 'download_csv did not die when user lacked edit_pages capability' );
+			$this->fail( 'download_csv did not die when user lacked manage_options capability' );
 		} catch ( RuntimeException $e ) {
 			$this->assertSame( 'wp_die_permission_denied_403', $e->getMessage() );
 		} finally {
 			remove_filter( 'wp_die_ajax_handler', $die_handler );
 			remove_filter( 'wp_die_handler', $die_handler );
-			wp_delete_user( $subscriber_id );
+			wp_delete_user( $editor_id );
 			wp_set_current_user( 0 );
 		}
 	}

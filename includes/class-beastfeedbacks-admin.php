@@ -672,6 +672,10 @@ class BeastFeedbacks_Admin {
 	 * @return void
 	 */
 	public function add_export_button() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
 		$screen = get_current_screen();
 		if ( ! $screen || ! isset( $screen->id ) || 'edit-beastfeedbacks' !== $screen->id ) {
 			return;
@@ -700,7 +704,7 @@ class BeastFeedbacks_Admin {
 		check_admin_referer( 'beastfeedbacks_csv_export' );
 
 		// Security: Verify user capability to prevent unauthorized data export.
-		if ( ! current_user_can( 'edit_pages' ) ) {
+		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'beastfeedbacks' ), 403 );
 		}
 
