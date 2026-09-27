@@ -256,9 +256,15 @@ class BeastFeedbacks_Admin {
 	 * @return array Associative array containing parsed JSON fields and key-presence booleans.
 	 */
 	private function extract_post_content_data( $post_content ) {
+		static $cache = array();
+
+		if ( isset( $cache[ $post_content ] ) ) {
+			return $cache[ $post_content ];
+		}
+
 		$content = json_decode( $post_content, true );
 		if ( ! is_array( $content ) ) {
-			return array(
+			$cache[ $post_content ] = array(
 				'is_valid'       => false,
 				'type'           => '',
 				'post_params'    => array(),
@@ -267,6 +273,7 @@ class BeastFeedbacks_Admin {
 				'has_ip_address' => false,
 				'has_user_agent' => false,
 			);
+			return $cache[ $post_content ];
 		}
 
 		$type        = isset( $content['type'] ) ? $content['type'] : '';
@@ -277,7 +284,7 @@ class BeastFeedbacks_Admin {
 		$ip_address = isset( $content['ip_address'] ) ? $content['ip_address'] : '';
 		$user_agent = isset( $content['user_agent'] ) ? $content['user_agent'] : '';
 
-		return array(
+		$cache[ $post_content ] = array(
 			'is_valid'       => true,
 			'type'           => $type,
 			'post_params'    => $post_params,
@@ -286,6 +293,8 @@ class BeastFeedbacks_Admin {
 			'has_ip_address' => isset( $content['ip_address'] ),
 			'has_user_agent' => isset( $content['user_agent'] ),
 		);
+
+		return $cache[ $post_content ];
 	}
 
 	/**
