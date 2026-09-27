@@ -69,8 +69,8 @@ class BeastFeedbacks_Public {
 		// Security: Verify nonce explicitly before reading or processing $_POST data.
 		check_ajax_referer( 'register_beastfeedbacks_form' );
 
-		// POSTデータの存在確認と適切なサニタイズ.
-		if ( ! isset( $_POST['id'] ) || ! isset( $_POST['beastfeedbacks_type'] ) ) {
+		// Security: Validate that expected parameters exist and are scalar values before sanitizing.
+		if ( ! isset( $_POST['id'] ) || ! isset( $_POST['beastfeedbacks_type'] ) || ! is_scalar( $_POST['id'] ) || ! is_scalar( $_POST['beastfeedbacks_type'] ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid request', 'beastfeedbacks' ) ) );
 		}
 

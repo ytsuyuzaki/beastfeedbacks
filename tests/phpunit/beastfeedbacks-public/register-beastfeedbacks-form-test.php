@@ -384,4 +384,39 @@ class BeastFeedbacks_Public_Register_Beastfeedbacks_Form_Test extends BeastFeedb
 		$this->assertFalse( $public->is_rate_limited( $ip ) );
 		remove_filter( 'beastfeedbacks_pre_is_rate_limited', '__return_false' );
 	}
+
+	/**
+	 * Verify that register_beastfeedbacks_form handles non-scalar array inputs gracefully without throwing TypeError.
+	 */
+	public function test_register_beastfeedbacks_form_handles_non_scalar_array_inputs(): void {
+		$parent_id = $this->create_post();
+
+		// Array passed as 'id' parameter.
+		$_POST    = array( // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			'_ajax_nonce'         => wp_create_nonce( 'register_beastfeedbacks_form' ),
+			'action'              => 'register_beastfeedbacks_form',
+			'id'                  => array( (string) $parent_id ),
+			'beastfeedbacks_type' => 'like',
+		);
+		$_REQUEST = $_POST;
+
+		$response = $this->call_ajax_handler();
+
+		$this->assertFalse( $response['success'] );
+		$this->assertSame( 'Invalid request', $response['data']['message'] );
+
+		// Array passed as 'beastfeedbacks_type' parameter.
+		$_POST    = array( // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			'_ajax_nonce'         => wp_create_nonce( 'register_beastfeedbacks_form' ),
+			'action'              => 'register_beastfeedbacks_form',
+			'id'                  => (string) $parent_id,
+			'beastfeedbacks_type' => array( 'like' ),
+		);
+		$_REQUEST = $_POST;
+
+		$response = $this->call_ajax_handler();
+
+		$this->assertFalse( $response['success'] );
+		$this->assertSame( 'Invalid request', $response['data']['message'] );
+	}
 }
