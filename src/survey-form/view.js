@@ -1,6 +1,9 @@
 import { submitForm } from '../utils/view';
 
-// 複数フォームを設定した場合に考慮
+/**
+ * Attach submit event listeners to all survey forms on the page.
+ * Handles cases where multiple forms are present.
+ */
 const forms = document.querySelectorAll(
 	'form[name="beastfeedbacks_survey_form"]'
 );

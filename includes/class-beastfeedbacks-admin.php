@@ -256,9 +256,15 @@ class BeastFeedbacks_Admin {
 	 * @return array Associative array containing parsed JSON fields and key-presence booleans.
 	 */
 	private function extract_post_content_data( $post_content ) {
+		static $cache = array();
+
+		if ( isset( $cache[ $post_content ] ) ) {
+			return $cache[ $post_content ];
+		}
+
 		$content = json_decode( $post_content, true );
 		if ( ! is_array( $content ) ) {
-			return array(
+			$cache[ $post_content ] = array(
 				'is_valid'       => false,
 				'type'           => '',
 				'post_params'    => array(),
@@ -267,6 +273,7 @@ class BeastFeedbacks_Admin {
 				'has_ip_address' => false,
 				'has_user_agent' => false,
 			);
+			return $cache[ $post_content ];
 		}
 
 		$type        = isset( $content['type'] ) ? $content['type'] : '';
@@ -277,7 +284,7 @@ class BeastFeedbacks_Admin {
 		$ip_address = isset( $content['ip_address'] ) ? $content['ip_address'] : '';
 		$user_agent = isset( $content['user_agent'] ) ? $content['user_agent'] : '';
 
-		return array(
+		$cache[ $post_content ] = array(
 			'is_valid'       => true,
 			'type'           => $type,
 			'post_params'    => $post_params,
@@ -286,6 +293,8 @@ class BeastFeedbacks_Admin {
 			'has_ip_address' => isset( $content['ip_address'] ),
 			'has_user_agent' => isset( $content['user_agent'] ),
 		);
+
+		return $cache[ $post_content ];
 	}
 
 	/**
@@ -447,6 +456,25 @@ class BeastFeedbacks_Admin {
 	}
 
 	/**
+	 * Verify admin filter nonce from request data.
+	 *
+	 * Memory context reminder: Raw nonce input should be unslashed without pre-sanitization before wp_verify_nonce().
+	 *
+	 * @return bool True if filter nonce or CSV export nonce is verified, false otherwise.
+	 */
+	private function is_filter_nonce_verified() {
+		if ( isset( $_REQUEST['_beastfeedbacks_nonce'] ) && is_scalar( $_REQUEST['_beastfeedbacks_nonce'] ) && wp_verify_nonce( wp_unslash( $_REQUEST['_beastfeedbacks_nonce'] ), 'beastfeedbacks_filter' ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			return true;
+		}
+
+		if ( isset( $_REQUEST['_wpnonce'] ) && is_scalar( $_REQUEST['_wpnonce'] ) && wp_verify_nonce( wp_unslash( $_REQUEST['_wpnonce'] ), 'beastfeedbacks_csv_export' ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
 	 * Add a post filter dropdown at the top of the admin page.
 	 *
 	 * @return void
@@ -458,8 +486,7 @@ class BeastFeedbacks_Admin {
 			return;
 		}
 
-		$nonce_verified = isset( $_GET['_beastfeedbacks_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_beastfeedbacks_nonce'] ) ), 'beastfeedbacks_filter' );
-		$selected_type  = $nonce_verified && isset( $_GET['beastfeedbacks_type'] ) ? sanitize_key( wp_unslash( $_GET['beastfeedbacks_type'] ) ) : '';
+		$selected_type = $this->is_filter_nonce_verified() && isset( $_GET['beastfeedbacks_type'] ) ? sanitize_key( wp_unslash( $_GET['beastfeedbacks_type'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( ! in_array( $selected_type, BeastFeedbacks_Block::TYPES, true ) ) {
 			$selected_type = '';
 		}
@@ -492,8 +519,7 @@ class BeastFeedbacks_Admin {
 			return;
 		}
 
-		$nonce_verified     = isset( $_GET['_beastfeedbacks_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_beastfeedbacks_nonce'] ) ), 'beastfeedbacks_filter' );
-		$selected_parent_id = $nonce_verified && isset( $_GET['beastfeedbacks_parent_id'] ) ? absint( wp_unslash( $_GET['beastfeedbacks_parent_id'] ) ) : 0;
+		$selected_parent_id = $this->is_filter_nonce_verified() && isset( $_GET['beastfeedbacks_parent_id'] ) ? absint( wp_unslash( $_GET['beastfeedbacks_parent_id'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 		$cache_key   = 'source_filter_parent_ids';
 		$cache_group = 'beastfeedbacks';
@@ -569,9 +595,7 @@ class BeastFeedbacks_Admin {
 	 * @return void
 	 */
 	public function type_filter_result( $query ) {
-		$nonce_verified = ( isset( $_REQUEST['_beastfeedbacks_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_REQUEST['_beastfeedbacks_nonce'] ) ), 'beastfeedbacks_filter' ) )
-			|| ( isset( $_REQUEST['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_REQUEST['_wpnonce'] ) ), 'beastfeedbacks_csv_export' ) );
-		$selected_type  = $nonce_verified && isset( $_REQUEST['beastfeedbacks_type'] ) ? sanitize_key( wp_unslash( $_REQUEST['beastfeedbacks_type'] ) ) : '';
+		$selected_type = $this->is_filter_nonce_verified() && isset( $_REQUEST['beastfeedbacks_type'] ) ? sanitize_key( wp_unslash( $_REQUEST['beastfeedbacks_type'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 		if ( ! $selected_type || ! in_array( $selected_type, BeastFeedbacks_Block::TYPES, true ) || 'beastfeedbacks' !== $query->query_vars['post_type'] ) {
 			return;
@@ -638,9 +662,7 @@ class BeastFeedbacks_Admin {
 	 * @return void
 	 */
 	public function source_filter_result( $query ) {
-		$nonce_verified     = ( isset( $_REQUEST['_beastfeedbacks_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_REQUEST['_beastfeedbacks_nonce'] ) ), 'beastfeedbacks_filter' ) )
-			|| ( isset( $_REQUEST['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_REQUEST['_wpnonce'] ) ), 'beastfeedbacks_csv_export' ) );
-		$selected_parent_id = $nonce_verified && isset( $_REQUEST['beastfeedbacks_parent_id'] ) ? absint( wp_unslash( $_REQUEST['beastfeedbacks_parent_id'] ) ) : 0;
+		$selected_parent_id = $this->is_filter_nonce_verified() && isset( $_REQUEST['beastfeedbacks_parent_id'] ) ? absint( wp_unslash( $_REQUEST['beastfeedbacks_parent_id'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 		if ( ! $selected_parent_id || 'beastfeedbacks' !== $query->query_vars['post_type'] ) {
 			return;
@@ -659,6 +681,10 @@ class BeastFeedbacks_Admin {
 	 * @return void
 	 */
 	public function add_export_button() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
 		$screen = get_current_screen();
 		if ( ! $screen || ! isset( $screen->id ) || 'edit-beastfeedbacks' !== $screen->id ) {
 			return;
@@ -687,7 +713,7 @@ class BeastFeedbacks_Admin {
 		check_admin_referer( 'beastfeedbacks_csv_export' );
 
 		// Security: Verify user capability to prevent unauthorized data export.
-		if ( ! current_user_can( 'edit_pages' ) ) {
+		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'beastfeedbacks' ), 403 );
 		}
 
@@ -884,7 +910,6 @@ class BeastFeedbacks_Admin {
 	 * @return array List of WP_Post objects.
 	 */
 	public function get_export_posts() {
-		// NOTE: POST情報にフィルター設定を載せて検索する.
 		$args = array(
 			'posts_per_page'         => -1,
 			'post_type'              => 'beastfeedbacks',

@@ -1,27 +1,27 @@
 import { __ } from '@wordpress/i18n';
-import { isEmpty, tap, noop, split, trim } from 'lodash';
 import { useRef } from '@wordpress/element';
 import { RichText } from '@wordpress/block-editor';
 
+const noop = () => {};
+
 const setFocus = ( wrapper, selector, index, cursorToEnd ) => {
 	setTimeout( () => {
-		tap( wrapper.querySelectorAll( selector )[ index ], ( input ) => {
-			if ( ! input ) {
-				return;
-			}
+		const input = wrapper.querySelectorAll( selector )[ index ];
+		if ( ! input ) {
+			return;
+		}
 
-			input.focus();
+		input.focus();
 
-			// 全削除
-			if ( document.createRange && cursorToEnd ) {
-				const range = document.createRange();
-				range.selectNodeContents( input );
-				range.collapse( false );
-				const selection = document.defaultView.getSelection();
-				selection.removeAllRanges();
-				selection.addRange( range );
-			}
-		} );
+		// 全削除
+		if ( document.createRange && cursorToEnd ) {
+			const range = document.createRange();
+			range.selectNodeContents( input );
+			range.collapse( false );
+			const selection = document.defaultView.getSelection();
+			selection.removeAllRanges();
+			selection.addRange( range );
+		}
 	}, 0 );
 };
 
@@ -62,9 +62,9 @@ export default function EditListBlock( {
 	};
 
 	const handleChange = ( index ) => ( value ) => {
-		const values = split( value, '\n' ).filter(
-			( op ) => op && trim( op ) !== ''
-		);
+		const values = ( value || '' )
+			.split( '\n' )
+			.filter( ( op ) => op && op.trim() !== '' );
 
 		if ( ! values.length ) {
 			return;
@@ -84,7 +84,7 @@ export default function EditListBlock( {
 
 		const splitValue = items[ index ].slice( value.length );
 
-		if ( isEmpty( value ) && isEmpty( splitValue ) ) {
+		if ( ! value && ! splitValue ) {
 			return;
 		}
 
