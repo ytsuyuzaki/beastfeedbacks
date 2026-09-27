@@ -23,7 +23,7 @@ const submit = ( e ) => {
 			if ( typeof response.json === 'function' ) {
 				return Promise.resolve( response.json() )
 					.then( ( data ) => ( { ok: response.ok, data } ) )
-					.catch( () => ( { ok: response.ok, data: {} } ) );
+					.catch( () => ( { ok: false, data: {} } ) );
 			}
 			if ( ! response.ok ) {
 				throw new Error();

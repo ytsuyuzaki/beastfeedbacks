@@ -66,11 +66,14 @@ jest.mock( '@wordpress/block-editor', () => {
 				placeholder,
 				className,
 				tagName = 'div',
+				role = 'textbox',
 			} ) => {
 				const Tag = tagName;
 				return (
 					<Tag
 						className={ className }
+						role={ role }
+						tabIndex={ 0 }
 						data-testid="mock-rich-text"
 						data-value={ value }
 						onClick={ () =>
@@ -86,15 +89,26 @@ jest.mock( '@wordpress/block-editor', () => {
 							}
 						/>
 						{ onSplit && (
-							<button
-								data-testid="mock-rich-text-split"
-								onClick={ ( e ) => {
-									e.stopPropagation();
-									onSplit( value || '', true );
-								} }
-							>
-								Split
-							</button>
+							<>
+								<button
+									data-testid="mock-rich-text-split"
+									onClick={ ( e ) => {
+										e.stopPropagation();
+										onSplit( value || '', true );
+									} }
+								>
+									Split
+								</button>
+								<button
+									data-testid="mock-rich-text-split-false"
+									onClick={ ( e ) => {
+										e.stopPropagation();
+										onSplit( value || '', false );
+									} }
+								>
+									Split False
+								</button>
+							</>
 						) }
 						{ onRemove && (
 							<button
