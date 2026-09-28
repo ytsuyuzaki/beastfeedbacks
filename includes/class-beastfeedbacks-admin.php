@@ -531,9 +531,10 @@ class BeastFeedbacks_Admin {
 
 			// Performance optimization: Direct $wpdb->get_col() prepared query bypasses WP_Query instantiation,
 			// query parsing, filter hook executions, and redundant internal post caching overhead.
+			// Grouping and ordering by MAX(post_date) DESC preserves option ordering based on recent feedback activity.
 			$results = $wpdb->get_col(
 				$wpdb->prepare(
-					"SELECT DISTINCT post_parent FROM {$wpdb->posts} WHERE post_type = %s AND post_status = 'publish' AND post_parent > 0",
+					"SELECT post_parent FROM {$wpdb->posts} WHERE post_type = %s AND post_status = 'publish' AND post_parent > 0 GROUP BY post_parent ORDER BY MAX(post_date) DESC, MAX(ID) DESC",
 					$this->post_type
 				)
 			);
