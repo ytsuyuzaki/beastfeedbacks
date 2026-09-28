@@ -527,35 +527,20 @@ class BeastFeedbacks_Admin {
 		$raw_parent_ids = wp_cache_get( $cache_key, $cache_group );
 
 		if ( false === $raw_parent_ids ) {
-			$fields_callback  = static function () {
-				global $wpdb;
-				return "DISTINCT {$wpdb->posts}.post_parent";
-			};
-			$groupby_callback = static function () {
-				return '';
-			};
+			global $wpdb;
 
-			add_filter( 'posts_fields', $fields_callback );
-			add_filter( 'posts_groupby', $groupby_callback );
-
-			$query = new WP_Query(
-				array(
-					'post_type'              => $this->post_type,
-					'post_status'            => 'publish',
-					'posts_per_page'         => -1,
-					'no_found_rows'          => true,
-					'fields'                 => 'ids',
-					'suppress_filters'       => false,
-					'update_post_term_cache' => false,
-					'update_post_meta_cache' => false,
+			// Performance optimization: Direct $wpdb->get_col() prepared query bypasses WP_Query instantiation,
+			// query parsing, filter hook executions, and redundant internal post caching overhead.
+			// Grouping and ordering by MAX(post_date) DESC preserves option ordering based on recent feedback activity.
+			$results = $wpdb->get_col(
+				$wpdb->prepare(
+					"SELECT post_parent FROM {$wpdb->posts} WHERE post_type = %s AND post_status = 'publish' AND post_parent > 0 GROUP BY post_parent ORDER BY MAX(post_date) DESC, MAX(ID) DESC",
+					$this->post_type
 				)
 			);
 
-			remove_filter( 'posts_fields', $fields_callback );
-			remove_filter( 'posts_groupby', $groupby_callback );
-
-			$raw_parent_ids = ! empty( $query->posts )
-				? array_values( array_unique( array_map( 'strval', $query->posts ) ) )
+			$raw_parent_ids = ! empty( $results )
+				? array_values( array_unique( array_map( 'strval', $results ) ) )
 				: array();
 
 			wp_cache_set( $cache_key, $raw_parent_ids, $cache_group );
