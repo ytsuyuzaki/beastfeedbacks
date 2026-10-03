@@ -11,11 +11,15 @@ describe( 'Like Block Edit component', () => {
 		expect( blockWrapper.tagName.toLowerCase() ).toBe( 'div' );
 
 		// Check the form rendering
-		const form = container.querySelector( 'form[name="beastfeedbacks_like_form"]' );
+		const form = container.querySelector(
+			'form[name="beastfeedbacks_like_form"]'
+		);
 		expect( form ).toBeInTheDocument();
 
 		// Check the balloon layout and like count
-		const balloon = container.querySelector( '.beastfeedbacks-like_balloon' );
+		const balloon = container.querySelector(
+			'.beastfeedbacks-like_balloon'
+		);
 		expect( balloon ).toBeInTheDocument();
 		const likeCount = container.querySelector( '.like-count' );
 		expect( likeCount ).toBeInTheDocument();
@@ -25,10 +29,14 @@ describe( 'Like Block Edit component', () => {
 		const innerBlocks = screen.getByTestId( 'mock-inner-blocks' );
 		expect( innerBlocks ).toBeInTheDocument();
 
-		const allowedBlocks = JSON.parse( innerBlocks.getAttribute( 'data-allowed-blocks' ) );
+		const allowedBlocks = JSON.parse(
+			innerBlocks.getAttribute( 'data-allowed-blocks' )
+		);
 		expect( allowedBlocks ).toEqual( [ 'core/button' ] );
 
-		const template = JSON.parse( innerBlocks.getAttribute( 'data-template' ) );
+		const template = JSON.parse(
+			innerBlocks.getAttribute( 'data-template' )
+		);
 		expect( template ).toEqual( [
 			[
 				'core/button',
