@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { Edit } from '../index';
 
 describe( 'Survey Choice Block Edit component', () => {
@@ -46,5 +46,51 @@ describe( 'Survey Choice Block Edit component', () => {
 				'.beastfeedbacks-survey-choice_label_required'
 			)
 		).toBeInTheDocument();
+	} );
+
+	it( 'applies width styling when width attribute is provided', () => {
+		const setAttributes = jest.fn();
+		render(
+			<Edit
+				attributes={ { ...defaultAttributes, width: 50 } }
+				setAttributes={ setAttributes }
+				isSelected={ false }
+			/>
+		);
+
+		const blockWrapper = screen.getByTestId( 'mock-block-props' );
+		expect( blockWrapper ).toHaveStyle( { width: '50%' } );
+	} );
+
+	it( 'does not apply width styling when width attribute is missing or null', () => {
+		const setAttributes = jest.fn();
+		render(
+			<Edit
+				attributes={ { ...defaultAttributes, width: null } }
+				setAttributes={ setAttributes }
+				isSelected={ false }
+			/>
+		);
+
+		const blockWrapper = screen.getByTestId( 'mock-block-props' );
+		expect( blockWrapper.style.width ).toBe( '' );
+	} );
+
+	it( 'calls setAttributes when label changes', () => {
+		const setAttributes = jest.fn();
+		render(
+			<Edit
+				attributes={ defaultAttributes }
+				setAttributes={ setAttributes }
+				isSelected={ false }
+			/>
+		);
+
+		const textareas = screen.getAllByTestId( 'mock-rich-text-input' );
+		fireEvent.change( textareas[ 0 ], { target: { value: 'New Label' } } );
+
+		expect( setAttributes ).toHaveBeenCalledWith(
+			expect.objectContaining( { label: 'New Label' } )
+		);
 	} );
 } );
