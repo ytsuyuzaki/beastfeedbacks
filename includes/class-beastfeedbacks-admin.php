@@ -669,11 +669,11 @@ class BeastFeedbacks_Admin {
 	public function source_filter_result( $query ) {
 		$selected_parent_id = $this->is_filter_nonce_verified() && isset( $_REQUEST['beastfeedbacks_parent_id'] ) && is_scalar( $_REQUEST['beastfeedbacks_parent_id'] ) ? absint( wp_unslash( $_REQUEST['beastfeedbacks_parent_id'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
-		if ( ! $selected_parent_id || 'beastfeedbacks' !== $query->query_vars['post_type'] ) {
+		if ( ! $selected_parent_id || empty( $query->query_vars['post_type'] ) || 'beastfeedbacks' !== $query->query_vars['post_type'] ) {
 			return;
 		}
 
-		if ( 'id=>parent' === $query->query_vars['fields'] ) {
+		if ( isset( $query->query_vars['fields'] ) && 'id=>parent' === $query->query_vars['fields'] ) {
 			return;
 		}
 
