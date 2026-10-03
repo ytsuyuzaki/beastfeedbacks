@@ -240,6 +240,51 @@ class BeastFeedbacks_Admin_Pre_Get_Posts_Test extends BeastFeedbacks_TestCase {
 	}
 
 	/** @test */
+	public function type_filter_result_ignores_when_type_is_array(): void {
+		$_GET['_beastfeedbacks_nonce'] = wp_create_nonce( 'beastfeedbacks_filter' );
+		$_GET['beastfeedbacks_type']   = array( 'vote' );
+		$_REQUEST                      = $_GET;
+
+		$q = new \WP_Query();
+		$q->set( 'post_type', 'beastfeedbacks' );
+		$q->set( 'posts_per_page', -1 );
+
+		\BeastFeedbacks_Admin::get_instance()->type_filter_result( $q );
+
+		$mq = $q->get( 'meta_query' );
+		$this->assertEmpty( $mq );
+	}
+
+	/** @test */
+	public function type_filter_result_filters_get_posts_when_hooked_to_pre_get_posts(): void {
+		$like_id   = $this->create_like_post();
+		$vote_id   = $this->create_vote_post();
+		$survey_id = $this->create_survey_post();
+
+		add_action( 'pre_get_posts', array( \BeastFeedbacks_Admin::get_instance(), 'type_filter_result' ) );
+
+		try {
+			$_GET['_beastfeedbacks_nonce'] = wp_create_nonce( 'beastfeedbacks_filter' );
+			$_GET['beastfeedbacks_type']   = 'survey';
+			$_REQUEST                      = $_GET;
+
+			$results = get_posts(
+				array(
+					'post_type'        => 'beastfeedbacks',
+					'suppress_filters' => false,
+					'fields'           => 'ids',
+				)
+			);
+
+			$this->assertContains( $survey_id, $results );
+			$this->assertNotContains( $like_id, $results );
+			$this->assertNotContains( $vote_id, $results );
+		} finally {
+			remove_action( 'pre_get_posts', array( \BeastFeedbacks_Admin::get_instance(), 'type_filter_result' ) );
+		}
+	}
+
+	/** @test */
 	public function source_filter_result_supports_post_request_and_export_nonce(): void {
 		$_POST['_wpnonce']                 = wp_create_nonce( 'beastfeedbacks_csv_export' );
 		$_POST['beastfeedbacks_parent_id'] = '102';
