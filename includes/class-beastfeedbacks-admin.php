@@ -962,7 +962,7 @@ class BeastFeedbacks_Admin {
 				'user_agent' => $content_data['user_agent'],
 			);
 
-			$add_data = array_merge( $add_data, $content_data['post_params'] );
+			$add_data += $content_data['post_params'];
 
 			foreach ( $add_data as $key => $value ) {
 				$data = $value;
