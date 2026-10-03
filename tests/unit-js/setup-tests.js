@@ -40,11 +40,14 @@ jest.mock( '@wordpress/block-editor', () => {
 			}
 		),
 		InnerBlocks: Object.assign(
-			( { template, allowedBlocks } ) => (
+			( { template, allowedBlocks, templateLock } ) => (
 				<div
 					data-testid="mock-inner-blocks"
 					data-template={ JSON.stringify( template ) }
 					data-allowed-blocks={ JSON.stringify( allowedBlocks ) }
+					data-template-lock={
+						templateLock === false ? 'false' : templateLock
+					}
 				/>
 			),
 			{
