@@ -63,6 +63,43 @@ class Init_Blocks_Test extends BeastFeedbacks_TestCase {
 	}
 
 	/**
+	 * Test that init_block() requires the build file if it exists.
+	 *
+	 * @test
+	 */
+	public function test_init_block_requires_file_if_exists(): void {
+		$instance = \BeastFeedbacks_Block::get_instance();
+		$name     = 'like';
+
+		$file = BEASTFEEDBACKS_DIR . 'build/' . $name . '/init.php';
+		$this->assertFileExists( $file );
+
+		$instance->init_block( $name );
+
+		$included_files = get_included_files();
+		$this->assertContains( $file, $included_files );
+	}
+
+	/**
+	 * Test that init_block() does not throw a fatal error if the build file does not exist.
+	 *
+	 * @test
+	 */
+	public function test_init_block_does_not_throw_error_if_file_does_not_exist(): void {
+		$instance = \BeastFeedbacks_Block::get_instance();
+		$name     = 'non-existent-block';
+
+		$file = BEASTFEEDBACKS_DIR . 'build/' . $name . '/init.php';
+		$this->assertFileDoesNotExist( $file );
+
+		// The test will fail if this throws a fatal error.
+		$instance->init_block( $name );
+
+		$included_files = get_included_files();
+		$this->assertNotContains( $file, $included_files );
+	}
+
+	/**
 	 * Test that init_blocks() initializes all five block types.
 	 *
 	 * @test
