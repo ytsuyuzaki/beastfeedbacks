@@ -115,7 +115,7 @@ class BeastFeedbacks_Public {
 		$post_params = array();
 
 		// Security: Enforce maximum parameter limit to prevent resource exhaustion via post parameter flooding.
-		$max_params = 50;
+		$max_params = (int) apply_filters( 'beastfeedbacks_max_post_params', 50 );
 
 		foreach ( array_keys( $post_data ) as $post_key ) {
 			if ( count( $post_params ) >= $max_params ) {
