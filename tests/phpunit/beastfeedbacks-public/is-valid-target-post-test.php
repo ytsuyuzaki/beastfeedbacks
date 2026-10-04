@@ -72,4 +72,19 @@ class BeastFeedbacks_Public_Is_Valid_Target_Post_Test extends BeastFeedbacks_Tes
 
 		$this->assertTrue( $public->is_valid_target_post( $post_id ) );
 	}
+
+	/**
+	 * Verify that is_valid_target_post returns false for password-protected posts when password is required.
+	 */
+	public function test_is_valid_target_post_returns_false_for_password_protected_post(): void {
+		$public  = BeastFeedbacks_Public::get_instance();
+		$post_id = $this->create_post(
+			array(
+				'post_status'   => 'publish',
+				'post_password' => 'secret123',
+			)
+		);
+
+		$this->assertFalse( $public->is_valid_target_post( $post_id ) );
+	}
 }

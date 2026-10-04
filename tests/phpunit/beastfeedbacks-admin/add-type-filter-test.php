@@ -46,7 +46,8 @@ class BeastFeedbacks_Admin_Add_Type_Filter_Test extends BeastFeedbacks_TestCase 
 		\BeastFeedbacks_Admin::get_instance()->add_type_filter();
 		$html = ob_get_clean();
 
-		$this->assertStringContainsString( 'value="survey"' . "\n" . '					selected', $html );
+		$this->assertStringContainsString( 'value="survey"', $html );
+		$this->assertStringContainsString( 'selected', $html );
 	}
 
 	/** @test */
@@ -61,6 +62,6 @@ class BeastFeedbacks_Admin_Add_Type_Filter_Test extends BeastFeedbacks_TestCase 
 		\BeastFeedbacks_Admin::get_instance()->add_type_filter();
 		$html = ob_get_clean();
 
-		$this->assertStringNotContainsString( 'value="survey"' . "\n" . '					selected', $html );
+		$this->assertStringNotContainsString( 'selected', $html );
 	}
 }

@@ -275,7 +275,8 @@ class BeastFeedbacks_Public {
 	/**
 	 * Target post validation check.
 	 *
-	 * Security: Requires target post to exist, be published, and not be a feedback item itself.
+	 * Security: Requires target post to exist, be published, not be a feedback item itself,
+	 * and not require a password that has not been provided.
 	 *
 	 * @param int $post_id Post ID.
 	 * @return bool True if valid, false otherwise.
@@ -290,6 +291,10 @@ class BeastFeedbacks_Public {
 		}
 
 		if ( 'beastfeedbacks' === get_post_type( $post_id ) ) {
+			return false;
+		}
+
+		if ( post_password_required( $post_id ) ) {
 			return false;
 		}
 
