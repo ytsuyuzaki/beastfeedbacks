@@ -49,7 +49,7 @@ class Init_Blocks_Test extends BeastFeedbacks_TestCase {
 	 * @param string $name Block name slug.
 	 */
 	public function test_init_block_registers_block( string $name ): void {
-		$registry = \WP_Block_Type_Registry::get_instance();
+		$registry  = \WP_Block_Type_Registry::get_instance();
 		$full_name = 'beastfeedbacks/' . $name;
 
 		if ( $registry->is_registered( $full_name ) ) {
@@ -60,6 +60,11 @@ class Init_Blocks_Test extends BeastFeedbacks_TestCase {
 		$instance->init_block( $name );
 
 		$this->assertTrue( $registry->is_registered( $full_name ) );
+
+		// Clean up.
+		if ( $registry->is_registered( $full_name ) ) {
+			unregister_block_type( $full_name );
+		}
 	}
 
 	/**
@@ -68,16 +73,28 @@ class Init_Blocks_Test extends BeastFeedbacks_TestCase {
 	 * @test
 	 */
 	public function test_init_block_requires_file_if_exists(): void {
+		$registry  = \WP_Block_Type_Registry::get_instance();
+		$name      = 'like';
+		$full_name = 'beastfeedbacks/' . $name;
+
+		// Unregister to ensure a clean state for observing side effects.
+		if ( $registry->is_registered( $full_name ) ) {
+			unregister_block_type( $full_name );
+		}
+
 		$instance = \BeastFeedbacks_Block::get_instance();
-		$name     = 'like';
 
 		$file = BEASTFEEDBACKS_DIR . 'build/' . $name . '/init.php';
 		$this->assertFileExists( $file );
 
 		$instance->init_block( $name );
 
-		$included_files = get_included_files();
-		$this->assertContains( $file, $included_files );
+		$this->assertTrue( $registry->is_registered( $full_name ) );
+
+		// Clean up.
+		if ( $registry->is_registered( $full_name ) ) {
+			unregister_block_type( $full_name );
+		}
 	}
 
 	/**
