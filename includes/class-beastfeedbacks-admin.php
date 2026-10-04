@@ -955,25 +955,18 @@ class BeastFeedbacks_Admin {
 
 			$content_data = $this->extract_post_content_data( $post->post_content );
 
-			$add_data = array(
-				'source'     => $source,
-				'date'       => $post->post_date,
-				'type'       => $content_data['type'],
-				'ip_address' => $content_data['ip_address'],
-				'user_agent' => $content_data['user_agent'],
-			);
+			$post_datas['source'][ $id ]     = $source;
+			$post_datas['date'][ $id ]       = $post->post_date;
+			$post_datas['type'][ $id ]       = $content_data['type'];
+			$post_datas['ip_address'][ $id ] = $content_data['ip_address'];
+			$post_datas['user_agent'][ $id ] = $content_data['user_agent'];
 
-			$add_data += $content_data['post_params'];
-
-			foreach ( $add_data as $key => $value ) {
-				$data = $value;
+			foreach ( $content_data['post_params'] as $key => $value ) {
 				if ( is_array( $value ) ) {
-					$data = implode( ',', $value );
+					$post_datas[ $key ][ $id ] = implode( ',', $value );
+				} else {
+					$post_datas[ $key ][ $id ] = $value;
 				}
-				if ( ! isset( $post_datas[ $key ] ) ) {
-					$post_datas[ $key ] = array();
-				}
-				$post_datas[ $key ][ $id ] = $data;
 			}
 		}
 
