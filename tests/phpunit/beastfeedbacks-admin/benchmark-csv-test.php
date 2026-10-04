@@ -52,8 +52,9 @@ class BeastFeedbacks_CSV_Benchmark_Test extends BeastFeedbacks_TestCase {
 		wp_set_current_user( $admin_id );
 
 		$nonce                = wp_create_nonce( 'beastfeedbacks_csv_export' );
-		$_REQUEST['_wpnonce'] = $nonce;
-		$_GET['_wpnonce']     = $nonce;
+		$_GET                 = array( '_wpnonce' => $nonce );
+		$_POST                = array();
+		$_REQUEST             = array( '_wpnonce' => $nonce );
 
 		$die_handler = static function () {
 			return static function () {
