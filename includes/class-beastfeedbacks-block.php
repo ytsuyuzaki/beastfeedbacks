@@ -96,6 +96,9 @@ class BeastFeedbacks_Block {
 	 * @param string $name 読み込むブロックエディタの対象.
 	 */
 	public function init_block( $name ) {
-		require BEASTFEEDBACKS_DIR . 'build/' . $name . '/init.php';
+		$file = BEASTFEEDBACKS_DIR . 'build/' . $name . '/init.php';
+		if ( file_exists( $file ) ) {
+			require $file;
+		}
 	}
 }

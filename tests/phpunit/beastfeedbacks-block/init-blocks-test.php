@@ -49,7 +49,7 @@ class Init_Blocks_Test extends BeastFeedbacks_TestCase {
 	 * @param string $name Block name slug.
 	 */
 	public function test_init_block_registers_block( string $name ): void {
-		$registry = \WP_Block_Type_Registry::get_instance();
+		$registry  = \WP_Block_Type_Registry::get_instance();
 		$full_name = 'beastfeedbacks/' . $name;
 
 		if ( $registry->is_registered( $full_name ) ) {
@@ -60,6 +60,60 @@ class Init_Blocks_Test extends BeastFeedbacks_TestCase {
 		$instance->init_block( $name );
 
 		$this->assertTrue( $registry->is_registered( $full_name ) );
+
+		// Clean up.
+		if ( $registry->is_registered( $full_name ) ) {
+			unregister_block_type( $full_name );
+		}
+	}
+
+	/**
+	 * Test that init_block() requires the build file if it exists.
+	 *
+	 * @test
+	 */
+	public function test_init_block_requires_file_if_exists(): void {
+		$registry  = \WP_Block_Type_Registry::get_instance();
+		$name      = 'like';
+		$full_name = 'beastfeedbacks/' . $name;
+
+		// Unregister to ensure a clean state for observing side effects.
+		if ( $registry->is_registered( $full_name ) ) {
+			unregister_block_type( $full_name );
+		}
+
+		$instance = \BeastFeedbacks_Block::get_instance();
+
+		$file = BEASTFEEDBACKS_DIR . 'build/' . $name . '/init.php';
+		$this->assertFileExists( $file );
+
+		$instance->init_block( $name );
+
+		$this->assertTrue( $registry->is_registered( $full_name ) );
+
+		// Clean up.
+		if ( $registry->is_registered( $full_name ) ) {
+			unregister_block_type( $full_name );
+		}
+	}
+
+	/**
+	 * Test that init_block() does not throw a fatal error if the build file does not exist.
+	 *
+	 * @test
+	 */
+	public function test_init_block_does_not_throw_error_if_file_does_not_exist(): void {
+		$instance = \BeastFeedbacks_Block::get_instance();
+		$name     = 'non-existent-block';
+
+		$file = BEASTFEEDBACKS_DIR . 'build/' . $name . '/init.php';
+		$this->assertFileDoesNotExist( $file );
+
+		// The test will fail if this throws a fatal error.
+		$instance->init_block( $name );
+
+		$included_files = get_included_files();
+		$this->assertNotContains( $file, $included_files );
 	}
 
 	/**
