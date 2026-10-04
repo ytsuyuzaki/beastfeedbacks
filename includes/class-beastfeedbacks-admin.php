@@ -793,12 +793,13 @@ class BeastFeedbacks_Admin {
 					'user_agent' => $content_data['user_agent'],
 				);
 
+				$row_data += $content_data['post_params'];
+
 				foreach ( $content_data['post_params'] as $key => $val ) {
 					if ( ! isset( $fields_map[ $key ] ) ) {
 						$fields_map[ $key ] = true;
 						$fields[]           = $key;
 					}
-					$row_data[ $key ] = $val;
 				}
 
 				$json_line   = wp_json_encode( $row_data ) . "\n";
