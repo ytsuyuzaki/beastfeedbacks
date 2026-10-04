@@ -28,6 +28,8 @@ class BeastFeedbacks_Public_Is_Rate_Limited_Test extends BeastFeedbacks_TestCase
 		// Clear current user
 		wp_set_current_user( 0 );
 
+		remove_all_filters( 'beastfeedbacks_rate_limit_max_requests' );
+
 		parent::tear_down();
 	}
 
