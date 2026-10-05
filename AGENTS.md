@@ -10,8 +10,8 @@
 - **種別**: WordPress プラグイン (Gutenberg / Block Editor 対応, WordPress.org 公式ディレクトリ公開対応)
 - **目的**: ブロックエディター上で「いいね (Like)」「単一選択投票 (Choice voting)」「アンケートフォーム (Survey Form / Input / Choice)」を設置し、訪問者からのフィードバックを収集・集計・CSVエクスポートする。
 - **データ構造**:
-  - 送信データはカスタム投稿タイプ `beastfeedbacks` として保存。
-  - 送信元投稿ID、回答内容、IPアドレス、User-Agent、送信日時等をメタデータとして保持。
+    - 送信データはカスタム投稿タイプ `beastfeedbacks` として保存。
+    - 送信元投稿ID、回答内容、IPアドレス、User-Agent、送信日時等をメタデータとして保持。
 
 ---
 
@@ -72,12 +72,14 @@ beastfeedbacks/
 開発・保守時に参照すべき専門ルールおよびワークフロースキルです。
 
 ### 専門ルール (`.agents/rules/`)
+
 - [wordpress-standards.md](file:///.agents/rules/wordpress-standards.md): PHP 8.1+ / WP 6.8+ コーディング規約、セキュアコーディング三原則（Sanitize, Validate, Late-escape）、Nonce、Capability、i18n。
 - [gutenberg-blocks.md](file:///.agents/rules/gutenberg-blocks.md): Gutenberg ブロック開発規約（`block.json` apiVersion 3、動的ブロック、**非推奨化 `deprecated` / `migrate`**、`InnerBlocks`、a11y）。
 - [security-and-privacy.md](file:///.agents/rules/security-and-privacy.md): Plugin Review 必須基準、SQL インジェクション対策 (`$wpdb->prepare`)、レート制限、**プライバシー & GDPR (PII/Privacy API)**、`uninstall.php` クリーンアップ。
 - [testing-and-qa.md](file:///.agents/rules/testing-and-qa.md): 多層テストピラミッド、バージョン整合性 (4箇所同期)、CI/CD マトリックス、生成物コミット整合性。
 
 ### ワークフロースキル (`.agents/skills/`)
+
 - [wp-env-manage](file:///.agents/skills/wp-env-manage/SKILL.md): `wp-env` の起動・停止・WP-CLI 操作・テストDB初期化・トラブルシューティング。
 - [test-and-lint](file:///.agents/skills/test-and-lint/SKILL.md): 静的解析 (Lint) 一括実行、JS 単体テスト、PHPUnit、Playwright E2E テストの個別実行・デバッグ手順。
 - [build-and-release](file:///.agents/skills/build-and-release/SKILL.md): アセットビルド、POT 翻訳更新、バージョン同期、配布 ZIP 生成、WordPress.org SVN 自動デプロイ手順。
