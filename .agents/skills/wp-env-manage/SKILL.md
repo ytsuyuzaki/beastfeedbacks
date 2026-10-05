@@ -13,21 +13,26 @@ description: >-
 
 ## 1. 環境の基本操作
 
-### 起動 (Xdebug Coverage 有効)
+### (1) 通常起動
 ```bash
 npm run wp-env:start
 ```
-- デフォルトポート:
-  - 開発用サイト: `http://localhost:8888` (ユーザー: `admin`, パスワード: `password`)
-  - テスト用サイト: `http://localhost:8889` (ユーザー: `admin`, パスワード: `password`)
+- 開発用サイト: `http://localhost:8888` (ユーザー: `admin`, パスワード: `password`)
+- テスト用サイト: `http://localhost:8889` (ユーザー: `admin`, パスワード: `password`)
 
-### 停止
+### (2) Xdebug カバレッジ有効化での起動
+PHPUnit のコードカバレッジを測定する場合は、Xdebug coverage を有効にして起動します。
+```bash
+npm run wp-env:start:coverage
+```
+
+### (3) 環境の停止
 ```bash
 npm run wp-env:stop
 ```
 
-### 環境のクリーン再構築 (トラブルシュート時)
-コンテナやデータベースの状態がおかしい場合、環境を破棄して再構築します。
+### (4) 環境の完全リセット (トラブルシューティング時)
+コンテナの停止や起動に失敗する場合、またはデータベースを初期化したい場合は完全破棄して再起動します。
 ```bash
 npx wp-env destroy
 npm run wp-env:start
@@ -35,33 +40,46 @@ npm run wp-env:start
 
 ---
 
-## 2. コンテナ内でのコマンド実行
+## 2. コンテナ内でのコマンド実行 (WP-CLI & Shell)
 
 ### (1) WP-CLI コマンドの実行
-開発環境やテスト環境で WP-CLI コマンドを実行する場合：
+開発インスタンス (`cli`) またはテストインスタンス (`tests-cli`) を指定して WP-CLI を実行します。
 
 ```bash
-# 開発インスタンス (cli) で実行
+# プラグインの有効化状態を確認
 npx wp-env run cli wp plugin list
 
-# テストインスタンス (tests-cli) で実行
-npx wp-env run tests-cli wp plugin list
+# テスト用の固定ページ / 投稿を作成
+npx wp-env run cli wp post create --post_title="Feedback Test Post" --post_status=publish
+
+# サイトのオプション値を取得
+npx wp-env run cli wp option get siteurl
+
+# プラグインのアクティベート
+npx wp-env run cli wp plugin activate beastfeedbacks
 ```
 
-### (2) プラグインディレクトリ内での PHPUnit 実行
+### (2) コンテナ内でのテスト実行
 ```bash
+# テストインスタンス内で PHPUnit を直接実行
 npx wp-env run tests-cli --env-cwd="wp-content/plugins/beastfeedbacks/" vendor/bin/phpunit
-```
 
-### (3) カバレッジレポート生成
-```bash
-npx wp-env run tests-cli --env-cwd="wp-content/plugins/beastfeedbacks/" sh -lc "XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-html tests/coverage --colors=always"
+# 特定のテストメソッドのみを実行 (フィルター指定)
+npx wp-env run tests-cli --env-cwd="wp-content/plugins/beastfeedbacks/" vendor/bin/phpunit --filter test_save_feedback
 ```
 
 ---
 
-## 3. 設定ファイル (`.wp-env.json`) の確認
+## 3. 設定ファイル (`.wp-env.json`) のカスタマイズ
 
-プロジェクトルートの `.wp-env.json` または `.github/.wp-env.template.json` で WordPress / PHP のバージョンが指定されています。
+プロジェクトルートの `.wp-env.json` または `.github/.wp-env.template.json` で WordPress コアや PHP のバージョンが指定されています。
 
-- PHP バージョンや WordPress バージョンを切り替えてテストしたい場合は、`.wp-env.json` を編集して `npm run wp-env:start` を実行してください。
+- **バージョン変更時の例**:
+  ```json
+  {
+    "core": "WordPress/WordPress#6.8",
+    "phpVersion": "8.2",
+    "plugins": [ "." ]
+  }
+  ```
+- 設定を変更した場合は、`npm run wp-env:stop` 後に `npm run wp-env:start` を実行して反映します。
