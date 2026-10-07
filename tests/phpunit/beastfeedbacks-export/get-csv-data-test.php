@@ -1,15 +1,15 @@
 <?php
 /**
- * Tests for BeastFeedbacks_Admin::get_csv_data().
+ * Tests for BeastFeedbacks_Export::get_csv_data().
  *
  * @package BeastFeedbacks
  */
 
-class BeastFeedbacks_Admin_Get_Csv_Data_Test extends BeastFeedbacks_TestCase {
+class BeastFeedbacks_Export_Get_Csv_Data_Test extends BeastFeedbacks_TestCase {
 
 	/** @test */
 	public function get_csv_data_formats_posts_correctly(): void {
-		$admin = \BeastFeedbacks_Admin::get_instance();
+		$admin = \BeastFeedbacks_Export::get_instance();
 
 		$post1 = (object) array(
 			'ID'           => 10,

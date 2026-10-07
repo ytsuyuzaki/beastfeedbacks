@@ -9,7 +9,7 @@ class BeastFeedbacks_CSV_Benchmark_Test extends BeastFeedbacks_TestCase {
 
 	/** @test */
 	public function benchmark_download_csv_memory_and_time(): void {
-		$admin = \BeastFeedbacks_Admin::get_instance();
+		$admin = \BeastFeedbacks_Export::get_instance();
 
 		$parent_id = $this->create_post(
 			array(
