@@ -1,14 +1,14 @@
 <?php
 /**
- * Tests for BeastFeedbacks_Admin::output_csv().
+ * Tests for BeastFeedbacks_Export::output_csv().
  *
  * @package BeastFeedbacks
  */
 
 /**
- * Tests for BeastFeedbacks_Admin::output_csv().
+ * Tests for BeastFeedbacks_Export::output_csv().
  */
-class BeastFeedbacks_Admin_Output_Csv_Test extends BeastFeedbacks_TestCase {
+class BeastFeedbacks_Export_Output_Csv_Test extends BeastFeedbacks_TestCase {
 
 	/**
 	 * Clean up request globals and user context after each test.
@@ -27,7 +27,7 @@ class BeastFeedbacks_Admin_Output_Csv_Test extends BeastFeedbacks_TestCase {
 	 * @test
 	 */
 	public function output_csv_exports_valid_headers_and_row_data(): void {
-		$admin = \BeastFeedbacks_Admin::get_instance();
+		$admin = \BeastFeedbacks_Export::get_instance();
 
 		$parent_id = $this->create_post( array( 'post_type' => 'page' ) );
 
@@ -87,7 +87,7 @@ class BeastFeedbacks_Admin_Output_Csv_Test extends BeastFeedbacks_TestCase {
 	 * @test
 	 */
 	public function output_csv_handles_missing_post_keys_gracefully(): void {
-		$admin = \BeastFeedbacks_Admin::get_instance();
+		$admin = \BeastFeedbacks_Export::get_instance();
 
 		$post1 = get_post( $this->create_like_post() );
 		$post2 = get_post( $this->create_like_post() );
@@ -134,7 +134,7 @@ class BeastFeedbacks_Admin_Output_Csv_Test extends BeastFeedbacks_TestCase {
 	 * @test
 	 */
 	public function output_csv_escapes_formula_triggers_in_headers_and_data(): void {
-		$admin = \BeastFeedbacks_Admin::get_instance();
+		$admin = \BeastFeedbacks_Export::get_instance();
 
 		$post = get_post( $this->create_like_post() );
 
@@ -177,7 +177,7 @@ class BeastFeedbacks_Admin_Output_Csv_Test extends BeastFeedbacks_TestCase {
 	 * @test
 	 */
 	public function output_csv_handles_empty_posts_and_empty_datas(): void {
-		$admin = \BeastFeedbacks_Admin::get_instance();
+		$admin = \BeastFeedbacks_Export::get_instance();
 
 		// Case 1: Empty posts and empty datas.
 		ob_start();
@@ -206,7 +206,7 @@ class BeastFeedbacks_Admin_Output_Csv_Test extends BeastFeedbacks_TestCase {
 	 * @test
 	 */
 	public function output_csv_formats_array_and_mixed_types_in_post_datas(): void {
-		$admin = \BeastFeedbacks_Admin::get_instance();
+		$admin = \BeastFeedbacks_Export::get_instance();
 
 		$post = get_post( $this->create_like_post() );
 

@@ -1,6 +1,6 @@
 <?php
 /**
- * PHPUnit tests for CSV export edge cases, special character escaping, and formula injection in BeastFeedbacks_Admin.
+ * PHPUnit tests for CSV export edge cases, special character escaping, and formula injection in BeastFeedbacks_Export.
  *
  * @package BeastFeedbacks
  */
@@ -28,7 +28,7 @@ class CSV_Edge_Cases_Test extends BeastFeedbacks_TestCase {
 	 * @test
 	 */
 	public function export_empty_data_returns_empty_or_header_only_csv(): void {
-		$admin = \BeastFeedbacks_Admin::get_instance();
+		$admin = \BeastFeedbacks_Export::get_instance();
 
 		// Test get_csv_data with empty post list.
 		$csv_data = $admin->get_csv_data( array() );
@@ -99,7 +99,7 @@ class CSV_Edge_Cases_Test extends BeastFeedbacks_TestCase {
 	 * @test
 	 */
 	public function export_large_volume_data_handles_many_posts(): void {
-		$admin = \BeastFeedbacks_Admin::get_instance();
+		$admin = \BeastFeedbacks_Export::get_instance();
 
 		$parent_id = $this->create_post(
 			array(
@@ -161,7 +161,7 @@ class CSV_Edge_Cases_Test extends BeastFeedbacks_TestCase {
 	 * @test
 	 */
 	public function export_special_characters_are_properly_quoted_and_escaped(): void {
-		$admin = \BeastFeedbacks_Admin::get_instance();
+		$admin = \BeastFeedbacks_Export::get_instance();
 
 		$parent_id = $this->create_post(
 			array(
@@ -228,7 +228,7 @@ class CSV_Edge_Cases_Test extends BeastFeedbacks_TestCase {
 	 * @test
 	 */
 	public function esc_csv_handles_formula_injection_and_safe_values(): void {
-		$admin = \BeastFeedbacks_Admin::get_instance();
+		$admin = \BeastFeedbacks_Export::get_instance();
 
 		// Formula triggers at start.
 		$this->assertSame( "' =1+1", $admin->esc_csv( '=1+1' ) );
@@ -280,7 +280,7 @@ class CSV_Edge_Cases_Test extends BeastFeedbacks_TestCase {
 	 * @test
 	 */
 	public function export_with_formula_injection_sanitizes_csv_output(): void {
-		$admin = \BeastFeedbacks_Admin::get_instance();
+		$admin = \BeastFeedbacks_Export::get_instance();
 
 		$parent_id = $this->create_post(
 			array(
@@ -335,7 +335,7 @@ class CSV_Edge_Cases_Test extends BeastFeedbacks_TestCase {
 	 * @test
 	 */
 	public function output_csv_escapes_formula_triggers_in_column_headers(): void {
-		$admin = \BeastFeedbacks_Admin::get_instance();
+		$admin = \BeastFeedbacks_Export::get_instance();
 
 		$post_id    = $this->create_post(
 			array(

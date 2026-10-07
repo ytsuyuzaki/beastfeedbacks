@@ -1,11 +1,11 @@
 <?php
 /**
- * Tests for BeastFeedbacks_Admin::get_export_posts().
+ * Tests for BeastFeedbacks_Export::get_export_posts().
  *
  * @package BeastFeedbacks
  */
 
-class BeastFeedbacks_Admin_Get_Export_Posts_Test extends BeastFeedbacks_TestCase {
+class BeastFeedbacks_Export_Get_Export_Posts_Test extends BeastFeedbacks_TestCase {
 
 	/**
 	 * Clean up request globals after each test.
@@ -19,7 +19,7 @@ class BeastFeedbacks_Admin_Get_Export_Posts_Test extends BeastFeedbacks_TestCase
 
 	/** @test */
 	public function get_export_posts_returns_only_published_beastfeedbacks_posts(): void {
-		$admin = \BeastFeedbacks_Admin::get_instance();
+		$admin = \BeastFeedbacks_Export::get_instance();
 
 		// Published beastfeedbacks post.
 		$published_id = $this->create_post(
@@ -68,7 +68,7 @@ class BeastFeedbacks_Admin_Get_Export_Posts_Test extends BeastFeedbacks_TestCase
 
 	/** @test */
 	public function get_export_posts_returns_posts_in_ascending_order(): void {
-		$admin = \BeastFeedbacks_Admin::get_instance();
+		$admin = \BeastFeedbacks_Export::get_instance();
 
 		$post1_id = $this->create_post(
 			array(
@@ -99,7 +99,7 @@ class BeastFeedbacks_Admin_Get_Export_Posts_Test extends BeastFeedbacks_TestCase
 
 	/** @test */
 	public function get_export_posts_respects_type_filter(): void {
-		$admin = \BeastFeedbacks_Admin::get_instance();
+		$admin = \BeastFeedbacks_Export::get_instance();
 		$admin->init();
 
 		$survey_id = $this->create_post(
@@ -135,7 +135,7 @@ class BeastFeedbacks_Admin_Get_Export_Posts_Test extends BeastFeedbacks_TestCase
 
 	/** @test */
 	public function get_export_posts_respects_source_filter(): void {
-		$admin = \BeastFeedbacks_Admin::get_instance();
+		$admin = \BeastFeedbacks_Export::get_instance();
 		$admin->init();
 
 		$parent1_id = $this->create_post( array( 'post_type' => 'page' ) );
