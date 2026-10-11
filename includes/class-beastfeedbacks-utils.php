@@ -48,20 +48,16 @@ class BeastFeedbacks_Utils {
 			return (int) $cached_count;
 		}
 
-		$args  = array(
-			'post_type'              => 'beastfeedbacks',
-			'post_parent'            => $post_id,
-			'post_status'            => 'publish',
-			'posts_per_page'         => 1, // Only need found_posts count; avoid retrieving full result set.
-			'fields'                 => 'ids', // Only return IDs to prevent instantiation of full WP_Post objects.
-			'no_found_rows'          => false, // Ensure total found posts calculation is enabled.
-			'update_post_term_cache' => false, // Skip taxonomy term cache query for count operation.
-			'update_post_meta_cache' => false, // Skip postmeta cache query for count operation.
-			'meta_key'               => 'beastfeedbacks_type',
-			'meta_value'             => 'like',
+		global $wpdb;
+
+		// Performance optimization: Direct $wpdb->get_var() prepared query bypasses WP_Query instantiation,
+		// query parsing, filter hook executions, and double-querying (SQL_CALC_FOUND_ROWS) overhead.
+		$count = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->posts} p INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id WHERE p.post_parent = %d AND p.post_type = 'beastfeedbacks' AND p.post_status = 'publish' AND pm.meta_key = 'beastfeedbacks_type' AND pm.meta_value = 'like'",
+				$post_id
+			)
 		);
-		$query = new WP_Query( $args );
-		$count = (int) $query->found_posts;
 
 		wp_cache_set( $cache_key, $count, $cache_group, DAY_IN_SECONDS );
 

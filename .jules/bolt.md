@@ -21,3 +21,7 @@
 ## 2026-09-27 - Direct $wpdb Query for Distinct Parent IDs in Admin Filters
 **Learning:** In `BeastFeedbacks_Admin::add_source_filter()`, constructing a `WP_Query` instance with custom `posts_fields` and `posts_groupby` filter callbacks to fetch distinct parent post IDs incurs unnecessary object instantiation, query argument parsing, hook management, and internal post cache priming overhead.
 **Action:** Use direct `$wpdb->get_col()` with `$wpdb->prepare()` for distinct column value queries in admin dropdown filters.
+
+## 2026-10-15 - Direct $wpdb->get_var Query for Count Aggregations
+**Learning:** Even with `fields => 'ids'` and `posts_per_page => 1`, using `WP_Query` solely to calculate `found_posts` in `BeastFeedbacks_Utils::get_like_count()` instantiates a heavy `WP_Query` object, parses arguments, executes multiple filter hooks, and runs two SQL queries (`SQL_CALC_FOUND_ROWS` and `SELECT FOUND_ROWS()`) on cache misses.
+**Action:** Replace `WP_Query` count operations with a direct `$wpdb->get_var()` prepared query using `SELECT COUNT(*) ...` to execute a single lightweight SQL query with zero PHP object overhead.
