@@ -29,7 +29,11 @@ describe( 'survey-form variations', () => {
 			expect( typeof block[ 1 ] ).toBe( 'object' );
 		} );
 
-		expect( productVariation.innerBlocks[0][0] ).toBe( 'core/heading' );
-		expect( productVariation.innerBlocks[productVariation.innerBlocks.length - 1][0] ).toBe( 'core/button' );
+		expect( productVariation.innerBlocks[ 0 ][ 0 ] ).toBe( 'core/heading' );
+		expect(
+			productVariation.innerBlocks[
+				productVariation.innerBlocks.length - 1
+			][ 0 ]
+		).toBe( 'core/button' );
 	} );
 } );
