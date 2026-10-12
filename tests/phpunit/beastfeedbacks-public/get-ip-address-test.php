@@ -73,4 +73,26 @@ class BeastFeedbacks_Public_Get_Ip_Address_Test extends BeastFeedbacks_TestCase 
 		$ip = \BeastFeedbacks_Public::get_instance()->get_ip_address();
 		$this->assertSame( '', $ip );
 	}
+
+	/** @test */
+	public function get_ip_address_returns_empty_string_for_non_scalar_input(): void {
+		$_SERVER['REMOTE_ADDR'] = array( '127.0.0.1' ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$ip                     = \BeastFeedbacks_Public::get_instance()->get_ip_address();
+		$this->assertSame( '', $ip );
+	}
+
+	/** @test */
+	public function get_ip_address_returns_empty_string_when_filtered_ip_is_non_scalar(): void {
+		$_SERVER['REMOTE_ADDR'] = '127.0.0.1';
+
+		add_filter(
+			'beastfeedbacks_ip_address',
+			function () {
+				return array( '198.51.100.50' );
+			}
+		);
+
+		$ip = \BeastFeedbacks_Public::get_instance()->get_ip_address();
+		$this->assertSame( '', $ip );
+	}
 }

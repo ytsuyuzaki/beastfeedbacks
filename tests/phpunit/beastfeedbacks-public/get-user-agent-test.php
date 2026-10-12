@@ -32,4 +32,11 @@ class BeastFeedbacks_Public_Get_User_Agent_Test extends BeastFeedbacks_TestCase 
 		$ua                         = \BeastFeedbacks_Public::get_instance()->get_user_agent();
 		$this->assertSame( 500, strlen( $ua ) );
 	}
+
+	/** @test */
+	public function get_user_agent_returns_empty_string_for_non_scalar_input(): void {
+		$_SERVER['HTTP_USER_AGENT'] = array( 'malicious_array' ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$ua                         = \BeastFeedbacks_Public::get_instance()->get_user_agent();
+		$this->assertSame( '', $ua );
+	}
 }

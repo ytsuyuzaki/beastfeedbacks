@@ -320,8 +320,8 @@ class BeastFeedbacks_Public {
 		$key          = 'bf_rl_' . md5( '' === $ip_address ? 'unknown' : $ip_address );
 		$entry        = get_transient( $key );
 		$now          = time();
-		$max_requests = (int) apply_filters( 'beastfeedbacks_rate_limit_max_requests', 10 );
-		$window       = (int) apply_filters( 'beastfeedbacks_rate_limit_window', 60 );
+		$max_requests = max( 1, (int) apply_filters( 'beastfeedbacks_rate_limit_max_requests', 10 ) );
+		$window       = max( 1, (int) apply_filters( 'beastfeedbacks_rate_limit_window', 60 ) );
 
 		if ( ! is_array( $entry ) || ! isset( $entry['count'], $entry['reset_at'] ) || $now >= $entry['reset_at'] ) {
 			$entry = array(
@@ -349,7 +349,7 @@ class BeastFeedbacks_Public {
 	 * @return string
 	 */
 	public function get_user_agent() {
-		if ( ! isset( $_SERVER['HTTP_USER_AGENT'] ) ) { // @codingStandardsIgnoreLine
+		if ( ! isset( $_SERVER['HTTP_USER_AGENT'] ) || ! is_scalar( $_SERVER['HTTP_USER_AGENT'] ) ) { // @codingStandardsIgnoreLine
 			return '';
 		}
 
@@ -368,7 +368,7 @@ class BeastFeedbacks_Public {
 	 * @return string
 	 */
 	public function get_ip_address() {
-		$ip = isset( $_SERVER['REMOTE_ADDR'] )
+		$ip = isset( $_SERVER['REMOTE_ADDR'] ) && is_scalar( $_SERVER['REMOTE_ADDR'] )
 			? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) )
 			: '';
 
@@ -388,6 +388,6 @@ class BeastFeedbacks_Public {
 		 */
 		$ip = apply_filters( 'beastfeedbacks_ip_address', $ip );
 
-		return false !== filter_var( $ip, FILTER_VALIDATE_IP ) ? (string) $ip : '';
+		return is_scalar( $ip ) && false !== filter_var( $ip, FILTER_VALIDATE_IP ) ? (string) $ip : '';
 	}
 }
