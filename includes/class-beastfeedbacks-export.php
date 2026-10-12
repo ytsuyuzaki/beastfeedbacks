@@ -35,9 +35,11 @@ class BeastFeedbacks_Export {
 
 	/**
 	 * Init
+	 *
+	 * @param string $action_name Action name for CSV export. Default 'beastfeedbacks_export'.
 	 */
-	public function init() {
-		add_action( 'wp_ajax_beastfeedbacks_export', array( $this, 'download_csv' ) );
+	public function init( $action_name = 'beastfeedbacks_export' ) {
+		add_action( 'wp_ajax_' . $action_name, array( $this, 'download_csv' ) );
 	}
 
 	/**
