@@ -126,10 +126,13 @@ class BeastFeedbacks_Public {
 				continue;
 			}
 			if ( isset( $post_data[ $post_key ] ) ) {
-				$sanitized_key = (string) $post_key;
-				// Security: Truncate oversized keys to prevent DoS/storage bloat.
-				$sanitized_key = mb_substr( $sanitized_key, 0, 100 );
+				// Security: Pre-truncate with a buffer to prevent DoS via huge keys.
+				// wp_unslash removes slashes which might have expanded the original string.
+				// We allocate a buffer (e.g. 200) to safely unslash before final strict truncation.
+				$sanitized_key = mb_substr( (string) $post_key, 0, 200 );
 				$sanitized_key = sanitize_text_field( wp_unslash( $sanitized_key ) );
+				$sanitized_key = mb_substr( $sanitized_key, 0, 100 );
+
 				if ( '' === $sanitized_key ) {
 					continue;
 				}
@@ -151,13 +154,6 @@ class BeastFeedbacks_Public {
 	 */
 	private function sanitize_param_value( $value ) {
 		if ( is_array( $value ) ) {
-			// Security: Reject complex array structures entirely to prevent deep parsing DoS.
-			foreach ( $value as $item ) {
-				if ( is_array( $item ) || is_object( $item ) ) {
-					return '';
-				}
-			}
-
 			$sanitized_array = array();
 			$max_items       = 50;
 			$item_count      = 0;
@@ -167,9 +163,16 @@ class BeastFeedbacks_Public {
 					break;
 				}
 
-				$sanitized_item_key = (string) $key;
-				$sanitized_item_key = mb_substr( $sanitized_item_key, 0, 100 );
+				// Security: Reject complex array structures entirely to prevent deep parsing DoS.
+				if ( is_array( $item ) || is_object( $item ) ) {
+					return '';
+				}
+
+				// Security: Pre-truncate with a buffer to prevent DoS via huge keys.
+				$sanitized_item_key = mb_substr( (string) $key, 0, 200 );
 				$sanitized_item_key = sanitize_text_field( wp_unslash( $sanitized_item_key ) );
+				$sanitized_item_key = mb_substr( $sanitized_item_key, 0, 100 );
+
 				if ( '' === $sanitized_item_key ) {
 					continue;
 				}
