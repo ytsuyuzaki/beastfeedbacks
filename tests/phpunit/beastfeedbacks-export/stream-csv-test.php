@@ -1,14 +1,14 @@
 <?php
 /**
- * Tests for BeastFeedbacks_Admin::stream_csv().
+ * Tests for BeastFeedbacks_Export::stream_csv().
  *
  * @package BeastFeedbacks
  */
 
 /**
- * Tests for BeastFeedbacks_Admin::stream_csv().
+ * Tests for BeastFeedbacks_Export::stream_csv().
  */
-class BeastFeedbacks_Admin_Stream_Csv_Test extends BeastFeedbacks_TestCase {
+class BeastFeedbacks_Export_Stream_Csv_Test extends BeastFeedbacks_TestCase {
 
 	/**
 	 * Clean up request globals and user context after each test.
@@ -45,7 +45,7 @@ class BeastFeedbacks_Admin_Stream_Csv_Test extends BeastFeedbacks_TestCase {
 	public function stream_csv_handles_empty_posts(): void {
 		$this->delete_all_feedback_posts();
 
-		$admin    = \BeastFeedbacks_Admin::get_instance();
+		$admin    = \BeastFeedbacks_Export::get_instance();
 		$filename = 'empty-export.csv';
 
 		ob_start();
@@ -63,7 +63,7 @@ class BeastFeedbacks_Admin_Stream_Csv_Test extends BeastFeedbacks_TestCase {
 	public function stream_csv_outputs_csv_data_with_chunking_headers_and_escaping(): void {
 		$this->delete_all_feedback_posts();
 
-		$admin = \BeastFeedbacks_Admin::get_instance();
+		$admin = \BeastFeedbacks_Export::get_instance();
 
 		// Create parent post for permalink resolution.
 		$parent_id = $this->create_post(
@@ -224,7 +224,7 @@ class BeastFeedbacks_Admin_Stream_Csv_Test extends BeastFeedbacks_TestCase {
 
 		// Verify row 501 mapping (Post 501 in chunk 2).
 		$map501         = array_combine( $header, $rows[500] );
-		$permalink_data = $admin->get_parent_permalink_data( $parent_id );
+		$permalink_data = \BeastFeedbacks_Admin::get_instance()->get_parent_permalink_data( $parent_id );
 		$this->assertSame( $permalink_data['path'], $map501['source'] );
 		$this->assertSame( 'survey', $map501['type'] );
 		$this->assertSame( '192.0.2.200', $map501['ip_address'] );
@@ -241,7 +241,7 @@ class BeastFeedbacks_Admin_Stream_Csv_Test extends BeastFeedbacks_TestCase {
 	public function stream_csv_aborts_when_write_fails(): void {
 		$this->delete_all_feedback_posts();
 
-		$admin = \BeastFeedbacks_Admin::get_instance();
+		$admin = \BeastFeedbacks_Export::get_instance();
 
 		$this->create_post(
 			array(
@@ -252,7 +252,7 @@ class BeastFeedbacks_Admin_Stream_Csv_Test extends BeastFeedbacks_TestCase {
 		);
 
 		// Create a subclass override that uses a read-only temp stream to simulate write failure.
-		$failing_admin = new class extends \BeastFeedbacks_Admin {
+		$failing_admin = new class extends \BeastFeedbacks_Export {
 			protected function open_temp_stream() {
 				return fopen( 'php://temp', 'r' ); // Read-only stream causes fwrite to return 0 or false.
 			}

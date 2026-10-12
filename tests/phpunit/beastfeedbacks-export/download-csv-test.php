@@ -1,11 +1,11 @@
 <?php
 /**
- * Tests for BeastFeedbacks_Admin::download_csv() and BeastFeedbacks_Admin::esc_csv().
+ * Tests for BeastFeedbacks_Export::download_csv() and BeastFeedbacks_Export::esc_csv().
  *
  * @package BeastFeedbacks
  */
 
-class BeastFeedbacks_Admin_Download_Csv_Test extends BeastFeedbacks_TestCase {
+class BeastFeedbacks_Export_Download_Csv_Test extends BeastFeedbacks_TestCase {
 
 	protected function tear_down(): void {
 		$_REQUEST = array();
@@ -17,7 +17,7 @@ class BeastFeedbacks_Admin_Download_Csv_Test extends BeastFeedbacks_TestCase {
 
 	/** @test */
 	public function esc_csv_prefixes_when_dangerous_first_char(): void {
-		$admin = \BeastFeedbacks_Admin::get_instance();
+		$admin = \BeastFeedbacks_Export::get_instance();
 
 		$this->assertSame( "' =SUM(A1:A2)", $admin->esc_csv( '=SUM(A1:A2)' ) );
 		$this->assertSame( "' +1+2", $admin->esc_csv( '+1+2' ) );
@@ -36,7 +36,7 @@ class BeastFeedbacks_Admin_Download_Csv_Test extends BeastFeedbacks_TestCase {
 
 	/** @test */
 	public function output_csv_executes_header_setting_without_error(): void {
-		$admin = \BeastFeedbacks_Admin::get_instance();
+		$admin = \BeastFeedbacks_Export::get_instance();
 
 		$posts      = array();
 		$post_datas = array(
@@ -78,7 +78,7 @@ class BeastFeedbacks_Admin_Download_Csv_Test extends BeastFeedbacks_TestCase {
 		add_filter( 'wp_die_handler', $die_handler );
 
 		try {
-			\BeastFeedbacks_Admin::get_instance()->download_csv();
+			\BeastFeedbacks_Export::get_instance()->download_csv();
 			$this->fail( 'download_csv did not die when user lacked manage_options capability' );
 		} catch ( RuntimeException $e ) {
 			$this->assertSame( 'wp_die_permission_denied_403', $e->getMessage() );
@@ -115,7 +115,7 @@ class BeastFeedbacks_Admin_Download_Csv_Test extends BeastFeedbacks_TestCase {
 		add_filter( 'wp_die_handler', $die_handler );
 
 		try {
-			\BeastFeedbacks_Admin::get_instance()->download_csv();
+			\BeastFeedbacks_Export::get_instance()->download_csv();
 			$this->fail( 'download_csv did not die when nonce was missing' );
 		} catch ( RuntimeException $e ) {
 			$this->assertSame( 'wp_die_nonce_invalid', $e->getMessage() );
@@ -200,7 +200,7 @@ class BeastFeedbacks_Admin_Download_Csv_Test extends BeastFeedbacks_TestCase {
 
 		ob_start();
 		try {
-			\BeastFeedbacks_Admin::get_instance()->download_csv();
+			\BeastFeedbacks_Export::get_instance()->download_csv();
 		} catch ( RuntimeException $e ) {
 			$this->assertSame( 'wp_die_csv_export', $e->getMessage() );
 		} finally {
@@ -278,7 +278,7 @@ class BeastFeedbacks_Admin_Download_Csv_Test extends BeastFeedbacks_TestCase {
 
 		ob_start();
 		try {
-			\BeastFeedbacks_Admin::get_instance()->download_csv();
+			\BeastFeedbacks_Export::get_instance()->download_csv();
 		} catch ( RuntimeException $e ) {
 			$this->assertSame( 'wp_die_csv_export', $e->getMessage() );
 		} finally {
@@ -335,7 +335,7 @@ class BeastFeedbacks_Admin_Download_Csv_Test extends BeastFeedbacks_TestCase {
 		);
 		add_post_meta( $post3, 'beastfeedbacks_type', 'survey' );
 
-		$admin = \BeastFeedbacks_Admin::get_instance();
+		$admin = \BeastFeedbacks_Export::get_instance();
 		$admin->init();
 		$nonce = wp_create_nonce( 'beastfeedbacks_csv_export' );
 
@@ -413,7 +413,7 @@ class BeastFeedbacks_Admin_Download_Csv_Test extends BeastFeedbacks_TestCase {
 
 		ob_start();
 		try {
-			\BeastFeedbacks_Admin::get_instance()->download_csv();
+			\BeastFeedbacks_Export::get_instance()->download_csv();
 		} catch ( RuntimeException $e ) {
 			$this->assertSame( 'wp_die_csv_export', $e->getMessage() );
 		} finally {
