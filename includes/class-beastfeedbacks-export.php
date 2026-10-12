@@ -91,17 +91,14 @@ class BeastFeedbacks_Export {
 		$admin      = BeastFeedbacks_Admin::get_instance();
 
 		foreach ( $chunks as $chunk ) {
-			$posts = get_posts(
-				array(
-					'post_type'              => 'beastfeedbacks',
-					'post__in'               => $chunk,
-					'orderby'                => 'post__in',
-					'posts_per_page'         => count( $chunk ),
-					'suppress_filters'       => false,
-					'update_post_term_cache' => false,
-					'update_post_meta_cache' => false,
-				)
-			);
+			_prime_post_caches( $chunk, false, false );
+			$posts = array();
+			foreach ( $chunk as $post_id ) {
+				$post = get_post( $post_id );
+				if ( $post ) {
+					$posts[] = $post;
+				}
+			}
 
 			$parent_ids = array_values( array_filter( array_map( 'intval', array_unique( wp_list_pluck( $posts, 'post_parent' ) ) ) ) );
 			if ( ! empty( $parent_ids ) ) {
