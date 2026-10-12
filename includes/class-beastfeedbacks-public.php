@@ -70,7 +70,7 @@ class BeastFeedbacks_Public {
 		check_ajax_referer( 'register_beastfeedbacks_form' );
 
 		// Security: Validate that expected parameters exist and are scalar values before sanitizing.
-		if ( ! isset( $_POST['id'] ) || ! isset( $_POST['beastfeedbacks_type'] ) || ! is_scalar( $_POST['id'] ) || ! is_scalar( $_POST['beastfeedbacks_type'] ) ) {
+		if ( ! $this->has_valid_request_params() ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid request', 'beastfeedbacks' ) ) );
 		}
 
@@ -299,6 +299,15 @@ class BeastFeedbacks_Public {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Checks if the request contains valid expected parameters.
+	 *
+	 * @return bool True if parameters are valid, false otherwise.
+	 */
+	private function has_valid_request_params() {
+		return isset( $_POST['id'] ) && isset( $_POST['beastfeedbacks_type'] ) && is_scalar( $_POST['id'] ) && is_scalar( $_POST['beastfeedbacks_type'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
 	}
 
 	/**
