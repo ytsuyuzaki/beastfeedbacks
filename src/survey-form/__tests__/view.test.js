@@ -1,6 +1,7 @@
 /**
  * External dependencies
  */
+import { flushPromises } from '../../../tests/unit-js/utils';
 
 describe( 'Survey Form view script', () => {
 	let fetchSpy;
@@ -86,7 +87,7 @@ describe( 'Survey Form view script', () => {
 		resolveJson( { message: 'Thank you for your feedback!' } );
 		await jsonPromise;
 		// Flush Microtask queue
-		await new Promise( ( resolve ) => setTimeout( resolve, 0 ) );
+		await flushPromises();
 
 		const messageSpan = container.querySelector( 'span' );
 		expect( messageSpan ).not.toBeNull();
@@ -118,7 +119,7 @@ describe( 'Survey Form view script', () => {
 		form.dispatchEvent( event );
 
 		// Flush microtask queue
-		await new Promise( ( resolve ) => setTimeout( resolve, 0 ) );
+		await flushPromises();
 
 		const messageSpan = container.querySelector( 'span' );
 		expect( messageSpan ).not.toBeNull();
@@ -144,7 +145,7 @@ describe( 'Survey Form view script', () => {
 		form.dispatchEvent( event );
 
 		// Flush microtask queue
-		await new Promise( ( resolve ) => setTimeout( resolve, 0 ) );
+		await flushPromises();
 
 		const messageSpan = container.querySelector( 'span' );
 		expect( messageSpan ).not.toBeNull();
@@ -178,7 +179,7 @@ describe( 'Survey Form view script', () => {
 		form.dispatchEvent( event );
 
 		// Flush microtask queue
-		await new Promise( ( resolve ) => setTimeout( resolve, 0 ) );
+		await flushPromises();
 
 		const messageSpan = container.querySelector( 'span' );
 		expect( messageSpan ).not.toBeNull();
@@ -210,7 +211,7 @@ describe( 'Survey Form view script', () => {
 		form.dispatchEvent( event );
 
 		// Flush microtask queue
-		await new Promise( ( resolve ) => setTimeout( resolve, 0 ) );
+		await flushPromises();
 
 		const messageSpan = container.querySelector( 'span' );
 		expect( messageSpan ).not.toBeNull();
@@ -242,7 +243,7 @@ describe( 'Survey Form view script', () => {
 		form.dispatchEvent( event );
 
 		// Flush microtask queue
-		await new Promise( ( resolve ) => setTimeout( resolve, 0 ) );
+		await flushPromises();
 
 		const messageSpan = container.querySelector( 'span' );
 		expect( messageSpan ).not.toBeNull();
