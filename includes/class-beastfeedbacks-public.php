@@ -126,9 +126,13 @@ class BeastFeedbacks_Public {
 				continue;
 			}
 			if ( isset( $post_data[ $post_key ] ) ) {
-				$sanitized_key = sanitize_text_field( wp_unslash( (string) $post_key ) );
-				// Security: Truncate oversized keys to prevent DoS/storage bloat.
+				// Security: Pre-truncate with a buffer to prevent DoS via huge keys.
+				// wp_unslash removes slashes which might have expanded the original string.
+				// We allocate a buffer (e.g. 200) to safely unslash before final strict truncation.
+				$sanitized_key = mb_substr( (string) $post_key, 0, 200 );
+				$sanitized_key = sanitize_text_field( wp_unslash( $sanitized_key ) );
 				$sanitized_key = mb_substr( $sanitized_key, 0, 100 );
+
 				if ( '' === $sanitized_key ) {
 					continue;
 				}
@@ -141,26 +145,15 @@ class BeastFeedbacks_Public {
 	}
 
 	/**
-	 * Recursively sanitize parameter values with depth and length limits.
+	 * Sanitize parameter values with length limits.
 	 *
-	 * Security: Prevents stack overflow, resource exhaustion, and key/value injection from deeply nested POST structures.
-	 * Unslashing is performed inside bounded traversal so rejected deep/excess branches are never unslashed.
+	 * Security: Prevents resource exhaustion and key/value injection by rejecting complex array structures.
 	 *
-	 * @param mixed $value         The value to sanitize.
-	 * @param int   $current_depth Current recursion depth.
-	 * @param int   $max_depth     Maximum allowed recursion depth.
+	 * @param mixed $value The value to sanitize.
 	 * @return mixed Sanitized string or array.
 	 */
-	private function sanitize_param_value( $value, int $current_depth = 1, int $max_depth = 2 ) {
-		if ( $current_depth > $max_depth ) {
-			return '';
-		}
-
+	private function sanitize_param_value( $value ) {
 		if ( is_array( $value ) ) {
-			if ( $current_depth === $max_depth ) {
-				return '';
-			}
-
 			$sanitized_array = array();
 			$max_items       = 50;
 			$item_count      = 0;
@@ -170,13 +163,21 @@ class BeastFeedbacks_Public {
 					break;
 				}
 
-				$sanitized_item_key = sanitize_text_field( wp_unslash( (string) $key ) );
+				// Security: Reject complex array structures entirely to prevent deep parsing DoS.
+				if ( is_array( $item ) || is_object( $item ) ) {
+					return '';
+				}
+
+				// Security: Pre-truncate with a buffer to prevent DoS via huge keys.
+				$sanitized_item_key = mb_substr( (string) $key, 0, 200 );
+				$sanitized_item_key = sanitize_text_field( wp_unslash( $sanitized_item_key ) );
 				$sanitized_item_key = mb_substr( $sanitized_item_key, 0, 100 );
+
 				if ( '' === $sanitized_item_key ) {
 					continue;
 				}
 
-				$sanitized_array[ $sanitized_item_key ] = $this->sanitize_param_value( $item, $current_depth + 1, $max_depth );
+				$sanitized_array[ $sanitized_item_key ] = $this->sanitize_param_value( $item );
 				++$item_count;
 			}
 

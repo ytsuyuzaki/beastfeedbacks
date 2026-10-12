@@ -69,7 +69,7 @@ class BeastFeedbacks_Public_Extract_Post_Params_Test extends BeastFeedbacks_Test
 		$this->assertArrayNotHasKey( '<script>alert("key")</script>', $result );
 		$this->assertArrayHasKey( 'Field Name', $result );
 		$this->assertSame( 'value2', $result['Field Name'] );
-		$this->assertSame( array( 'level1' => '' ), $result['nested_array'] );
+		$this->assertSame( '', $result['nested_array'] );
 	}
 
 	/** @test */
