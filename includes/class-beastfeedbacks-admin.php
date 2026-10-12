@@ -81,7 +81,7 @@ class BeastFeedbacks_Admin {
 		add_action( 'trashed_post', array( $this, 'clear_source_filter_cache' ), 10, 1 );
 		add_action( 'untrashed_post', array( $this, 'clear_source_filter_cache' ), 10, 1 );
 
-		BeastFeedbacks_Export::get_instance()->init();
+		BeastFeedbacks_Export::get_instance()->init( $this->export_action_name );
 	}
 
 	/**

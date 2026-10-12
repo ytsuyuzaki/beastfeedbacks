@@ -28,4 +28,21 @@ class BeastFeedbacks_Admin_Init_Test extends BeastFeedbacks_TestCase {
 			has_filter( 'wp_untrash_post_status', array( $instance, 'untrash_beastfeedbacks_status_handler' ) )
 		);
 	}
+
+	/** @test */
+	public function init_registers_export_action_with_custom_name(): void {
+		$instance = \BeastFeedbacks_Admin::get_instance();
+		$original_action_name = $instance->export_action_name;
+
+		$instance->export_action_name = 'custom_admin_export_action';
+		$instance->init();
+
+		$this->assertSame(
+			10,
+			has_action( 'wp_ajax_custom_admin_export_action', array( \BeastFeedbacks_Export::get_instance(), 'download_csv' ) )
+		);
+
+		// Restore original name.
+		$instance->export_action_name = $original_action_name;
+	}
 }
