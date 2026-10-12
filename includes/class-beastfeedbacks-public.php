@@ -188,9 +188,7 @@ class BeastFeedbacks_Public {
 		}
 
 		$unslashed_val = wp_unslash( (string) $value );
-		$no_script_val = preg_replace( '@<(script|style)[^>]*?>.*?</\1>@si', '', $unslashed_val );
-		$no_tags_val   = wp_kses( $no_script_val, array() );
-		$sanitized_val = wp_specialchars_decode( sanitize_text_field( $no_tags_val ), ENT_QUOTES );
+		$sanitized_val = wp_specialchars_decode( sanitize_text_field( $unslashed_val ), ENT_QUOTES );
 		return mb_substr( $sanitized_val, 0, 2000 );
 	}
 
