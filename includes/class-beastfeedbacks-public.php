@@ -188,7 +188,9 @@ class BeastFeedbacks_Public {
 		}
 
 		$unslashed_val = wp_unslash( (string) $value );
-		$sanitized_val = wp_specialchars_decode( sanitize_text_field( $unslashed_val ), ENT_QUOTES );
+		// Strip C0 control characters (except \t, \n, \r) previously handled by wp_kses().
+		$no_control_val = preg_replace( '/[\x00-\x08\x0B\x0C\x0E-\x1F]/', '', $unslashed_val );
+		$sanitized_val  = wp_specialchars_decode( sanitize_text_field( $no_control_val ), ENT_QUOTES );
 		return mb_substr( $sanitized_val, 0, 2000 );
 	}
 
