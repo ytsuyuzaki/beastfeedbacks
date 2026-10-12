@@ -391,17 +391,17 @@ class BeastFeedbacks_Export {
 			"\n" => true,
 		);
 
-		$needs_escaping = false;
+		$starts_with_trigger = function ( $str ) use ( $active_content_triggers ) {
+			$trimmed = ltrim( $str, " \v\0\x0C" );
+			return '' !== $trimmed && isset( $active_content_triggers[ mb_substr( $trimmed, 0, 1 ) ] );
+		};
 
-		$trimmed_field = ltrim( $string_field, " \v\0\x0C" );
-		if ( isset( $active_content_triggers[ mb_substr( $string_field, 0, 1 ) ] ) ||
-			( '' !== $trimmed_field && isset( $active_content_triggers[ mb_substr( $trimmed_field, 0, 1 ) ] ) ) ) {
-			$needs_escaping = true;
-		} else {
+		$needs_escaping = $starts_with_trigger( $string_field );
+
+		if ( ! $needs_escaping ) {
 			$lines = preg_split( '/(\r\n|\r|\n)/', $string_field );
 			foreach ( $lines as $line ) {
-				$trimmed_line = ltrim( $line, " \v\0\x0C" );
-				if ( '' !== $line && ( isset( $active_content_triggers[ mb_substr( $line, 0, 1 ) ] ) || ( '' !== $trimmed_line && isset( $active_content_triggers[ mb_substr( $trimmed_line, 0, 1 ) ] ) ) ) ) {
+				if ( $starts_with_trigger( $line ) ) {
 					$needs_escaping = true;
 					break;
 				}
