@@ -10,11 +10,11 @@ class BeastFeedbacks_Public_Extract_Post_Params_Test extends BeastFeedbacks_Test
 	/** @test */
 	public function ignore_keys_constant_contains_expected_keys(): void {
 		$expected_keys = array(
-			'id',
-			'beastfeedbacks_type',
-			'action',
-			'_wp_http_referer',
-			'_wpnonce',
+			'id'                  => true,
+			'beastfeedbacks_type' => true,
+			'action'              => true,
+			'_wp_http_referer'    => true,
+			'_wpnonce'            => true,
 		);
 
 		$this->assertSame( $expected_keys, \BeastFeedbacks_Public::IGNORE_KEYS );

@@ -20,11 +20,11 @@ class BeastFeedbacks_Public {
 	 * @var array
 	 */
 	public const IGNORE_KEYS = array(
-		'id',
-		'beastfeedbacks_type',
-		'action',
-		'_wp_http_referer',
-		'_wpnonce',
+		'id'                  => true,
+		'beastfeedbacks_type' => true,
+		'action'              => true,
+		'_wp_http_referer'    => true,
+		'_wpnonce'            => true,
 	);
 
 	/**
@@ -122,7 +122,7 @@ class BeastFeedbacks_Public {
 				break;
 			}
 
-			if ( in_array( $post_key, self::IGNORE_KEYS, true ) ) {
+			if ( isset( self::IGNORE_KEYS[ $post_key ] ) ) {
 				continue;
 			}
 			if ( isset( $post_data[ $post_key ] ) ) {
