@@ -15,19 +15,6 @@
 class BeastFeedbacks_Public {
 
 	/**
-	 * 除外するPOSTキー一覧
-	 *
-	 * @var array
-	 */
-	public const IGNORE_KEYS = array(
-		'id'                  => true,
-		'beastfeedbacks_type' => true,
-		'action'              => true,
-		'_wp_http_referer'    => true,
-		'_wpnonce'            => true,
-	);
-
-	/**
 	 * Self class
 	 *
 	 * @var self|null
@@ -61,8 +48,9 @@ class BeastFeedbacks_Public {
 	public function register_beastfeedbacks_form() {
 		check_ajax_referer( 'register_beastfeedbacks_form' );
 
-		$ip_address = $this->get_ip_address();
-		if ( $this->is_rate_limited( $ip_address ) ) {
+		$service    = BeastFeedbacks_Feedback_Service::get_instance();
+		$ip_address = $service->get_ip_address();
+		if ( $service->is_rate_limited( $ip_address ) ) {
 			wp_send_json_error( array( 'message' => __( 'Too many requests', 'beastfeedbacks' ) ), 429 );
 		}
 
@@ -70,7 +58,7 @@ class BeastFeedbacks_Public {
 		check_ajax_referer( 'register_beastfeedbacks_form' );
 
 		// Security: Validate that expected parameters exist and are scalar values before sanitizing.
-		if ( ! $this->has_valid_request_params() ) {
+		if ( ! $service->has_valid_request_params() ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid request', 'beastfeedbacks' ) ) );
 		}
 
@@ -84,22 +72,22 @@ class BeastFeedbacks_Public {
 		$post    = get_post( $id );
 		$post_id = $post ? (int) $post->ID : 0;
 
-		if ( ! $this->is_valid_target_post( $post_id ) ) {
+		if ( ! $service->is_valid_target_post( $post_id ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid post ID', 'beastfeedbacks' ) ) );
 		}
 
-		$user_agent  = $this->get_user_agent();
+		$user_agent  = $service->get_user_agent();
 		$time        = current_time( 'mysql' );
 		$title       = "{$ip_address} - {$time}";
-		$post_params = $this->extract_post_params( $_POST );
-		$content     = $this->format_feedback_content( $user_agent, $ip_address, $type, $post_params );
+		$post_params = $service->extract_post_params( $_POST );
+		$content     = $service->format_feedback_content( $user_agent, $ip_address, $type, $post_params );
 
-		$saved = $this->save_feedback( $post_id, $type, $title, $time, $content );
+		$saved = $service->save_feedback( $post_id, $type, $title, $time, $content );
 		if ( is_wp_error( $saved ) || ! $saved ) {
 			wp_send_json_error( array( 'message' => __( 'Failed to save feedback', 'beastfeedbacks' ) ) );
 		}
 
-		$response_data = $this->build_response_data( $post_id, $type );
+		$response_data = $service->build_response_data( $post_id, $type );
 
 		wp_send_json( $response_data );
 		wp_die();
@@ -108,40 +96,12 @@ class BeastFeedbacks_Public {
 	/**
 	 * POSTデータから不要な項目を除外・サニタイズして抽出する
 	 *
+	 * @deprecated Use BeastFeedbacks_Feedback_Service::extract_post_params() instead.
 	 * @param array $post_data POSTデータ.
 	 * @return array
 	 */
 	public function extract_post_params( array $post_data ) {
-		$post_params = array();
-
-		// Security: Enforce maximum parameter limit to prevent resource exhaustion via post parameter flooding.
-		$max_params = (int) apply_filters( 'beastfeedbacks_max_post_params', 50 );
-
-		foreach ( array_keys( $post_data ) as $post_key ) {
-			if ( count( $post_params ) >= $max_params ) {
-				break;
-			}
-
-			if ( isset( self::IGNORE_KEYS[ $post_key ] ) ) {
-				continue;
-			}
-			if ( isset( $post_data[ $post_key ] ) ) {
-				// Security: Pre-truncate with a buffer to prevent DoS via huge keys.
-				// wp_unslash removes slashes which might have expanded the original string.
-				// We allocate a buffer (e.g. 200) to safely unslash before final strict truncation.
-				$sanitized_key = mb_substr( (string) $post_key, 0, 200 );
-				$sanitized_key = sanitize_text_field( wp_unslash( $sanitized_key ) );
-				$sanitized_key = mb_substr( $sanitized_key, 0, 100 );
-
-				if ( '' === $sanitized_key ) {
-					continue;
-				}
-				$post_value                    = $post_data[ $post_key ];
-				$post_params[ $sanitized_key ] = $this->sanitize_param_value( $post_value );
-			}
-		}
-
-		return $post_params;
+		return BeastFeedbacks_Feedback_Service::get_instance()->extract_post_params( $post_data );
 	}
 
 	/**
@@ -149,50 +109,12 @@ class BeastFeedbacks_Public {
 	 *
 	 * Security: Prevents resource exhaustion and key/value injection by rejecting complex array structures.
 	 *
+	 * @deprecated Use BeastFeedbacks_Feedback_Service::sanitize_param_value() instead.
 	 * @param mixed $value The value to sanitize.
 	 * @return mixed Sanitized string or array.
 	 */
-	private function sanitize_param_value( $value ) {
-		if ( is_array( $value ) ) {
-			$sanitized_array = array();
-			$max_items       = 50;
-			$item_count      = 0;
-
-			foreach ( $value as $key => $item ) {
-				if ( $item_count >= $max_items ) {
-					break;
-				}
-
-				// Security: Reject complex array structures entirely to prevent deep parsing DoS.
-				if ( is_array( $item ) || is_object( $item ) ) {
-					return '';
-				}
-
-				// Security: Pre-truncate with a buffer to prevent DoS via huge keys.
-				$sanitized_item_key = mb_substr( (string) $key, 0, 200 );
-				$sanitized_item_key = sanitize_text_field( wp_unslash( $sanitized_item_key ) );
-				$sanitized_item_key = mb_substr( $sanitized_item_key, 0, 100 );
-
-				if ( '' === $sanitized_item_key ) {
-					continue;
-				}
-
-				$sanitized_array[ $sanitized_item_key ] = $this->sanitize_param_value( $item );
-				++$item_count;
-			}
-
-			return $sanitized_array;
-		}
-
-		if ( is_object( $value ) ) {
-			return '';
-		}
-
-		$unslashed_val = wp_unslash( (string) $value );
-		// Strip C0 control characters (except \t, \n, \r) previously handled by wp_kses().
-		$no_control_val = preg_replace( '/[\x00-\x08\x0B\x0C\x0E-\x1F]/', '', $unslashed_val );
-		$sanitized_val  = wp_specialchars_decode( sanitize_text_field( $no_control_val ), ENT_QUOTES );
-		return mb_substr( $sanitized_val, 0, 2000 );
+	public function sanitize_param_value( $value ) {
+		return BeastFeedbacks_Feedback_Service::get_instance()->sanitize_param_value( $value );
 	}
 
 	/**
@@ -202,6 +124,7 @@ class BeastFeedbacks_Public {
 	 * as HTML parsing on serialized JSON strings is redundant and risks corrupting valid JSON payloads.
 	 * Input parameters are already sanitized prior to serialization.
 	 *
+	 * @deprecated Use BeastFeedbacks_Feedback_Service::format_feedback_content() instead.
 	 * @param string $user_agent ユーザーエージェント.
 	 * @param string $ip_address IPアドレス.
 	 * @param string $type       フィードバック種別.
@@ -209,24 +132,13 @@ class BeastFeedbacks_Public {
 	 * @return string
 	 */
 	public function format_feedback_content( string $user_agent, string $ip_address, string $type, array $post_params ) {
-		// Performance optimization: wp_json_encode() produces a clean JSON payload.
-		// Passing JSON to wp_kses() runs unnecessary HTML parsing & regex sanitization over stringified JSON.
-		return addslashes(
-			wp_json_encode(
-				array(
-					'user_agent'  => $user_agent,
-					'ip_address'  => $ip_address,
-					'type'        => $type,
-					'post_params' => $post_params,
-				),
-				JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP
-			)
-		);
+		return BeastFeedbacks_Feedback_Service::get_instance()->format_feedback_content( $user_agent, $ip_address, $type, $post_params );
 	}
 
 	/**
 	 * フィードバック投稿を保存する
 	 *
+	 * @deprecated Use BeastFeedbacks_Feedback_Service::save_feedback() instead.
 	 * @param int    $post_id 親投稿ID.
 	 * @param string $type    フィードバック種別.
 	 * @param string $title   投稿タイトル.
@@ -235,42 +147,19 @@ class BeastFeedbacks_Public {
 	 * @return int|WP_Error
 	 */
 	public function save_feedback( int $post_id, string $type, string $title, string $time, string $content ) {
-		return wp_insert_post(
-			array(
-				'post_date'    => $time,
-				'post_type'    => 'beastfeedbacks',
-				'post_status'  => 'publish',
-				'post_parent'  => $post_id,
-				'post_title'   => addslashes( wp_kses( $title, array() ) ),
-				'post_name'    => md5( $title ),
-				'post_content' => $content,
-				'meta_input'   => array(
-					'beastfeedbacks_type' => $type,
-				),
-			)
-		);
+		return BeastFeedbacks_Feedback_Service::get_instance()->save_feedback( $post_id, $type, $title, $time, $content );
 	}
 
 	/**
 	 * レスポンス用データを構築する
 	 *
+	 * @deprecated Use BeastFeedbacks_Feedback_Service::build_response_data() instead.
 	 * @param int    $post_id 親投稿ID.
 	 * @param string $type    フィードバック種別.
 	 * @return array
 	 */
 	public function build_response_data( int $post_id, string $type ) {
-		$message = ( 'survey' === $type )
-			? __( 'Thank you for your responses to the questionnaire. ', 'beastfeedbacks' )
-			: __( 'Thank you for the vote. ', 'beastfeedbacks' );
-		$count   = ( 'like' === $type )
-			? BeastFeedbacks_Utils::get_like_count( $post_id )
-			: 1;
-
-		return array(
-			'success' => 1,
-			'message' => $message,
-			'count'   => $count,
-		);
+		return BeastFeedbacks_Feedback_Service::get_instance()->build_response_data( $post_id, $type );
 	}
 
 	/**
@@ -279,94 +168,43 @@ class BeastFeedbacks_Public {
 	 * Security: Requires target post to exist, be published, not be a feedback item itself,
 	 * and not require a password that has not been provided.
 	 *
+	 * @deprecated Use BeastFeedbacks_Feedback_Service::is_valid_target_post() instead.
 	 * @param int $post_id Post ID.
 	 * @return bool True if valid, false otherwise.
 	 */
 	public function is_valid_target_post( int $post_id ) {
-		if ( $post_id <= 0 ) {
-			return false;
-		}
-
-		if ( 'publish' !== get_post_status( $post_id ) ) {
-			return false;
-		}
-
-		if ( 'beastfeedbacks' === get_post_type( $post_id ) ) {
-			return false;
-		}
-
-		if ( post_password_required( $post_id ) ) {
-			return false;
-		}
-
-		return true;
+		return BeastFeedbacks_Feedback_Service::get_instance()->is_valid_target_post( $post_id );
 	}
 
 	/**
 	 * Checks if the request contains valid expected parameters.
 	 *
+	 * @deprecated Use BeastFeedbacks_Feedback_Service::has_valid_request_params() instead.
 	 * @return bool True if parameters are valid, false otherwise.
 	 */
 	private function has_valid_request_params() {
-		return isset( $_POST['id'] ) && isset( $_POST['beastfeedbacks_type'] ) && is_scalar( $_POST['id'] ) && is_scalar( $_POST['beastfeedbacks_type'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		return BeastFeedbacks_Feedback_Service::get_instance()->has_valid_request_params();
 	}
 
 	/**
 	 * レートリミットの判定とカウント処理
 	 *
+	 * @deprecated Use BeastFeedbacks_Feedback_Service::is_rate_limited() instead.
 	 * @param string $ip_address IPアドレス.
 	 * @return bool レートリミット超過の場合は true.
 	 */
 	public function is_rate_limited( string $ip_address ) {
-		if ( current_user_can( 'manage_options' ) ) {
-			return false;
-		}
-
-		$pre = apply_filters( 'beastfeedbacks_pre_is_rate_limited', null, $ip_address );
-		if ( null !== $pre ) {
-			return (bool) $pre;
-		}
-
-		$key          = 'bf_rl_' . md5( '' === $ip_address ? 'unknown' : $ip_address );
-		$entry        = get_transient( $key );
-		$now          = time();
-		$max_requests = max( 1, (int) apply_filters( 'beastfeedbacks_rate_limit_max_requests', 10 ) );
-		$window       = max( 1, (int) apply_filters( 'beastfeedbacks_rate_limit_window', 60 ) );
-
-		if ( ! is_array( $entry ) || ! isset( $entry['count'], $entry['reset_at'] ) || $now >= $entry['reset_at'] ) {
-			$entry = array(
-				'count'    => 1,
-				'reset_at' => $now + $window,
-			);
-			set_transient( $key, $entry, $window );
-			return false;
-		}
-
-		if ( $entry['count'] >= $max_requests ) {
-			return true;
-		}
-
-		++$entry['count'];
-		$ttl = max( 1, $entry['reset_at'] - $now );
-		set_transient( $key, $entry, $ttl );
-
-		return false;
+		return BeastFeedbacks_Feedback_Service::get_instance()->is_rate_limited( $ip_address );
 	}
 
 	/**
 	 * ユーザーエージェントの取得
 	 *
+	 * @deprecated Use BeastFeedbacks_Feedback_Service::get_user_agent() instead.
 	 * @return string
 	 */
 	public function get_user_agent() {
-		if ( ! isset( $_SERVER['HTTP_USER_AGENT'] ) || ! is_scalar( $_SERVER['HTTP_USER_AGENT'] ) ) { // @codingStandardsIgnoreLine
-			return '';
-		}
-
-		$ua = sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ); // @codingStandardsIgnoreLine
-
-		// Security: Limit User-Agent string length to mitigate header flooding and buffer bloat.
-		return mb_substr( $ua, 0, 500 );
+		return BeastFeedbacks_Feedback_Service::get_instance()->get_user_agent();
 	}
 
 	/**
@@ -375,29 +213,10 @@ class BeastFeedbacks_Public {
 	 * Uses strictly REMOTE_ADDR by default to prevent IP spoofing via untrusted HTTP headers.
 	 * Provides a filter hook 'beastfeedbacks_ip_address' for trusted reverse proxy / CDN setups.
 	 *
+	 * @deprecated Use BeastFeedbacks_Feedback_Service::get_ip_address() instead.
 	 * @return string
 	 */
 	public function get_ip_address() {
-		$ip = isset( $_SERVER['REMOTE_ADDR'] ) && is_scalar( $_SERVER['REMOTE_ADDR'] )
-			? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) )
-			: '';
-
-		if ( false === filter_var( $ip, FILTER_VALIDATE_IP ) ) {
-			$ip = '';
-		}
-
-		/**
-		 * Filter the client IP address.
-		 *
-		 * Allows site administrators operating behind trusted reverse proxies or CDNs
-		 * to customize client IP resolution safely.
-		 *
-		 * @since 0.1.6
-		 *
-		 * @param string $ip The client IP address from REMOTE_ADDR.
-		 */
-		$ip = apply_filters( 'beastfeedbacks_ip_address', $ip );
-
-		return is_scalar( $ip ) && false !== filter_var( $ip, FILTER_VALIDATE_IP ) ? (string) $ip : '';
+		return BeastFeedbacks_Feedback_Service::get_instance()->get_ip_address();
 	}
 }
