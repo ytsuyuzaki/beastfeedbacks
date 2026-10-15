@@ -55,6 +55,7 @@ class BeastFeedbacks {
 	 * @access   private
 	 */
 	private function load_dependencies() {
+		require_once BEASTFEEDBACKS_DIR . 'includes/class-beastfeedbacks-feedback-service.php';
 		require_once BEASTFEEDBACKS_DIR . 'includes/class-beastfeedbacks-utils.php';
 		require_once BEASTFEEDBACKS_DIR . 'includes/class-beastfeedbacks-export.php';
 		require_once BEASTFEEDBACKS_DIR . 'includes/class-beastfeedbacks-admin.php';
