@@ -14,9 +14,6 @@
  */
 class BeastFeedbacks_Admin {
 
-
-
-
 	/**
 	 * Self class
 	 *
@@ -62,25 +59,9 @@ class BeastFeedbacks_Admin {
 		add_filter( 'bulk_actions-edit-' . $this->post_type, array( $this, 'admin_bulk_actions' ) );
 		add_filter( 'views_edit-' . $this->post_type, array( $this, 'admin_view_tabs' ) );
 
-		add_filter( 'post_row_actions', array( $this, 'manage_post_row_actions' ), 10, 2 );
-		add_filter( 'wp_untrash_post_status', array( $this, 'untrash_beastfeedbacks_status_handler' ), 10, 3 );
-
-		add_filter( 'manage_' . $this->post_type . '_posts_columns', array( $this, 'manage_posts_columns' ) );
-		add_action( 'manage_posts_custom_column', array( $this, 'manage_posts_custom_column' ), 10, 2 );
-
-		add_action( 'restrict_manage_posts', array( $this, 'add_type_filter' ) );
-		add_action( 'restrict_manage_posts', array( $this, 'add_source_filter' ) );
 		add_action( 'restrict_manage_posts', array( $this, 'add_export_button' ) );
 
-		add_action( 'pre_get_posts', array( $this, 'type_filter_result' ) );
-		add_action( 'pre_get_posts', array( $this, 'source_filter_result' ) );
-		add_filter( 'the_posts', array( $this, 'prime_parent_post_caches' ), 10, 2 );
-
-		add_action( "save_post_{$this->post_type}", array( $this, 'clear_source_filter_cache' ), 10, 2 );
-		add_action( 'deleted_post', array( $this, 'clear_source_filter_cache' ), 10, 2 );
-		add_action( 'trashed_post', array( $this, 'clear_source_filter_cache' ), 10, 1 );
-		add_action( 'untrashed_post', array( $this, 'clear_source_filter_cache' ), 10, 1 );
-
+		BeastFeedbacks_Admin_List::get_instance()->init();
 		BeastFeedbacks_Export::get_instance()->init( $this->export_action_name );
 	}
 
@@ -184,72 +165,6 @@ class BeastFeedbacks_Admin {
 	}
 
 	/**
-	 * 一覧で表示するカラム
-	 */
-	public function manage_posts_columns() {
-		return array(
-			'cb'                      => '<input type="checkbox" />',
-			'beastfeedbacks_source'   => __( 'Source', 'beastfeedbacks' ),
-			'beastfeedbacks_type'     => __( 'Type', 'beastfeedbacks' ),
-			'beastfeedbacks_date'     => __( 'Date', 'beastfeedbacks' ),
-			'beastfeedbacks_response' => __( 'Response Data', 'beastfeedbacks' ),
-		);
-	}
-
-	/**
-	 * 一覧で表示する行
-	 *
-	 * @param string $column_name The name of the column to display.
-	 * @param int    $post_id     The current post ID.
-	 */
-	public function manage_posts_custom_column( $column_name, $post_id ) {
-		switch ( $column_name ) {
-			case 'beastfeedbacks_date':
-				$this->render_date_column( $post_id );
-				break;
-			case 'beastfeedbacks_response':
-				$this->render_response_column( $post_id );
-				break;
-			case 'beastfeedbacks_source':
-				$this->render_source_column( $post_id );
-				break;
-			case 'beastfeedbacks_type':
-				$this->render_type_column( $post_id );
-				break;
-		}
-	}
-
-	/**
-	 * Render date column content.
-	 *
-	 * Performance optimization: Accepts $post_id and retrieves the post object directly via get_post_for_column()
-	 * (which reuses $GLOBALS['post'] when available), avoiding the overhead of get_the_time() querying global context.
-	 *
-	 * @param int $post_id The current post ID.
-	 */
-	private function render_date_column( $post_id ) {
-		$post = $this->get_post_for_column( $post_id );
-		if ( ! $post ) {
-			return;
-		}
-		echo esc_html( mysql2date( 'Y/m/d', $post->post_date ) );
-	}
-
-	/**
-	 * Retrieve WP_Post object for column rendering, utilizing global $post when available.
-	 *
-	 * @param int $post_id The post ID.
-	 * @return WP_Post|null
-	 */
-	private function get_post_for_column( $post_id ) {
-		global $post;
-		if ( isset( $post ) && $post instanceof WP_Post && (int) $post->ID === (int) $post_id ) {
-			return $post;
-		}
-		return get_post( $post_id );
-	}
-
-	/**
 	 * Extract structured content data from post_content JSON.
 	 *
 	 * @param string $post_content JSON string stored in post_content.
@@ -304,70 +219,6 @@ class BeastFeedbacks_Admin {
 	}
 
 	/**
-	 * Render response column content.
-	 *
-	 * @param int $post_id The current post ID.
-	 */
-	private function render_response_column( $post_id ) {
-		$post = $this->get_post_for_column( $post_id );
-		if ( ! $post ) {
-			return;
-		}
-
-		$content_data = $this->extract_post_content_data( $post->post_content );
-		if ( ! $content_data['is_valid'] ) {
-			return;
-		}
-
-		$type        = $content_data['type'];
-		$post_params = $content_data['post_params'];
-		?>
-		<table>
-			<tbody>
-				<?php if ( 'vote' === $type ) : ?>
-					<tr>
-						<td><?php esc_html_e( 'Select', 'beastfeedbacks' ); ?></td>
-						<td><?php echo esc_html( isset( $post_params['selected'] ) && is_scalar( $post_params['selected'] ) ? (string) $post_params['selected'] : '' ); ?></td>
-					</tr>
-				<?php elseif ( 'survey' === $type ) : ?>
-					<?php foreach ( $post_params as $key => $value ) : ?>
-						<tr>
-							<td><?php echo esc_html( is_scalar( $key ) ? (string) $key : '' ); ?></td>
-							<td>
-								<?php if ( is_array( $value ) ) : ?>
-									<?php foreach ( $value as $v ) : ?>
-										<?php echo esc_html( is_scalar( $v ) ? (string) $v : '' ); ?><br />
-									<?php endforeach; ?>
-								<?php else : ?>
-									<?php echo esc_html( is_scalar( $value ) ? (string) $value : '' ); ?>
-								<?php endif ?>
-							</td>
-						</tr>
-					<?php endforeach; ?>
-				<?php endif ?>
-			</tbody>
-		</table>
-		<table>
-			<tbody>
-				<hr />
-				<?php if ( $content_data['has_ip_address'] ) : ?>
-					<tr>
-						<td>IP_Address</td>
-						<td><?php echo esc_html( $content_data['ip_address'] ); ?></td>
-					</tr>
-				<?php endif ?>
-				<?php if ( $content_data['has_user_agent'] ) : ?>
-					<tr>
-						<td>UserAgent</td>
-						<td><?php echo esc_html( $content_data['user_agent'] ); ?></td>
-					</tr>
-				<?php endif ?>
-			</tbody>
-		</table>
-		<?php
-	}
-
-	/**
 	 * Retrieve and cache permalink URL and parsed path for a given parent post ID.
 	 *
 	 * @param int $parent_id Parent post ID.
@@ -386,304 +237,6 @@ class BeastFeedbacks_Admin {
 		}
 
 		return $cache[ $parent_id ];
-	}
-
-	/**
-	 * Render source column content.
-	 *
-	 * @param int $post_id The current post ID.
-	 */
-	private function render_source_column( $post_id ) {
-		$post = $this->get_post_for_column( $post_id );
-		if ( ! $post || ! isset( $post->post_parent ) || ! $post->post_parent ) {
-			return;
-		}
-
-		$permalink_data = $this->get_parent_permalink_data( $post->post_parent );
-
-		printf(
-			'<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>',
-			esc_url( $permalink_data['url'] ),
-			$permalink_data['path'] // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		);
-	}
-
-	/**
-	 * Render type column content.
-	 *
-	 * @param int $post_id The current post ID.
-	 */
-	private function render_type_column( $post_id ) {
-		$meta = get_post_meta( $post_id, 'beastfeedbacks_type', true );
-		echo esc_html( $meta );
-	}
-
-	/**
-	 * Add actions to beastfeedbacks response rows in WP Admin.
-	 *
-	 * @param string[] $actions Default actions.
-	 * @return string[]
-	 */
-	public function manage_post_row_actions( $actions ) {
-		global $post;
-
-		if ( 'beastfeedbacks' !== $post->post_type ) {
-			return $actions;
-		}
-
-		if ( 'publish' !== $post->post_status ) {
-			return $actions;
-		}
-
-		unset( $actions['inline hide-if-no-js'] );
-		unset( $actions['edit'] );
-		unset( $actions['view'] );
-
-		return $actions;
-	}
-
-	/**
-	 * Method untrash_beastfeedbacks_status_handler
-	 * wp_untrash_post filter handler.
-	 *
-	 * @param string $current_status   The status to be set.
-	 * @param int    $post_id          The post ID.
-	 * @param string $previous_status  The previous status.
-	 */
-	public function untrash_beastfeedbacks_status_handler( $current_status, $post_id, $previous_status ) {
-		$post = get_post( $post_id );
-		if ( $post && 'beastfeedbacks' === $post->post_type ) {
-			if ( in_array( $previous_status, array( 'publish' ), true ) ) {
-				return $previous_status;
-			}
-			return 'publish';
-		}
-		return $current_status;
-	}
-
-	/**
-	 * Verify admin filter nonce from request data.
-	 *
-	 * Memory context reminder: Raw nonce input should be unslashed without pre-sanitization before wp_verify_nonce().
-	 *
-	 * @return bool True if filter nonce or CSV export nonce is verified, false otherwise.
-	 */
-	private function is_filter_nonce_verified() {
-		if ( isset( $_REQUEST['_beastfeedbacks_nonce'] ) && is_scalar( $_REQUEST['_beastfeedbacks_nonce'] ) && wp_verify_nonce( wp_unslash( $_REQUEST['_beastfeedbacks_nonce'] ), 'beastfeedbacks_filter' ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-			return true;
-		}
-
-		if ( isset( $_REQUEST['_wpnonce'] ) && is_scalar( $_REQUEST['_wpnonce'] ) && wp_verify_nonce( wp_unslash( $_REQUEST['_wpnonce'] ), 'beastfeedbacks_csv_export' ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-			return true;
-		}
-
-		return false;
-	}
-
-	/**
-	 * Add a post filter dropdown at the top of the admin page.
-	 *
-	 * @return void
-	 */
-	public function add_type_filter() {
-		$screen = get_current_screen();
-
-		if ( ! $screen || ! isset( $screen->id ) || 'edit-beastfeedbacks' !== $screen->id ) {
-			return;
-		}
-
-		$selected_type = $this->is_filter_nonce_verified() && isset( $_GET['beastfeedbacks_type'] ) && is_scalar( $_GET['beastfeedbacks_type'] ) ? sanitize_key( wp_unslash( $_GET['beastfeedbacks_type'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( ! in_array( $selected_type, BeastFeedbacks_Block::TYPES, true ) ) {
-			$selected_type = '';
-		}
-
-		wp_nonce_field( 'beastfeedbacks_filter', '_beastfeedbacks_nonce' );
-		?>
-		<select name="beastfeedbacks_type">
-			<option value=""><?php esc_html_e( 'All Types', 'beastfeedbacks' ); ?></option>
-			<?php foreach ( BeastFeedbacks_Block::TYPES as $select_type ) : ?>
-				<option value="<?php echo esc_html( $select_type ); ?>"
-					<?php if ( $selected_type === $select_type ) : ?>
-					selected
-					<?php endif; ?>>
-					<?php echo esc_html( $select_type ); ?>
-				</option>
-			<?php endforeach; ?>
-		</select>
-		<?php
-	}
-
-	/**
-	 * Add a post filter dropdown at the top of the admin page.
-	 *
-	 * @return void
-	 */
-	public function add_source_filter() {
-		$screen = get_current_screen();
-
-		if ( ! $screen || ! isset( $screen->id ) || 'edit-beastfeedbacks' !== $screen->id ) {
-			return;
-		}
-
-		$selected_parent_id = $this->is_filter_nonce_verified() && isset( $_GET['beastfeedbacks_parent_id'] ) && is_scalar( $_GET['beastfeedbacks_parent_id'] ) ? absint( wp_unslash( $_GET['beastfeedbacks_parent_id'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-
-		$cache_key   = 'source_filter_parent_ids';
-		$cache_group = 'beastfeedbacks';
-
-		$raw_parent_ids = wp_cache_get( $cache_key, $cache_group );
-
-		if ( false === $raw_parent_ids ) {
-			global $wpdb;
-
-			// Performance optimization: Direct $wpdb->get_col() prepared query bypasses WP_Query instantiation,
-			// query parsing, filter hook executions, and redundant internal post caching overhead.
-			// Grouping and ordering by MAX(post_date) DESC preserves option ordering based on recent feedback activity.
-			$results = $wpdb->get_col(
-				$wpdb->prepare(
-					"SELECT post_parent FROM {$wpdb->posts} WHERE post_type = %s AND post_status = 'publish' AND post_parent > 0 GROUP BY post_parent ORDER BY MAX(post_date) DESC, MAX(ID) DESC",
-					$this->post_type
-				)
-			);
-
-			$raw_parent_ids = ! empty( $results )
-				? array_values( array_unique( array_map( 'strval', $results ) ) )
-				: array();
-
-			wp_cache_set( $cache_key, $raw_parent_ids, $cache_group );
-		}
-
-		$parent_ids = ! empty( $raw_parent_ids ) ? array_values( array_filter( array_map( 'absint', $raw_parent_ids ) ) ) : array();
-
-		if ( ! empty( $parent_ids ) ) {
-			_prime_post_caches( $parent_ids );
-		}
-
-		?>
-		<select name="beastfeedbacks_parent_id">
-			<option value=""><?php esc_html_e( 'All Sources', 'beastfeedbacks' ); ?></option>
-			<?php foreach ( $parent_ids as $parent_id ) : ?>
-				<?php
-				$permalink_data = $this->get_parent_permalink_data( $parent_id );
-				$select_source  = $permalink_data['path'];
-				?>
-				<option value="<?php echo esc_html( $parent_id ); ?>"
-					<?php if ( $selected_parent_id === $parent_id ) : ?>
-					selected
-					<?php endif; ?>>
-					<?php echo esc_html( $select_source ); ?>
-				</option>
-			<?php endforeach; ?>
-		</select>
-		<?php
-	}
-
-	/**
-	 * Clear parent ids cache for source filter when a feedback post is created, updated, or deleted.
-	 *
-	 * @param int          $post_id Post ID.
-	 * @param WP_Post|null $post    Post object.
-	 * @return void
-	 */
-	public function clear_source_filter_cache( $post_id = 0, $post = null ) {
-		if ( $post instanceof WP_Post ) {
-			if ( $post->post_type !== $this->post_type ) {
-				return;
-			}
-		} elseif ( $post_id ) {
-			if ( get_post_type( $post_id ) !== $this->post_type ) {
-				return;
-			}
-		}
-
-		wp_cache_delete( 'source_filter_parent_ids', 'beastfeedbacks' );
-	}
-
-	/**
-	 * Type フィルターの表示に対応
-	 *
-	 * @param WP_Query $query Current query.
-	 *
-	 * @return void
-	 */
-	public function type_filter_result( $query ) {
-		$selected_type = $this->is_filter_nonce_verified() && isset( $_REQUEST['beastfeedbacks_type'] ) && is_scalar( $_REQUEST['beastfeedbacks_type'] ) ? sanitize_key( wp_unslash( $_REQUEST['beastfeedbacks_type'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-
-		if ( ! $selected_type || ! in_array( $selected_type, BeastFeedbacks_Block::TYPES, true ) || 'beastfeedbacks' !== $query->query_vars['post_type'] ) {
-			return;
-		}
-
-		$meta_query = array(
-			array(
-				'key'   => 'beastfeedbacks_type',
-				'value' => $selected_type,
-			),
-		);
-
-		$old_meta_query = $query->get( 'meta_query' );
-		if ( $old_meta_query ) {
-			$meta_query[] = $old_meta_query;
-		}
-
-		$query->set( 'meta_query', $meta_query );
-	}
-
-	/**
-	 * Prime parent post and post meta caches to prevent N+1 queries in admin list table.
-	 *
-	 * @param array    $posts Array of WP_Post objects.
-	 * @param WP_Query $query WP_Query instance.
-	 * @return array
-	 */
-	public function prime_parent_post_caches( $posts, $query ) {
-		if ( ! is_admin() ) {
-			return $posts;
-		}
-
-		if ( empty( $posts ) || ! is_array( $posts ) ) {
-			return $posts;
-		}
-
-		$post_type = isset( $query->query_vars['post_type'] ) ? $query->query_vars['post_type'] : '';
-		if ( is_array( $post_type ) ) {
-			if ( ! in_array( $this->post_type, $post_type, true ) ) {
-				return $posts;
-			}
-		} elseif ( $this->post_type !== $post_type ) {
-			return $posts;
-		}
-
-		$post_ids = array_values( array_filter( array_map( 'absint', wp_list_pluck( $posts, 'ID' ) ) ) );
-		if ( ! empty( $post_ids ) ) {
-			update_postmeta_cache( $post_ids );
-		}
-
-		$parent_ids = array_values( array_unique( array_filter( array_map( 'absint', wp_list_pluck( $posts, 'post_parent' ) ) ) ) );
-		if ( ! empty( $parent_ids ) ) {
-			_prime_post_caches( $parent_ids );
-		}
-
-		return $posts;
-	}
-
-	/**
-	 * Source フィルターの表示に対応
-	 *
-	 * @param WP_Query $query Current query.
-	 *
-	 * @return void
-	 */
-	public function source_filter_result( $query ) {
-		$selected_parent_id = $this->is_filter_nonce_verified() && isset( $_REQUEST['beastfeedbacks_parent_id'] ) && is_scalar( $_REQUEST['beastfeedbacks_parent_id'] ) ? absint( wp_unslash( $_REQUEST['beastfeedbacks_parent_id'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-
-		if ( ! $selected_parent_id || empty( $query->query_vars['post_type'] ) || 'beastfeedbacks' !== $query->query_vars['post_type'] ) {
-			return;
-		}
-
-		if ( isset( $query->query_vars['fields'] ) && 'id=>parent' === $query->query_vars['fields'] ) {
-			return;
-		}
-
-		$query->query_vars['post_parent'] = $selected_parent_id;
 	}
 
 	/**
@@ -773,5 +326,120 @@ class BeastFeedbacks_Admin {
 	 */
 	public function esc_csv( $field ) {
 		return BeastFeedbacks_Export::get_instance()->esc_csv( $field );
+	}
+
+	// --------------------------------------------------------------------------------
+	// Deprecated / Delegated Methods for Backward Compatibility
+	// --------------------------------------------------------------------------------
+
+	/**
+	 * 一覧で表示するカラム
+	 *
+	 * @deprecated Use BeastFeedbacks_Admin_List::get_instance()->manage_posts_columns() instead.
+	 */
+	public function manage_posts_columns() {
+		return BeastFeedbacks_Admin_List::get_instance()->manage_posts_columns();
+	}
+
+	/**
+	 * 一覧で表示する行
+	 *
+	 * @param string $column_name The name of the column to display.
+	 * @param int    $post_id     The current post ID.
+	 * @deprecated Use BeastFeedbacks_Admin_List::get_instance()->manage_posts_custom_column() instead.
+	 */
+	public function manage_posts_custom_column( $column_name, $post_id ) {
+		BeastFeedbacks_Admin_List::get_instance()->manage_posts_custom_column( $column_name, $post_id );
+	}
+
+	/**
+	 * Add actions to beastfeedbacks response rows in WP Admin.
+	 *
+	 * @param string[] $actions Default actions.
+	 * @return string[]
+	 * @deprecated Use BeastFeedbacks_Admin_List::get_instance()->manage_post_row_actions() instead.
+	 */
+	public function manage_post_row_actions( $actions ) {
+		return BeastFeedbacks_Admin_List::get_instance()->manage_post_row_actions( $actions );
+	}
+
+	/**
+	 * wp_untrash_post filter handler.
+	 *
+	 * @param string $current_status   The status to be set.
+	 * @param int    $post_id          The post ID.
+	 * @param string $previous_status  The previous status.
+	 * @deprecated Use BeastFeedbacks_Admin_List::get_instance()->untrash_beastfeedbacks_status_handler() instead.
+	 */
+	public function untrash_beastfeedbacks_status_handler( $current_status, $post_id, $previous_status ) {
+		return BeastFeedbacks_Admin_List::get_instance()->untrash_beastfeedbacks_status_handler( $current_status, $post_id, $previous_status );
+	}
+
+	/**
+	 * Add a post filter dropdown at the top of the admin page.
+	 *
+	 * @return void
+	 * @deprecated Use BeastFeedbacks_Admin_List::get_instance()->add_type_filter() instead.
+	 */
+	public function add_type_filter() {
+		BeastFeedbacks_Admin_List::get_instance()->add_type_filter();
+	}
+
+	/**
+	 * Add a post filter dropdown at the top of the admin page.
+	 *
+	 * @return void
+	 * @deprecated Use BeastFeedbacks_Admin_List::get_instance()->add_source_filter() instead.
+	 */
+	public function add_source_filter() {
+		BeastFeedbacks_Admin_List::get_instance()->add_source_filter();
+	}
+
+	/**
+	 * Clear parent ids cache for source filter when a feedback post is created, updated, or deleted.
+	 *
+	 * @param int          $post_id Post ID.
+	 * @param WP_Post|null $post    Post object.
+	 * @return void
+	 * @deprecated Use BeastFeedbacks_Admin_List::get_instance()->clear_source_filter_cache() instead.
+	 */
+	public function clear_source_filter_cache( $post_id = 0, $post = null ) {
+		BeastFeedbacks_Admin_List::get_instance()->clear_source_filter_cache( $post_id, $post );
+	}
+
+	/**
+	 * Type フィルターの表示に対応
+	 *
+	 * @param WP_Query $query Current query.
+	 *
+	 * @return void
+	 * @deprecated Use BeastFeedbacks_Admin_List::get_instance()->type_filter_result() instead.
+	 */
+	public function type_filter_result( $query ) {
+		BeastFeedbacks_Admin_List::get_instance()->type_filter_result( $query );
+	}
+
+	/**
+	 * Prime parent post and post meta caches to prevent N+1 queries in admin list table.
+	 *
+	 * @param array    $posts Array of WP_Post objects.
+	 * @param WP_Query $query WP_Query instance.
+	 * @return array
+	 * @deprecated Use BeastFeedbacks_Admin_List::get_instance()->prime_parent_post_caches() instead.
+	 */
+	public function prime_parent_post_caches( $posts, $query ) {
+		return BeastFeedbacks_Admin_List::get_instance()->prime_parent_post_caches( $posts, $query );
+	}
+
+	/**
+	 * Source フィルターの表示に対応
+	 *
+	 * @param WP_Query $query Current query.
+	 *
+	 * @return void
+	 * @deprecated Use BeastFeedbacks_Admin_List::get_instance()->source_filter_result() instead.
+	 */
+	public function source_filter_result( $query ) {
+		BeastFeedbacks_Admin_List::get_instance()->source_filter_result( $query );
 	}
 }
