@@ -15,6 +15,13 @@
 class BeastFeedbacks_Public {
 
 	/**
+	 * 除外するPOSTキー一覧 (後方互換性のため残す)
+	 *
+	 * @var array
+	 */
+	public const IGNORE_KEYS = BeastFeedbacks_Feedback_Service::IGNORE_KEYS;
+
+	/**
 	 * Self class
 	 *
 	 * @var self|null
