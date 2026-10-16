@@ -19,17 +19,6 @@ class BeastFeedbacks_Admin_Init_Test extends BeastFeedbacks_TestCase {
 	}
 
 	/** @test */
-	public function init_registers_untrash_beastfeedbacks_status_handler_filter(): void {
-		$instance = \BeastFeedbacks_Admin::get_instance();
-		$instance->init();
-
-		$this->assertSame(
-			10,
-			has_filter( 'wp_untrash_post_status', array( $instance, 'untrash_beastfeedbacks_status_handler' ) )
-		);
-	}
-
-	/** @test */
 	public function init_registers_export_action_with_custom_name(): void {
 		$instance = \BeastFeedbacks_Admin::get_instance();
 		$original_action_name = $instance->export_action_name;

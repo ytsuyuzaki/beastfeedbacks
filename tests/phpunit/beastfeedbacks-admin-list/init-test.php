@@ -15,7 +15,7 @@ class BeastFeedbacks_Admin_List_Init_Test extends BeastFeedbacks_TestCase {
 	 *
 	 * @return void
 	 */
-	public function tear_down() {
+	protected function tear_down(): void {
 		parent::tear_down();
 		$this->remove_all_filters();
 	}

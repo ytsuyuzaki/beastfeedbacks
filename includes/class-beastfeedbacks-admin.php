@@ -364,7 +364,7 @@ class BeastFeedbacks_Admin {
 	}
 
 	/**
-	 * wp_untrash_post filter handler.
+	 * Wp_untrash_post filter handler.
 	 *
 	 * @param string $current_status   The status to be set.
 	 * @param int    $post_id          The post ID.
