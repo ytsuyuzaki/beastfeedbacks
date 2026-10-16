@@ -83,18 +83,19 @@ class BeastFeedbacks_Admin_List {
 	 * @param int    $post_id     The current post ID.
 	 */
 	public function manage_posts_custom_column( $column_name, $post_id ) {
+		$renderer = BeastFeedbacks_Admin_List_Table_Renderer::get_instance();
 		switch ( $column_name ) {
 			case 'beastfeedbacks_date':
-				$this->render_date_column( $post_id );
+				$renderer->render_date_column( $post_id );
 				break;
 			case 'beastfeedbacks_response':
-				$this->render_response_column( $post_id );
+				$renderer->render_response_column( $post_id );
 				break;
 			case 'beastfeedbacks_source':
-				$this->render_source_column( $post_id );
+				$renderer->render_source_column( $post_id );
 				break;
 			case 'beastfeedbacks_type':
-				$this->render_type_column( $post_id );
+				$renderer->render_type_column( $post_id );
 				break;
 		}
 	}
@@ -106,13 +107,10 @@ class BeastFeedbacks_Admin_List {
 	 * (which reuses $GLOBALS['post'] when available), avoiding the overhead of get_the_time() querying global context.
 	 *
 	 * @param int $post_id The current post ID.
+	 * @deprecated Use BeastFeedbacks_Admin_List_Table_Renderer::get_instance()->render_date_column() instead.
 	 */
 	public function render_date_column( $post_id ) {
-		$post = $this->get_post_for_column( $post_id );
-		if ( ! $post ) {
-			return;
-		}
-		echo esc_html( mysql2date( 'Y/m/d', $post->post_date ) );
+		BeastFeedbacks_Admin_List_Table_Renderer::get_instance()->render_date_column( $post_id );
 	}
 
 	/**
@@ -120,109 +118,40 @@ class BeastFeedbacks_Admin_List {
 	 *
 	 * @param int $post_id The post ID.
 	 * @return WP_Post|null
+	 * @deprecated Use BeastFeedbacks_Admin_List_Table_Renderer::get_instance()->get_post_for_column() instead.
 	 */
 	public function get_post_for_column( $post_id ) {
-		global $post;
-		if ( isset( $post ) && $post instanceof WP_Post && (int) $post->ID === (int) $post_id ) {
-			return $post;
-		}
-		return get_post( $post_id );
+		return BeastFeedbacks_Admin_List_Table_Renderer::get_instance()->get_post_for_column( $post_id );
 	}
 
 	/**
 	 * Render response column content.
 	 *
 	 * @param int $post_id The current post ID.
+	 * @deprecated Use BeastFeedbacks_Admin_List_Table_Renderer::get_instance()->render_response_column() instead.
 	 */
 	public function render_response_column( $post_id ) {
-		$post = $this->get_post_for_column( $post_id );
-		if ( ! $post ) {
-			return;
-		}
-
-		$admin        = BeastFeedbacks_Admin::get_instance();
-		$content_data = $admin->extract_post_content_data( $post->post_content );
-		if ( ! $content_data['is_valid'] ) {
-			return;
-		}
-
-		$type        = $content_data['type'];
-		$post_params = $content_data['post_params'];
-		?>
-		<table>
-			<tbody>
-				<?php if ( 'vote' === $type ) : ?>
-					<tr>
-						<td><?php esc_html_e( 'Select', 'beastfeedbacks' ); ?></td>
-						<td><?php echo esc_html( isset( $post_params['selected'] ) && is_scalar( $post_params['selected'] ) ? (string) $post_params['selected'] : '' ); ?></td>
-					</tr>
-				<?php elseif ( 'survey' === $type ) : ?>
-					<?php foreach ( $post_params as $key => $value ) : ?>
-						<tr>
-							<td><?php echo esc_html( is_scalar( $key ) ? (string) $key : '' ); ?></td>
-							<td>
-								<?php if ( is_array( $value ) ) : ?>
-									<?php foreach ( $value as $v ) : ?>
-										<?php echo esc_html( is_scalar( $v ) ? (string) $v : '' ); ?><br />
-									<?php endforeach; ?>
-								<?php else : ?>
-									<?php echo esc_html( is_scalar( $value ) ? (string) $value : '' ); ?>
-								<?php endif ?>
-							</td>
-						</tr>
-					<?php endforeach; ?>
-				<?php endif ?>
-			</tbody>
-		</table>
-		<table>
-			<tbody>
-				<hr />
-				<?php if ( $content_data['has_ip_address'] ) : ?>
-					<tr>
-						<td>IP_Address</td>
-						<td><?php echo esc_html( $content_data['ip_address'] ); ?></td>
-					</tr>
-				<?php endif ?>
-				<?php if ( $content_data['has_user_agent'] ) : ?>
-					<tr>
-						<td>UserAgent</td>
-						<td><?php echo esc_html( $content_data['user_agent'] ); ?></td>
-					</tr>
-				<?php endif ?>
-			</tbody>
-		</table>
-		<?php
+		BeastFeedbacks_Admin_List_Table_Renderer::get_instance()->render_response_column( $post_id );
 	}
 
 	/**
 	 * Render source column content.
 	 *
 	 * @param int $post_id The current post ID.
+	 * @deprecated Use BeastFeedbacks_Admin_List_Table_Renderer::get_instance()->render_source_column() instead.
 	 */
 	public function render_source_column( $post_id ) {
-		$post = $this->get_post_for_column( $post_id );
-		if ( ! $post || ! isset( $post->post_parent ) || ! $post->post_parent ) {
-			return;
-		}
-
-		$admin          = BeastFeedbacks_Admin::get_instance();
-		$permalink_data = $admin->get_parent_permalink_data( $post->post_parent );
-
-		printf(
-			'<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>',
-			esc_url( $permalink_data['url'] ),
-			$permalink_data['path'] // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		);
+		BeastFeedbacks_Admin_List_Table_Renderer::get_instance()->render_source_column( $post_id );
 	}
 
 	/**
 	 * Render type column content.
 	 *
 	 * @param int $post_id The current post ID.
+	 * @deprecated Use BeastFeedbacks_Admin_List_Table_Renderer::get_instance()->render_type_column() instead.
 	 */
 	public function render_type_column( $post_id ) {
-		$meta = get_post_meta( $post_id, 'beastfeedbacks_type', true );
-		echo esc_html( $meta );
+		BeastFeedbacks_Admin_List_Table_Renderer::get_instance()->render_type_column( $post_id );
 	}
 
 	/**
