@@ -17,6 +17,7 @@ class BeastFeedbacks_Feedback_Service_Extract_Post_Params_Test extends BeastFeed
 			'_wpnonce'            => true,
 		);
 
+		$this->assertSame( $expected_keys, \BeastFeedbacks_Feedback_Service::IGNORE_KEYS );
 	}
 
 	/** @test */
@@ -108,5 +109,3 @@ class BeastFeedbacks_Feedback_Service_Extract_Post_Params_Test extends BeastFeed
 		$this->assertSame( 2000, strlen( $result['array_val'][0] ) );
 	}
 }
-<?php
-// wait let's just manually fix the duplicate assertion
