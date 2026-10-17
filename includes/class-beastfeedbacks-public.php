@@ -187,6 +187,7 @@ class BeastFeedbacks_Public {
 	 * Checks if the request contains valid expected parameters.
 	 *
 	 * @deprecated Use BeastFeedbacks_Feedback_Service::has_valid_request_params() instead.
+	 * @param array $post_data POST data array.
 	 * @return bool True if parameters are valid, false otherwise.
 	 */
 	private function has_valid_request_params( array $post_data ) {

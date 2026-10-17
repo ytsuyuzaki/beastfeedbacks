@@ -246,6 +246,7 @@ class BeastFeedbacks_Feedback_Service {
 	/**
 	 * Checks if the request contains valid expected parameters.
 	 *
+	 * @param array $post_data POST data array.
 	 * @return bool True if parameters are valid, false otherwise.
 	 */
 	public function has_valid_request_params( array $post_data ) {
