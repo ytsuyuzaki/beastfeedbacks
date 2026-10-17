@@ -227,14 +227,20 @@ class BeastFeedbacks_Admin {
 	public function get_parent_permalink_data( $parent_id ) {
 		static $cache = array();
 
-		if ( ! isset( $cache[ $parent_id ] ) ) {
-			$form_url            = get_permalink( $parent_id );
-			$parsed_url          = wp_parse_url( $form_url );
-			$cache[ $parent_id ] = array(
-				'url'  => $form_url,
-				'path' => esc_html( isset( $parsed_url['path'] ) ? $parsed_url['path'] : '' ),
-			);
+		if ( isset( $cache[ $parent_id ] ) ) {
+			return $cache[ $parent_id ];
 		}
+
+		if ( count( $cache ) >= 100 ) {
+			$cache = array();
+		}
+
+		$form_url            = get_permalink( $parent_id );
+		$parsed_url          = wp_parse_url( $form_url );
+		$cache[ $parent_id ] = array(
+			'url'  => $form_url,
+			'path' => esc_html( isset( $parsed_url['path'] ) ? $parsed_url['path'] : '' ),
+		);
 
 		return $cache[ $parent_id ];
 	}
