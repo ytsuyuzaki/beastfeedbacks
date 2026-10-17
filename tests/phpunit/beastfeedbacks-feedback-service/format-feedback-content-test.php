@@ -1,15 +1,15 @@
 <?php
 /**
- * Tests for BeastFeedbacks_Public::format_feedback_content().
+ * Tests for BeastFeedbacks_Feedback_Service::format_feedback_content().
  *
  * @package BeastFeedbacks
  */
 
-class BeastFeedbacks_Public_Format_Feedback_Content_Test extends BeastFeedbacks_TestCase {
+class BeastFeedbacks_Feedback_Service_Format_Feedback_Content_Test extends BeastFeedbacks_TestCase {
 
 	/** @test */
 	public function format_feedback_content_encodes_json_correctly(): void {
-		$content = \BeastFeedbacks_Public::get_instance()->format_feedback_content(
+		$content = \BeastFeedbacks_Feedback_Service::get_instance()->format_feedback_content(
 			'TestUA',
 			'127.0.0.1',
 			'survey',
@@ -29,7 +29,7 @@ class BeastFeedbacks_Public_Format_Feedback_Content_Test extends BeastFeedbacks_
 			'comparison' => '10 < 20 & 30 > 5',
 			'formula'    => 'x < y',
 		);
-		$content = \BeastFeedbacks_Public::get_instance()->format_feedback_content(
+		$content = \BeastFeedbacks_Feedback_Service::get_instance()->format_feedback_content(
 			'TestUA',
 			'127.0.0.1',
 			'survey',

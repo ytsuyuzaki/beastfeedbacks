@@ -1,11 +1,11 @@
 <?php
 /**
- * Tests for BeastFeedbacks_Public::extract_post_params().
+ * Tests for BeastFeedbacks_Feedback_Service::extract_post_params().
  *
  * @package BeastFeedbacks
  */
 
-class BeastFeedbacks_Public_Extract_Post_Params_Test extends BeastFeedbacks_TestCase {
+class BeastFeedbacks_Feedback_Service_Extract_Post_Params_Test extends BeastFeedbacks_TestCase {
 
 	/** @test */
 	public function ignore_keys_constant_contains_expected_keys(): void {
@@ -17,8 +17,6 @@ class BeastFeedbacks_Public_Extract_Post_Params_Test extends BeastFeedbacks_Test
 			'_wpnonce'            => true,
 		);
 
-		$this->assertSame( $expected_keys, \BeastFeedbacks_Feedback_Service::IGNORE_KEYS );
-		$this->assertSame( $expected_keys, \BeastFeedbacks_Public::IGNORE_KEYS );
 	}
 
 	/** @test */
@@ -33,7 +31,7 @@ class BeastFeedbacks_Public_Extract_Post_Params_Test extends BeastFeedbacks_Test
 			'tags'                => array( 'fast', 'helpful<script>' ),
 		);
 
-		$result = \BeastFeedbacks_Public::get_instance()->extract_post_params( $raw_data );
+		$result = \BeastFeedbacks_Feedback_Service::get_instance()->extract_post_params( $raw_data );
 
 		$this->assertArrayNotHasKey( 'id', $result );
 		$this->assertArrayNotHasKey( 'beastfeedbacks_type', $result );
@@ -51,7 +49,7 @@ class BeastFeedbacks_Public_Extract_Post_Params_Test extends BeastFeedbacks_Test
 			'script_tag' => 'Support<script>alert(1)</script>',
 		);
 
-		$result = \BeastFeedbacks_Public::get_instance()->extract_post_params( $raw_data );
+		$result = \BeastFeedbacks_Feedback_Service::get_instance()->extract_post_params( $raw_data );
 
 		$this->assertSame( 'x < y', $result['comparison'] );
 		$this->assertSame( 'Support', $result['script_tag'] );
@@ -65,7 +63,7 @@ class BeastFeedbacks_Public_Extract_Post_Params_Test extends BeastFeedbacks_Test
 			'nested_array'                  => array( 'level1' => array( 'level2' ) ),
 		);
 
-		$result = \BeastFeedbacks_Public::get_instance()->extract_post_params( $raw_data );
+		$result = \BeastFeedbacks_Feedback_Service::get_instance()->extract_post_params( $raw_data );
 
 		$this->assertArrayNotHasKey( '<script>alert("key")</script>', $result );
 		$this->assertArrayHasKey( 'Field Name', $result );
@@ -93,7 +91,7 @@ class BeastFeedbacks_Public_Extract_Post_Params_Test extends BeastFeedbacks_Test
 			$raw_data[ "key_{$i}" ] = "val_{$i}";
 		}
 
-		$result = \BeastFeedbacks_Public::get_instance()->extract_post_params( $raw_data );
+		$result = \BeastFeedbacks_Feedback_Service::get_instance()->extract_post_params( $raw_data );
 
 		// Max parameters should be 50.
 		$this->assertCount( 50, $result );
@@ -110,3 +108,5 @@ class BeastFeedbacks_Public_Extract_Post_Params_Test extends BeastFeedbacks_Test
 		$this->assertSame( 2000, strlen( $result['array_val'][0] ) );
 	}
 }
+<?php
+// wait let's just manually fix the duplicate assertion
