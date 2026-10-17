@@ -332,14 +332,14 @@ class BeastFeedbacks_Public_Register_Beastfeedbacks_Form_Test extends BeastFeedb
 		$ip     = '198.51.100.99';
 		$key    = 'bf_rl_' . md5( $ip );
 
-		$this->assertFalse( $public->is_rate_limited( $ip ) );
+		$this->assertFalse( BeastFeedbacks_Feedback_Service::get_instance()->is_rate_limited( $ip ) );
 		$entry = get_transient( $key );
 		$this->assertIsArray( $entry );
 		$this->assertSame( 1, $entry['count'] );
 		$initial_reset_at = $entry['reset_at'];
 
 		// Subsequent calls should increment count but keep the same reset_at.
-		$this->assertFalse( $public->is_rate_limited( $ip ) );
+		$this->assertFalse( BeastFeedbacks_Feedback_Service::get_instance()->is_rate_limited( $ip ) );
 		$entry = get_transient( $key );
 		$this->assertSame( 2, $entry['count'] );
 		$initial_reset_at = $entry['reset_at'];
@@ -353,7 +353,7 @@ class BeastFeedbacks_Public_Register_Beastfeedbacks_Form_Test extends BeastFeedb
 		$user_id = $this->create_user( array( 'role' => 'administrator' ) );
 		wp_set_current_user( $user_id );
 
-		$this->assertFalse( $public->is_rate_limited( '198.51.100.50' ) );
+		$this->assertFalse( BeastFeedbacks_Feedback_Service::get_instance()->is_rate_limited( '198.51.100.50' ) );
 
 		// Even when transient exceeds max requests, admin is not rate limited.
 		$key = 'bf_rl_' . md5( '198.51.100.50' );
@@ -366,7 +366,7 @@ class BeastFeedbacks_Public_Register_Beastfeedbacks_Form_Test extends BeastFeedb
 			60
 		);
 
-		$this->assertFalse( $public->is_rate_limited( '198.51.100.50' ) );
+		$this->assertFalse( BeastFeedbacks_Feedback_Service::get_instance()->is_rate_limited( '198.51.100.50' ) );
 	}
 
 	/**
@@ -377,11 +377,11 @@ class BeastFeedbacks_Public_Register_Beastfeedbacks_Form_Test extends BeastFeedb
 		$ip     = '198.51.100.77';
 
 		add_filter( 'beastfeedbacks_pre_is_rate_limited', '__return_true' );
-		$this->assertTrue( $public->is_rate_limited( $ip ) );
+		$this->assertTrue( BeastFeedbacks_Feedback_Service::get_instance()->is_rate_limited( $ip ) );
 		remove_filter( 'beastfeedbacks_pre_is_rate_limited', '__return_true' );
 
 		add_filter( 'beastfeedbacks_pre_is_rate_limited', '__return_false' );
-		$this->assertFalse( $public->is_rate_limited( $ip ) );
+		$this->assertFalse( BeastFeedbacks_Feedback_Service::get_instance()->is_rate_limited( $ip ) );
 		remove_filter( 'beastfeedbacks_pre_is_rate_limited', '__return_false' );
 	}
 
