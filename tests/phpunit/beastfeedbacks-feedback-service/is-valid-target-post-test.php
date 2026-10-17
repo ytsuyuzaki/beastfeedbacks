@@ -1,17 +1,17 @@
 <?php
 /**
- * Tests for BeastFeedbacks_Public::is_valid_target_post().
+ * Tests for BeastFeedbacks_Feedback_Service::is_valid_target_post().
  *
  * @package BeastFeedbacks
  */
 
-class BeastFeedbacks_Public_Is_Valid_Target_Post_Test extends BeastFeedbacks_TestCase {
+class BeastFeedbacks_Feedback_Service_Is_Valid_Target_Post_Test extends BeastFeedbacks_TestCase {
 
 	/**
 	 * Verify that is_valid_target_post returns false for zero or negative post IDs.
 	 */
 	public function test_is_valid_target_post_returns_false_for_invalid_ids(): void {
-		$public = BeastFeedbacks_Public::get_instance();
+		$public = BeastFeedbacks_Feedback_Service::get_instance();
 
 		$this->assertFalse( $public->is_valid_target_post( 0 ) );
 		$this->assertFalse( $public->is_valid_target_post( -1 ) );
@@ -22,7 +22,7 @@ class BeastFeedbacks_Public_Is_Valid_Target_Post_Test extends BeastFeedbacks_Tes
 	 * Verify that is_valid_target_post returns false for non-existent post IDs.
 	 */
 	public function test_is_valid_target_post_returns_false_for_non_existent_post(): void {
-		$public = BeastFeedbacks_Public::get_instance();
+		$public = BeastFeedbacks_Feedback_Service::get_instance();
 
 		$this->assertFalse( $public->is_valid_target_post( 999999 ) );
 	}
@@ -31,7 +31,7 @@ class BeastFeedbacks_Public_Is_Valid_Target_Post_Test extends BeastFeedbacks_Tes
 	 * Verify that is_valid_target_post returns false for unpublished post statuses (draft, trash).
 	 */
 	public function test_is_valid_target_post_returns_false_for_unpublished_posts(): void {
-		$public = BeastFeedbacks_Public::get_instance();
+		$public = BeastFeedbacks_Feedback_Service::get_instance();
 
 		$draft_id = $this->create_post(
 			array(
@@ -52,7 +52,7 @@ class BeastFeedbacks_Public_Is_Valid_Target_Post_Test extends BeastFeedbacks_Tes
 	 * Verify that is_valid_target_post returns false when target post is itself a feedback item.
 	 */
 	public function test_is_valid_target_post_returns_false_for_beastfeedbacks_post_type(): void {
-		$public      = BeastFeedbacks_Public::get_instance();
+		$public      = BeastFeedbacks_Feedback_Service::get_instance();
 		$parent_id   = $this->create_post();
 		$feedback_id = $this->create_like_post( $parent_id );
 
@@ -63,7 +63,7 @@ class BeastFeedbacks_Public_Is_Valid_Target_Post_Test extends BeastFeedbacks_Tes
 	 * Verify that is_valid_target_post returns true for a valid, published target post.
 	 */
 	public function test_is_valid_target_post_returns_true_for_valid_published_post(): void {
-		$public  = BeastFeedbacks_Public::get_instance();
+		$public  = BeastFeedbacks_Feedback_Service::get_instance();
 		$post_id = $this->create_post(
 			array(
 				'post_status' => 'publish',
@@ -77,7 +77,7 @@ class BeastFeedbacks_Public_Is_Valid_Target_Post_Test extends BeastFeedbacks_Tes
 	 * Verify that is_valid_target_post returns false for password-protected posts when password is required.
 	 */
 	public function test_is_valid_target_post_returns_false_for_password_protected_post(): void {
-		$public  = BeastFeedbacks_Public::get_instance();
+		$public  = BeastFeedbacks_Feedback_Service::get_instance();
 		$post_id = $this->create_post(
 			array(
 				'post_status'   => 'publish',

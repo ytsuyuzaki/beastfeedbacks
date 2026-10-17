@@ -1,11 +1,11 @@
 <?php
 /**
- * Tests for BeastFeedbacks_Public::save_feedback().
+ * Tests for BeastFeedbacks_Feedback_Service::save_feedback().
  *
  * @package BeastFeedbacks
  */
 
-class BeastFeedbacks_Public_Save_Feedback_Test extends BeastFeedbacks_TestCase {
+class BeastFeedbacks_Feedback_Service_Save_Feedback_Test extends BeastFeedbacks_TestCase {
 
 	/**
 	 * Verify that save_feedback creates a feedback post with correct attributes and meta data.
@@ -17,7 +17,7 @@ class BeastFeedbacks_Public_Save_Feedback_Test extends BeastFeedbacks_TestCase {
 			)
 		);
 
-		$instance = \BeastFeedbacks_Public::get_instance();
+		$instance = \BeastFeedbacks_Feedback_Service::get_instance();
 		$type     = 'like';
 		$time     = current_time( 'mysql' );
 		$title    = "127.0.0.1 - {$time}";
@@ -46,7 +46,7 @@ class BeastFeedbacks_Public_Save_Feedback_Test extends BeastFeedbacks_TestCase {
 	 */
 	public function test_save_feedback_sanitizes_title(): void {
 		$parent_id = $this->create_post();
-		$instance  = \BeastFeedbacks_Public::get_instance();
+		$instance  = \BeastFeedbacks_Feedback_Service::get_instance();
 
 		$raw_title = '127.0.0.1 - <script>alert("xss")</script> <b>Title</b>';
 		$time      = current_time( 'mysql' );
@@ -69,7 +69,7 @@ class BeastFeedbacks_Public_Save_Feedback_Test extends BeastFeedbacks_TestCase {
 	 */
 	public function test_save_feedback_returns_failure_on_insert_error(): void {
 		$parent_id = $this->create_post();
-		$instance  = \BeastFeedbacks_Public::get_instance();
+		$instance  = \BeastFeedbacks_Feedback_Service::get_instance();
 
 		$fail_insert = static function () {
 			return true;
