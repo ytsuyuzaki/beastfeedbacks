@@ -50,17 +50,19 @@ class BeastFeedbacks_Admin_List_Table_Renderer {
 	}
 
 	/**
-	 * Retrieve WP_Post object for column rendering, utilizing global $post when available.
+	 * Retrieve WP_Post object for column rendering.
 	 *
 	 * @param int $post_id The post ID.
 	 * @return WP_Post|null
 	 */
 	public function get_post_for_column( $post_id ) {
-		global $post;
-		if ( isset( $post ) && $post instanceof WP_Post && (int) $post->ID === (int) $post_id ) {
-			return $post;
+		$post = get_post( $post_id );
+
+		if ( ! $post instanceof WP_Post ) {
+			return null;
 		}
-		return get_post( $post_id );
+
+		return $post;
 	}
 
 	/**
