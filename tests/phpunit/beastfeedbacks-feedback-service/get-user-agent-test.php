@@ -1,11 +1,11 @@
 <?php
 /**
- * Tests for BeastFeedbacks_Public::get_user_agent().
+ * Tests for BeastFeedbacks_Feedback_Service::get_user_agent().
  *
  * @package BeastFeedbacks
  */
 
-class BeastFeedbacks_Public_Get_User_Agent_Test extends BeastFeedbacks_TestCase {
+class BeastFeedbacks_Feedback_Service_Get_User_Agent_Test extends BeastFeedbacks_TestCase {
 
 	protected function tear_down(): void {
 		unset( $_SERVER['HTTP_USER_AGENT'] );
@@ -15,28 +15,28 @@ class BeastFeedbacks_Public_Get_User_Agent_Test extends BeastFeedbacks_TestCase 
 	/** @test */
 	public function get_user_agent_returns_empty_when_not_set(): void {
 		unset( $_SERVER['HTTP_USER_AGENT'] );
-		$ua = \BeastFeedbacks_Public::get_instance()->get_user_agent();
+		$ua = \BeastFeedbacks_Feedback_Service::get_instance()->get_user_agent();
 		$this->assertSame( '', $ua );
 	}
 
 	/** @test */
 	public function get_user_agent_returns_sanitized_value_when_set(): void {
 		$_SERVER['HTTP_USER_AGENT'] = "TestAgent/1.0\t";
-		$ua                         = \BeastFeedbacks_Public::get_instance()->get_user_agent();
+		$ua                         = \BeastFeedbacks_Feedback_Service::get_instance()->get_user_agent();
 		$this->assertStringContainsString( 'TestAgent/1.0', $ua );
 	}
 
 	/** @test */
 	public function get_user_agent_truncates_oversized_input(): void {
 		$_SERVER['HTTP_USER_AGENT'] = str_repeat( 'A', 1000 );
-		$ua                         = \BeastFeedbacks_Public::get_instance()->get_user_agent();
+		$ua                         = \BeastFeedbacks_Feedback_Service::get_instance()->get_user_agent();
 		$this->assertSame( 500, strlen( $ua ) );
 	}
 
 	/** @test */
 	public function get_user_agent_returns_empty_string_for_non_scalar_input(): void {
 		$_SERVER['HTTP_USER_AGENT'] = array( 'malicious_array' ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		$ua                         = \BeastFeedbacks_Public::get_instance()->get_user_agent();
+		$ua                         = \BeastFeedbacks_Feedback_Service::get_instance()->get_user_agent();
 		$this->assertSame( '', $ua );
 	}
 }
