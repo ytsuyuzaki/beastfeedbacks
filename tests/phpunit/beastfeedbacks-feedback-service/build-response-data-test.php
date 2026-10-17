@@ -1,15 +1,15 @@
 <?php
 /**
- * Tests for BeastFeedbacks_Public::build_response_data().
+ * Tests for BeastFeedbacks_Feedback_Service::build_response_data().
  *
  * @package BeastFeedbacks
  */
 
-class BeastFeedbacks_Public_Build_Response_Data_Test extends BeastFeedbacks_TestCase {
+class BeastFeedbacks_Feedback_Service_Build_Response_Data_Test extends BeastFeedbacks_TestCase {
 
 	/** @test */
 	public function build_response_data_returns_expected_array_for_survey_and_like(): void {
-		$instance = \BeastFeedbacks_Public::get_instance();
+		$instance = \BeastFeedbacks_Feedback_Service::get_instance();
 
 		$survey_res = $instance->build_response_data( 123, 'survey' );
 		$this->assertSame( 1, $survey_res['success'] );

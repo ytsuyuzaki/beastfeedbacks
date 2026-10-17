@@ -1,11 +1,11 @@
 <?php
 /**
- * Tests for BeastFeedbacks_Public::is_rate_limited().
+ * Tests for BeastFeedbacks_Feedback_Service::is_rate_limited().
  *
  * @package BeastFeedbacks
  */
 
-class BeastFeedbacks_Public_Is_Rate_Limited_Test extends BeastFeedbacks_TestCase {
+class BeastFeedbacks_Feedback_Service_Is_Rate_Limited_Test extends BeastFeedbacks_TestCase {
 
 	/**
 	 * Setup before each test.
@@ -44,7 +44,7 @@ class BeastFeedbacks_Public_Is_Rate_Limited_Test extends BeastFeedbacks_TestCase
 		);
 		wp_set_current_user( $admin_id );
 
-		$instance = \BeastFeedbacks_Public::get_instance();
+		$instance = \BeastFeedbacks_Feedback_Service::get_instance();
 
 		// Simulate hitting the limit.
 		for ( $i = 0; $i < 15; $i++ ) {
@@ -54,7 +54,7 @@ class BeastFeedbacks_Public_Is_Rate_Limited_Test extends BeastFeedbacks_TestCase
 
 	/** @test */
 	public function is_rate_limited_respects_pre_filter(): void {
-		$instance = \BeastFeedbacks_Public::get_instance();
+		$instance = \BeastFeedbacks_Feedback_Service::get_instance();
 
 		add_filter( 'beastfeedbacks_pre_is_rate_limited', '__return_true' );
 
@@ -65,7 +65,7 @@ class BeastFeedbacks_Public_Is_Rate_Limited_Test extends BeastFeedbacks_TestCase
 
 	/** @test */
 	public function is_rate_limited_allows_requests_under_limit(): void {
-		$instance = \BeastFeedbacks_Public::get_instance();
+		$instance = \BeastFeedbacks_Feedback_Service::get_instance();
 
 		// Default limit is 10. First 10 requests should be allowed.
 		for ( $i = 0; $i < 10; $i++ ) {
@@ -75,7 +75,7 @@ class BeastFeedbacks_Public_Is_Rate_Limited_Test extends BeastFeedbacks_TestCase
 
 	/** @test */
 	public function is_rate_limited_blocks_requests_over_limit(): void {
-		$instance = \BeastFeedbacks_Public::get_instance();
+		$instance = \BeastFeedbacks_Feedback_Service::get_instance();
 
 		// 10 requests allowed
 		for ( $i = 0; $i < 10; $i++ ) {
@@ -88,7 +88,7 @@ class BeastFeedbacks_Public_Is_Rate_Limited_Test extends BeastFeedbacks_TestCase
 
 	/** @test */
 	public function is_rate_limited_respects_custom_max_requests(): void {
-		$instance = \BeastFeedbacks_Public::get_instance();
+		$instance = \BeastFeedbacks_Feedback_Service::get_instance();
 
 		add_filter( 'beastfeedbacks_rate_limit_max_requests', function() {
 			return 3;
@@ -105,7 +105,7 @@ class BeastFeedbacks_Public_Is_Rate_Limited_Test extends BeastFeedbacks_TestCase
 
 	/** @test */
 	public function is_rate_limited_handles_empty_ip(): void {
-		$instance = \BeastFeedbacks_Public::get_instance();
+		$instance = \BeastFeedbacks_Feedback_Service::get_instance();
 
 		add_filter( 'beastfeedbacks_rate_limit_max_requests', function() {
 			return 2;
