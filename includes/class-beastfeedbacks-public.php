@@ -65,7 +65,7 @@ class BeastFeedbacks_Public {
 		check_ajax_referer( 'register_beastfeedbacks_form' );
 
 		// Security: Validate that expected parameters exist and are scalar values before sanitizing.
-		if ( ! $service->has_valid_request_params() ) {
+		if ( ! $service->has_valid_request_params( $_POST ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid request', 'beastfeedbacks' ) ) );
 		}
 
@@ -189,8 +189,8 @@ class BeastFeedbacks_Public {
 	 * @deprecated Use BeastFeedbacks_Feedback_Service::has_valid_request_params() instead.
 	 * @return bool True if parameters are valid, false otherwise.
 	 */
-	private function has_valid_request_params() {
-		return BeastFeedbacks_Feedback_Service::get_instance()->has_valid_request_params();
+	private function has_valid_request_params( array $post_data ) {
+		return BeastFeedbacks_Feedback_Service::get_instance()->has_valid_request_params( $post_data );
 	}
 
 	/**
