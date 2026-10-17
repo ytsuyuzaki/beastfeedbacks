@@ -111,7 +111,10 @@ class BeastFeedbacks_Feedback_Service {
 
 				// Security: Pre-truncate with a buffer to prevent DoS via huge keys.
 				$sanitized_item_key = mb_substr( (string) $key, 0, 200 );
-				$sanitized_item_key = sanitize_text_field( wp_unslash( $sanitized_item_key ) );
+				$unslashed_key      = wp_unslash( $sanitized_item_key );
+				// Strip C0 control characters (except \t, \n, \r) before sanitize_text_field.
+				$no_control_key     = preg_replace( '/[\x00-\x08\x0B\x0C\x0E-\x1F]/', '', $unslashed_key );
+				$sanitized_item_key = sanitize_text_field( $no_control_key );
 				$sanitized_item_key = mb_substr( $sanitized_item_key, 0, 100 );
 
 				if ( '' === $sanitized_item_key ) {
