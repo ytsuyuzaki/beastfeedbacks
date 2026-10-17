@@ -99,5 +99,4 @@ class BeastFeedbacks_Public {
 		wp_send_json( $response_data );
 		wp_die();
 	}
-
 }
