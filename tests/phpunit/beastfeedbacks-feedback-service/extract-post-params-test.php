@@ -16,6 +16,7 @@ class BeastFeedbacks_Feedback_Service_Extract_Post_Params_Test extends BeastFeed
 			'_wp_http_referer'    => true,
 			'_wpnonce'            => true,
 		);
+		$this->assertSame( $expected_keys, \BeastFeedbacks_Feedback_Service::IGNORE_KEYS );
 
 	}
 
