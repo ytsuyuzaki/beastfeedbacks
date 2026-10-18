@@ -1,11 +1,11 @@
 <?php
 /**
- * Test the extract_post_content_data method of BeastFeedbacks_Admin.
+ * Test the extract_post_content_data method of BeastFeedbacks_Data_Extractor.
  *
  * @package BeastFeedbacks
  */
 
-class BeastFeedbacks_Admin_Extract_Post_Content_Data_Test extends BeastFeedbacks_TestCase {
+class BeastFeedbacks_Data_Extractor_Extract_Post_Content_Data_Test extends BeastFeedbacks_TestCase {
 
 	/**
 	 * Setup for tests.
@@ -18,8 +18,8 @@ class BeastFeedbacks_Admin_Extract_Post_Content_Data_Test extends BeastFeedbacks
 	 * Test valid JSON string with all expected fields.
 	 */
 	public function test_extract_post_content_data_valid_json() {
-		$admin = \BeastFeedbacks_Admin::get_instance();
-		$json  = wp_json_encode(
+		$extractor = \BeastFeedbacks_Data_Extractor::get_instance();
+		$json      = wp_json_encode(
 			array(
 				'type'        => 'like',
 				'ip_address'  => '127.0.0.1',
@@ -28,7 +28,7 @@ class BeastFeedbacks_Admin_Extract_Post_Content_Data_Test extends BeastFeedbacks
 			)
 		);
 
-		$result = $admin->extract_post_content_data( $json );
+		$result = $extractor->extract_post_content_data( $json );
 
 		$this->assertTrue( $result['is_valid'] );
 		$this->assertSame( 'like', $result['type'] );
@@ -43,9 +43,9 @@ class BeastFeedbacks_Admin_Extract_Post_Content_Data_Test extends BeastFeedbacks
 	 * Test missing fields in valid JSON object.
 	 */
 	public function test_extract_post_content_data_missing_fields() {
-		$admin  = \BeastFeedbacks_Admin::get_instance();
-		$json   = wp_json_encode( array() );
-		$result = $admin->extract_post_content_data( $json );
+		$extractor = \BeastFeedbacks_Data_Extractor::get_instance();
+		$json      = wp_json_encode( array() );
+		$result    = $extractor->extract_post_content_data( $json );
 
 		$this->assertTrue( $result['is_valid'] );
 		$this->assertSame( '', $result['type'] );
@@ -60,9 +60,9 @@ class BeastFeedbacks_Admin_Extract_Post_Content_Data_Test extends BeastFeedbacks
 	 * Test malformed invalid JSON string.
 	 */
 	public function test_extract_post_content_data_invalid_json() {
-		$admin  = \BeastFeedbacks_Admin::get_instance();
-		$json   = '{"foo": "bar"';
-		$result = $admin->extract_post_content_data( $json );
+		$extractor = \BeastFeedbacks_Data_Extractor::get_instance();
+		$json      = '{"foo": "bar"';
+		$result    = $extractor->extract_post_content_data( $json );
 
 		$this->assertFalse( $result['is_valid'] );
 		$this->assertSame( '', $result['type'] );
@@ -77,9 +77,9 @@ class BeastFeedbacks_Admin_Extract_Post_Content_Data_Test extends BeastFeedbacks
 	 * Test valid JSON that decodes to non-array (e.g. string).
 	 */
 	public function test_extract_post_content_data_non_array_json() {
-		$admin  = \BeastFeedbacks_Admin::get_instance();
-		$json   = wp_json_encode( 'string' );
-		$result = $admin->extract_post_content_data( $json );
+		$extractor = \BeastFeedbacks_Data_Extractor::get_instance();
+		$json      = wp_json_encode( 'string' );
+		$result    = $extractor->extract_post_content_data( $json );
 
 		$this->assertFalse( $result['is_valid'] );
 		$this->assertSame( '', $result['type'] );
@@ -94,10 +94,10 @@ class BeastFeedbacks_Admin_Extract_Post_Content_Data_Test extends BeastFeedbacks
 	 * Test cache eviction bounds and behavior.
 	 */
 	public function test_extract_post_content_data_caching_eviction() {
-		$admin = \BeastFeedbacks_Admin::get_instance();
+		$extractor = \BeastFeedbacks_Data_Extractor::get_instance();
 
 		// Use Reflection to access and inspect the static $cache variable.
-		$reflection_method = new \ReflectionMethod( $admin, 'extract_post_content_data' );
+		$reflection_method = new \ReflectionMethod( $extractor, 'extract_post_content_data' );
 		$reflection_method->setAccessible( true );
 
 		// Insert 100 distinct items to fill the cache to its 100-item bound, pushing out any prior items.
@@ -107,7 +107,7 @@ class BeastFeedbacks_Admin_Extract_Post_Content_Data_Test extends BeastFeedbacks
 			if ( 0 === $i ) {
 				$first_json = $json;
 			}
-			$admin->extract_post_content_data( $json );
+			$extractor->extract_post_content_data( $json );
 		}
 
 		// Cache should now have exactly 100 items, starting with $first_json.
@@ -117,7 +117,7 @@ class BeastFeedbacks_Admin_Extract_Post_Content_Data_Test extends BeastFeedbacks
 
 		// Insert the 101st item. This should trigger FIFO eviction of the oldest item ($first_json) and add the new item.
 		$json_101 = wp_json_encode( array( 'eviction_seed' => 'seed_100' ) );
-		$admin->extract_post_content_data( $json_101 );
+		$extractor->extract_post_content_data( $json_101 );
 
 		// Cache should still have 100 items, without $first_json, and with $json_101.
 		$static_vars_after = $reflection_method->getStaticVariables();
