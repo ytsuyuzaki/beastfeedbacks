@@ -179,8 +179,10 @@ class BeastFeedbacks_Admin {
 
 		// Performance optimization: Bounding in-memory static cache size to 100 items prevents unbounded
 		// memory allocation during large batch operations (e.g. multi-thousand row CSV exports).
+		// By evicting the oldest item sequentially, we prevent complete cache thrashing while retaining the bound.
 		if ( count( $cache ) >= 100 ) {
-			$cache = array();
+			reset( $cache );
+			unset( $cache[ key( $cache ) ] );
 		}
 
 		$content = json_decode( $post_content, true );
