@@ -7,63 +7,66 @@
 
 class BeastFeedbacks_Feedback_Service_Save_Feedback_Test extends BeastFeedbacks_TestCase {
 
-	/** @test */
-	public function test_save_feedback_creates_post_correctly(): void {
-		$service = \BeastFeedbacks_Feedback_Service::get_instance();
-
-		$post_id = $this->create_post(
+	/**
+	 * Verify that save_feedback creates a feedback post with correct attributes and meta data.
+	 */
+	public function test_save_feedback_creates_post_with_correct_attributes(): void {
+		$parent_id = $this->create_post(
 			array(
-				'post_title' => 'parent post',
+				'post_title' => 'Parent Post',
 			)
 		);
 
-		$type    = 'survey';
-		$title   = 'Test Feedback Title';
-		$time    = '2023-01-01 12:00:00';
-		$content = wp_json_encode( array( 'some' => 'data' ) );
+		$instance = \BeastFeedbacks_Feedback_Service::get_instance();
+		$type     = 'like';
+		$time     = current_time( 'mysql' );
+		$title    = "127.0.0.1 - {$time}";
+		$content  = '{"user_agent":"TestAgent","ip_address":"127.0.0.1","type":"like","post_params":[]}';
 
-		$feedback_id = $service->save_feedback( $post_id, $type, $title, $time, $content );
+		$saved_id = $instance->save_feedback( $parent_id, $type, $title, $time, $content );
 
-		$this->assertIsInt( $feedback_id );
-		$this->assertGreaterThan( 0, $feedback_id );
+		$this->assertIsInt( $saved_id );
+		$this->assertGreaterThan( 0, $saved_id );
+		$this->created_ids[] = $saved_id;
 
-		$this->created_ids[] = $feedback_id;
-
-		$feedback_post = get_post( $feedback_id );
-
-		$this->assertSame( 'beastfeedbacks', $feedback_post->post_type );
-		// when using a past date, WP might adjust status depending on various things, but wp_insert_post specifies 'publish'.
-		$this->assertSame( 'publish', $feedback_post->post_status );
-		$this->assertSame( (int) $post_id, (int) $feedback_post->post_parent );
-		$this->assertSame( $title, $feedback_post->post_title );
-		$this->assertSame( $content, $feedback_post->post_content );
-		$this->assertSame( '2023-01-01 12:00:00', $feedback_post->post_date );
-
-		$saved_type = get_post_meta( $feedback_id, 'beastfeedbacks_type', true );
-		$this->assertSame( 'survey', $saved_type );
+		$post = get_post( $saved_id );
+		$this->assertNotNull( $post );
+		$this->assertSame( 'beastfeedbacks', $post->post_type );
+		$this->assertSame( 'publish', $post->post_status );
+		$this->assertSame( $parent_id, $post->post_parent );
+		$this->assertSame( $title, $post->post_title );
+		$this->assertSame( md5( $title ), $post->post_name );
+		$this->assertSame( $content, $post->post_content );
+		$this->assertSame( $time, $post->post_date );
+		$this->assertSame( $type, get_post_meta( $saved_id, 'beastfeedbacks_type', true ) );
 	}
 
-	/** @test */
+	/**
+	 * Verify that save_feedback strips HTML tags from title and calculates post_name from title.
+	 */
 	public function test_save_feedback_sanitizes_title(): void {
-		$service = \BeastFeedbacks_Feedback_Service::get_instance();
+		$parent_id = $this->create_post();
+		$instance  = \BeastFeedbacks_Feedback_Service::get_instance();
 
-		$post_id = $this->create_post();
+		$raw_title = '127.0.0.1 - <script>alert("xss")</script> <b>Title</b> O\'Connor';
+		$time      = current_time( 'mysql' );
+		$content   = '{"test":"data"}';
 
-		$type    = 'vote';
-		$title   = 'Test <script>alert("xss")</script> Title O\'Connor';
-		$time    = current_time( 'mysql' );
-		$content = '{}';
+		$saved_id = $instance->save_feedback( $parent_id, 'survey', $raw_title, $time, $content );
 
-		$feedback_id = $service->save_feedback( $post_id, $type, $title, $time, $content );
+		$this->assertIsInt( $saved_id );
+		$this->assertGreaterThan( 0, $saved_id );
+		$this->created_ids[] = $saved_id;
 
-		$this->created_ids[] = $feedback_id;
-
-		$feedback_post = get_post( $feedback_id );
-
-		$this->assertSame( 'Test alert("xss") Title O\'Connor', $feedback_post->post_title );
+		$post = get_post( $saved_id );
+		$this->assertNotNull( $post );
+		$this->assertSame( '127.0.0.1 - alert("xss") Title O\'Connor', $post->post_title );
+		$this->assertSame( md5( $raw_title ), $post->post_name );
 	}
 
-	/** @test */
+	/**
+	 * Verify that save_feedback generates MD5 post_name.
+	 */
 	public function test_save_feedback_generates_md5_post_name(): void {
 		$service = \BeastFeedbacks_Feedback_Service::get_instance();
 
@@ -81,5 +84,26 @@ class BeastFeedbacks_Feedback_Service_Save_Feedback_Test extends BeastFeedbacks_
 		$feedback_post = get_post( $feedback_id );
 
 		$this->assertSame( md5( $title ), $feedback_post->post_name );
+	}
+
+	/**
+	 * Verify that save_feedback returns error or failure value when post insertion fails.
+	 */
+	public function test_save_feedback_returns_failure_on_insert_error(): void {
+		$parent_id = $this->create_post();
+		$instance  = \BeastFeedbacks_Feedback_Service::get_instance();
+
+		$fail_insert = static function () {
+			return true;
+		};
+		add_filter( 'wp_insert_post_empty_content', $fail_insert );
+
+		try {
+			$saved = $instance->save_feedback( $parent_id, 'like', 'Title', current_time( 'mysql' ), '' );
+		} finally {
+			remove_filter( 'wp_insert_post_empty_content', $fail_insert );
+		}
+
+		$this->assertTrue( is_wp_error( $saved ) || 0 === $saved || false === $saved );
 	}
 }

@@ -1,6 +1,6 @@
 <?php
 /**
- * Tests for BeastFeedbacks_Feedback_Service::build_response_data.
+ * Tests for BeastFeedbacks_Feedback_Service::build_response_data().
  *
  * @package BeastFeedbacks
  */
@@ -76,17 +76,25 @@ class BeastFeedbacks_Feedback_Service_Build_Response_Data_Test extends BeastFeed
 		$this->create_like_post( $post_id );
 		$this->create_like_post( $post_id );
 
-		// Clear cache to get fresh count, although clear_like_count_cache should be triggered on post creation if hooks run,
-		// but in test environment hooks might need explicit call or we can manually clear the cache for safety if needed,
-		// wait, wp_insert_post triggers hooks. Let's rely on it.
-		// Well, actually I need to clear cache explicitly if I am bypassing hooks or in case object cache persists.
-		// BeastFeedbacks_Utils::clear_like_count_cache triggers on save_post_beastfeedbacks which wp_insert_post calls.
-
 		$response = $this->service->build_response_data( $post_id, $type );
 
 		$this->assertIsArray( $response );
 		$this->assertSame( 1, $response['success'] );
 		$this->assertSame( 'Thank you for the vote. ', $response['message'] );
 		$this->assertSame( 2, $response['count'] );
+	}
+
+	/** @test */
+	public function build_response_data_returns_expected_array_for_survey_and_like(): void {
+		$instance = \BeastFeedbacks_Feedback_Service::get_instance();
+
+		$survey_res = $instance->build_response_data( 123, 'survey' );
+		$this->assertSame( 1, $survey_res['success'] );
+		$this->assertSame( 1, $survey_res['count'] );
+		$this->assertStringContainsString( 'questionnaire', $survey_res['message'] );
+
+		$like_res = $instance->build_response_data( 123, 'like' );
+		$this->assertSame( 1, $like_res['success'] );
+		$this->assertStringContainsString( 'vote', $like_res['message'] );
 	}
 }

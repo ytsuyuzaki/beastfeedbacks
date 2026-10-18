@@ -19,7 +19,7 @@ class BeastFeedbacks_Feedback_Service_Get_Ip_Address_Test extends BeastFeedbacks
 
 	protected function set_up(): void {
 		parent::set_up();
-		$this->service = BeastFeedbacks_Feedback_Service::get_instance();
+		$this->service         = BeastFeedbacks_Feedback_Service::get_instance();
 		$this->original_server = $_SERVER;
 	}
 
@@ -61,17 +61,29 @@ class BeastFeedbacks_Feedback_Service_Get_Ip_Address_Test extends BeastFeedbacks
 
 	/** @test */
 	public function get_ip_address_returns_empty_for_non_scalar(): void {
-		$_SERVER['REMOTE_ADDR'] = array( '192.168.1.1' );
+		$_SERVER['REMOTE_ADDR'] = array( '192.168.1.1' ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$this->assertSame( '', $this->service->get_ip_address() );
+	}
+
+	/** @test */
+	public function get_ip_address_ignores_spoofable_headers(): void {
+		$_SERVER['HTTP_X_FORWARDED_FOR'] = '198.51.100.1';
+		$_SERVER['HTTP_CLIENT_IP']       = '198.51.100.2';
+		$_SERVER['REMOTE_ADDR']          = '203.0.113.19';
+
+		$this->assertSame( '203.0.113.19', $this->service->get_ip_address() );
 	}
 
 	/** @test */
 	public function get_ip_address_applies_filter_valid_ip(): void {
 		$_SERVER['REMOTE_ADDR'] = '192.168.1.1';
 
-		add_filter( 'beastfeedbacks_ip_address', function( $ip ) {
-			return '10.0.0.1';
-		} );
+		add_filter(
+			'beastfeedbacks_ip_address',
+			function () {
+				return '10.0.0.1';
+			}
+		);
 
 		$this->assertSame( '10.0.0.1', $this->service->get_ip_address() );
 	}
@@ -80,9 +92,26 @@ class BeastFeedbacks_Feedback_Service_Get_Ip_Address_Test extends BeastFeedbacks
 	public function get_ip_address_ignores_filter_invalid_ip(): void {
 		$_SERVER['REMOTE_ADDR'] = '192.168.1.1';
 
-		add_filter( 'beastfeedbacks_ip_address', function( $ip ) {
-			return 'invalid-filtered-ip';
-		} );
+		add_filter(
+			'beastfeedbacks_ip_address',
+			function () {
+				return 'invalid-filtered-ip';
+			}
+		);
+
+		$this->assertSame( '', $this->service->get_ip_address() );
+	}
+
+	/** @test */
+	public function get_ip_address_returns_empty_string_when_filtered_ip_is_non_scalar(): void {
+		$_SERVER['REMOTE_ADDR'] = '127.0.0.1';
+
+		add_filter(
+			'beastfeedbacks_ip_address',
+			function () {
+				return array( '198.51.100.50' );
+			}
+		);
 
 		$this->assertSame( '', $this->service->get_ip_address() );
 	}
