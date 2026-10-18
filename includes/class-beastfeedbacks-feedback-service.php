@@ -246,10 +246,11 @@ class BeastFeedbacks_Feedback_Service {
 	/**
 	 * Checks if the request contains valid expected parameters.
 	 *
+	 * @param array $post_data POST data array.
 	 * @return bool True if parameters are valid, false otherwise.
 	 */
-	public function has_valid_request_params() {
-		return isset( $_POST['id'] ) && isset( $_POST['beastfeedbacks_type'] ) && is_scalar( $_POST['id'] ) && is_scalar( $_POST['beastfeedbacks_type'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+	public function has_valid_request_params( array $post_data ) {
+		return isset( $post_data['id'] ) && isset( $post_data['beastfeedbacks_type'] ) && is_scalar( $post_data['id'] ) && is_scalar( $post_data['beastfeedbacks_type'] );
 	}
 
 	/**
