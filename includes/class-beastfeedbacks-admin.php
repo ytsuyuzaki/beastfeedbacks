@@ -233,8 +233,12 @@ class BeastFeedbacks_Admin {
 			return $cache[ $parent_id ];
 		}
 
+		// Performance optimization: Bounding in-memory static cache size to 100 items prevents unbounded
+		// memory allocation during large batch operations (e.g. multi-thousand row CSV exports).
+		// By evicting the oldest item sequentially (FIFO), we prevent complete cache thrashing while retaining the bound.
 		if ( count( $cache ) >= 100 ) {
-			$cache = array();
+			reset( $cache );
+			unset( $cache[ key( $cache ) ] );
 		}
 
 		$form_url            = get_permalink( $parent_id );

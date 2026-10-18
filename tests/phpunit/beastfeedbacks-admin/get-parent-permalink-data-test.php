@@ -151,4 +151,49 @@ class BeastFeedbacks_Admin_Get_Parent_Permalink_Data_Test extends BeastFeedbacks
 		$this->assertSame( 'http://example.com', $data['url'] );
 		$this->assertSame( '', $data['path'] );
 	}
+
+	/**
+	 * Test FIFO eviction strategy when static cache exceeds bound of 100 items.
+	 *
+	 * @test
+	 */
+	public function get_parent_permalink_data_evicts_oldest_item_fifo_when_cache_limit_reached(): void {
+		$admin = \BeastFeedbacks_Admin::get_instance();
+
+		$post_ids = array();
+		for ( $i = 1; $i <= 101; $i++ ) {
+			$post_ids[ $i ] = $this->create_post(
+				array(
+					'post_title' => 'FIFO Test Post ' . $i,
+					'post_type'  => 'post',
+				)
+			);
+		}
+
+		// Populate cache with items 1 to 100.
+		for ( $i = 1; $i <= 100; $i++ ) {
+			$admin->get_parent_permalink_data( $post_ids[ $i ] );
+		}
+
+		// Now add the 101st item, which triggers FIFO eviction of item 1.
+		$admin->get_parent_permalink_data( $post_ids[101] );
+
+		$filter_call_count = 0;
+		$filter            = static function ( $permalink ) use ( &$filter_call_count ) {
+			$filter_call_count++;
+			return $permalink;
+		};
+
+		add_filter( 'post_link', $filter );
+
+		// Item 2 should still be in cache (no filter call).
+		$admin->get_parent_permalink_data( $post_ids[2] );
+		$this->assertSame( 0, $filter_call_count, 'Item 2 should remain cached after FIFO eviction.' );
+
+		// Item 1 was evicted, so querying it triggers a filter call.
+		$admin->get_parent_permalink_data( $post_ids[1] );
+		$this->assertSame( 1, $filter_call_count, 'Item 1 should have been evicted FIFO and require re-fetching.' );
+
+		remove_filter( 'post_link', $filter );
+	}
 }
