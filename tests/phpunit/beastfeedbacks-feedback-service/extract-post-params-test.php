@@ -18,7 +18,6 @@ class BeastFeedbacks_Feedback_Service_Extract_Post_Params_Test extends BeastFeed
 		);
 
 		$this->assertSame( $expected_keys, \BeastFeedbacks_Feedback_Service::IGNORE_KEYS );
-		$this->assertSame( $expected_keys, \BeastFeedbacks_Feedback_Service::IGNORE_KEYS );
 	}
 
 	/** @test */
