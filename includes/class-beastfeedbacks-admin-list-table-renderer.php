@@ -74,8 +74,8 @@ class BeastFeedbacks_Admin_List_Table_Renderer {
 			return;
 		}
 
-		$admin        = BeastFeedbacks_Admin::get_instance();
-		$content_data = $admin->extract_post_content_data( $post->post_content );
+		$extractor    = BeastFeedbacks_Data_Extractor::get_instance();
+		$content_data = $extractor->extract_post_content_data( $post->post_content );
 		if ( ! $content_data['is_valid'] ) {
 			return;
 		}
@@ -139,8 +139,8 @@ class BeastFeedbacks_Admin_List_Table_Renderer {
 			return;
 		}
 
-		$admin          = BeastFeedbacks_Admin::get_instance();
-		$permalink_data = $admin->get_parent_permalink_data( $post->post_parent );
+		$extractor      = BeastFeedbacks_Data_Extractor::get_instance();
+		$permalink_data = $extractor->get_parent_permalink_data( $post->post_parent );
 
 		printf(
 			'<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>',

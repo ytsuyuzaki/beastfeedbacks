@@ -88,7 +88,7 @@ class BeastFeedbacks_Export {
 	private function process_csv_post_chunks( array $chunks, $temp_stream ) {
 		$fields     = array( 'source', 'date', 'type', 'ip_address', 'user_agent' );
 		$fields_map = array_fill_keys( $fields, true );
-		$admin      = BeastFeedbacks_Admin::get_instance();
+		$extractor  = BeastFeedbacks_Data_Extractor::get_instance();
 
 		foreach ( $chunks as $chunk ) {
 			_prime_post_caches( $chunk, false, false );
@@ -108,11 +108,11 @@ class BeastFeedbacks_Export {
 			foreach ( $posts as $post ) {
 				$source = '';
 				if ( $post->post_parent ) {
-					$permalink_data = $admin->get_parent_permalink_data( $post->post_parent );
+					$permalink_data = $extractor->get_parent_permalink_data( $post->post_parent );
 					$source         = $permalink_data['path'];
 				}
 
-				$content_data = $admin->extract_post_content_data( $post->post_content );
+				$content_data = $extractor->extract_post_content_data( $post->post_content );
 
 				$row_data = array(
 					'source'     => $source,
@@ -267,7 +267,7 @@ class BeastFeedbacks_Export {
 	 */
 	public function get_csv_data( array $posts ) {
 		$post_datas = array();
-		$admin      = BeastFeedbacks_Admin::get_instance();
+		$extractor  = BeastFeedbacks_Data_Extractor::get_instance();
 
 		$parent_ids = array_values( array_filter( array_map( 'intval', array_unique( wp_list_pluck( $posts, 'post_parent' ) ) ) ) );
 		if ( ! empty( $parent_ids ) ) {
@@ -279,11 +279,11 @@ class BeastFeedbacks_Export {
 
 			$source = '';
 			if ( $post->post_parent ) {
-				$permalink_data = $admin->get_parent_permalink_data( $post->post_parent );
+				$permalink_data = $extractor->get_parent_permalink_data( $post->post_parent );
 				$source         = $permalink_data['path'];
 			}
 
-			$content_data = $admin->extract_post_content_data( $post->post_content );
+			$content_data = $extractor->extract_post_content_data( $post->post_content );
 
 			$post_datas['source'][ $id ]     = $source;
 			$post_datas['date'][ $id ]       = $post->post_date;

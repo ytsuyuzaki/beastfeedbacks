@@ -58,6 +58,7 @@ class BeastFeedbacks {
 		require_once BEASTFEEDBACKS_DIR . 'includes/class-beastfeedbacks-feedback-service.php';
 		require_once BEASTFEEDBACKS_DIR . 'includes/class-beastfeedbacks-admin-list-table-renderer.php';
 		require_once BEASTFEEDBACKS_DIR . 'includes/class-beastfeedbacks-utils.php';
+		require_once BEASTFEEDBACKS_DIR . 'includes/class-beastfeedbacks-data-extractor.php';
 		require_once BEASTFEEDBACKS_DIR . 'includes/class-beastfeedbacks-export.php';
 		require_once BEASTFEEDBACKS_DIR . 'includes/class-beastfeedbacks-admin.php';
 		require_once BEASTFEEDBACKS_DIR . 'includes/class-beastfeedbacks-admin-list.php';

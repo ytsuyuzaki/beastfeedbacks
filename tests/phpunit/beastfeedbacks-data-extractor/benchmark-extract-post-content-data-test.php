@@ -5,11 +5,11 @@
  * @package BeastFeedbacks
  */
 
-class BeastFeedbacks_Extract_Post_Content_Data_Benchmark_Test extends BeastFeedbacks_TestCase {
+class BeastFeedbacks_Data_Extractor_Extract_Post_Content_Data_Benchmark_Test extends BeastFeedbacks_TestCase {
 
 	/** @test */
 	public function benchmark_extract_post_content_data_caching(): void {
-		$admin = \BeastFeedbacks_Admin::get_instance();
+		$extractor = \BeastFeedbacks_Data_Extractor::get_instance();
 
 		// Create sample JSON strings
 		$sample_json_strings = array();
@@ -28,18 +28,18 @@ class BeastFeedbacks_Extract_Post_Content_Data_Benchmark_Test extends BeastFeedb
 			);
 		}
 
-		$reflection = new ReflectionMethod( $admin, 'extract_post_content_data' );
+		$reflection = new ReflectionMethod( $extractor, 'extract_post_content_data' );
 		$reflection->setAccessible( true );
 
 		// Verify correctness of cached responses
-		$first_res  = $reflection->invoke( $admin, $sample_json_strings[0] );
-		$second_res = $reflection->invoke( $admin, $sample_json_strings[0] );
+		$first_res  = $reflection->invoke( $extractor, $sample_json_strings[0] );
+		$second_res = $reflection->invoke( $extractor, $sample_json_strings[0] );
 		$this->assertSame( $first_res, $second_res );
 		$this->assertTrue( $first_res['is_valid'] );
 		$this->assertSame( 'survey', $first_res['type'] );
 
 		// Verify handling of invalid JSON
-		$invalid_res = $reflection->invoke( $admin, 'invalid_json_string' );
+		$invalid_res = $reflection->invoke( $extractor, 'invalid_json_string' );
 		$this->assertFalse( $invalid_res['is_valid'] );
 
 		// Run 100,000 extractions across 50 JSON payloads
@@ -48,7 +48,7 @@ class BeastFeedbacks_Extract_Post_Content_Data_Benchmark_Test extends BeastFeedb
 
 		for ( $k = 0; $k < $iterations; $k++ ) {
 			$json = $sample_json_strings[ $k % 50 ];
-			$res  = $reflection->invoke( $admin, $json );
+			$res  = $reflection->invoke( $extractor, $json );
 		}
 
 		$time_taken = microtime( true ) - $start_time;

@@ -6,9 +6,9 @@
  */
 
 /**
- * Test case for BeastFeedbacks_Admin::get_parent_permalink_data().
+ * Test case for BeastFeedbacks_Data_Extractor::get_parent_permalink_data().
  */
-class BeastFeedbacks_Admin_Get_Parent_Permalink_Data_Test extends BeastFeedbacks_TestCase {
+class BeastFeedbacks_Data_Extractor_Get_Parent_Permalink_Data_Test extends BeastFeedbacks_TestCase {
 
 	/**
 	 * Test retrieving URL and path for a valid post ID.
@@ -24,8 +24,8 @@ class BeastFeedbacks_Admin_Get_Parent_Permalink_Data_Test extends BeastFeedbacks
 			)
 		);
 
-		$admin = \BeastFeedbacks_Admin::get_instance();
-		$data  = $admin->get_parent_permalink_data( $post_id );
+		$extractor = \BeastFeedbacks_Data_Extractor::get_instance();
+		$data      = $extractor->get_parent_permalink_data( $post_id );
 
 		$expected_url        = get_permalink( $post_id );
 		$expected_parsed_url = wp_parse_url( $expected_url );
@@ -59,12 +59,12 @@ class BeastFeedbacks_Admin_Get_Parent_Permalink_Data_Test extends BeastFeedbacks
 
 		add_filter( 'post_link', $filter );
 
-		$admin = \BeastFeedbacks_Admin::get_instance();
-		$first = $admin->get_parent_permalink_data( $post_id );
+		$extractor = \BeastFeedbacks_Data_Extractor::get_instance();
+		$first     = $extractor->get_parent_permalink_data( $post_id );
 
 		$this->assertSame( 1, $filter_call_count, 'post_link filter should be called once on initial cache miss.' );
 
-		$second = $admin->get_parent_permalink_data( $post_id );
+		$second = $extractor->get_parent_permalink_data( $post_id );
 
 		$this->assertSame( 1, $filter_call_count, 'post_link filter should not be called on static cache hit.' );
 
@@ -94,9 +94,9 @@ class BeastFeedbacks_Admin_Get_Parent_Permalink_Data_Test extends BeastFeedbacks
 			)
 		);
 
-		$admin  = \BeastFeedbacks_Admin::get_instance();
-		$data_a = $admin->get_parent_permalink_data( $post_id_a );
-		$data_b = $admin->get_parent_permalink_data( $post_id_b );
+		$extractor = \BeastFeedbacks_Data_Extractor::get_instance();
+		$data_a    = $extractor->get_parent_permalink_data( $post_id_a );
+		$data_b    = $extractor->get_parent_permalink_data( $post_id_b );
 
 		$this->assertNotEquals( $post_id_a, $post_id_b );
 		$this->assertSame( get_permalink( $post_id_a ), $data_a['url'] );
@@ -110,8 +110,8 @@ class BeastFeedbacks_Admin_Get_Parent_Permalink_Data_Test extends BeastFeedbacks
 	 */
 	public function get_parent_permalink_data_handles_non_existent_post_id(): void {
 		$invalid_id = 99999999;
-		$admin      = \BeastFeedbacks_Admin::get_instance();
-		$data       = $admin->get_parent_permalink_data( $invalid_id );
+		$extractor  = \BeastFeedbacks_Data_Extractor::get_instance();
+		$data       = $extractor->get_parent_permalink_data( $invalid_id );
 
 		$expected_url        = get_permalink( $invalid_id );
 		$expected_parsed_url = wp_parse_url( $expected_url );
@@ -143,8 +143,8 @@ class BeastFeedbacks_Admin_Get_Parent_Permalink_Data_Test extends BeastFeedbacks
 
 		add_filter( 'post_link', $filter );
 
-		$admin = \BeastFeedbacks_Admin::get_instance();
-		$data  = $admin->get_parent_permalink_data( $post_id );
+		$extractor = \BeastFeedbacks_Data_Extractor::get_instance();
+		$data      = $extractor->get_parent_permalink_data( $post_id );
 
 		remove_filter( 'post_link', $filter );
 

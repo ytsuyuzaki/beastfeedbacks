@@ -169,55 +169,10 @@ class BeastFeedbacks_Admin {
 	 *
 	 * @param string $post_content JSON string stored in post_content.
 	 * @return array Associative array containing parsed JSON fields and key-presence booleans.
+	 * @deprecated Use BeastFeedbacks_Data_Extractor::get_instance()->extract_post_content_data() instead.
 	 */
 	public function extract_post_content_data( $post_content ) {
-		static $cache = array();
-
-		if ( isset( $cache[ $post_content ] ) ) {
-			return $cache[ $post_content ];
-		}
-
-		// Performance optimization: Bounding in-memory static cache size to 100 items prevents unbounded
-		// memory allocation during large batch operations (e.g. multi-thousand row CSV exports).
-		// By evicting the oldest item sequentially, we prevent complete cache thrashing while retaining the bound.
-		if ( count( $cache ) >= 100 ) {
-			reset( $cache );
-			unset( $cache[ key( $cache ) ] );
-		}
-
-		$content = json_decode( $post_content, true );
-		if ( ! is_array( $content ) ) {
-			$cache[ $post_content ] = array(
-				'is_valid'       => false,
-				'type'           => '',
-				'post_params'    => array(),
-				'ip_address'     => '',
-				'user_agent'     => '',
-				'has_ip_address' => false,
-				'has_user_agent' => false,
-			);
-			return $cache[ $post_content ];
-		}
-
-		$type        = isset( $content['type'] ) ? $content['type'] : '';
-		$post_params = isset( $content['post_params'] ) && is_array( $content['post_params'] )
-			? $content['post_params']
-			: array();
-
-		$ip_address = isset( $content['ip_address'] ) ? $content['ip_address'] : '';
-		$user_agent = isset( $content['user_agent'] ) ? $content['user_agent'] : '';
-
-		$cache[ $post_content ] = array(
-			'is_valid'       => true,
-			'type'           => $type,
-			'post_params'    => $post_params,
-			'ip_address'     => $ip_address,
-			'user_agent'     => $user_agent,
-			'has_ip_address' => isset( $content['ip_address'] ),
-			'has_user_agent' => isset( $content['user_agent'] ),
-		);
-
-		return $cache[ $post_content ];
+		return BeastFeedbacks_Data_Extractor::get_instance()->extract_post_content_data( $post_content );
 	}
 
 	/**
@@ -225,26 +180,10 @@ class BeastFeedbacks_Admin {
 	 *
 	 * @param int $parent_id Parent post ID.
 	 * @return array Associative array containing 'url' and 'path'.
+	 * @deprecated Use BeastFeedbacks_Data_Extractor::get_instance()->get_parent_permalink_data() instead.
 	 */
 	public function get_parent_permalink_data( $parent_id ) {
-		static $cache = array();
-
-		if ( isset( $cache[ $parent_id ] ) ) {
-			return $cache[ $parent_id ];
-		}
-
-		if ( count( $cache ) >= 100 ) {
-			$cache = array();
-		}
-
-		$form_url            = get_permalink( $parent_id );
-		$parsed_url          = wp_parse_url( $form_url );
-		$cache[ $parent_id ] = array(
-			'url'  => $form_url,
-			'path' => esc_html( isset( $parsed_url['path'] ) ? $parsed_url['path'] : '' ),
-		);
-
-		return $cache[ $parent_id ];
+		return BeastFeedbacks_Data_Extractor::get_instance()->get_parent_permalink_data( $parent_id );
 	}
 
 	/**

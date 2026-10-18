@@ -292,13 +292,13 @@ class BeastFeedbacks_Admin_List {
 			_prime_post_caches( $parent_ids );
 		}
 
-		$admin = BeastFeedbacks_Admin::get_instance();
+		$extractor = BeastFeedbacks_Data_Extractor::get_instance();
 		?>
 		<select name="beastfeedbacks_parent_id">
 			<option value=""><?php esc_html_e( 'All Sources', 'beastfeedbacks' ); ?></option>
 			<?php foreach ( $parent_ids as $parent_id ) : ?>
 				<?php
-				$permalink_data = $admin->get_parent_permalink_data( $parent_id );
+				$permalink_data = $extractor->get_parent_permalink_data( $parent_id );
 				$select_source  = $permalink_data['path'];
 				?>
 				<option value="<?php echo esc_html( $parent_id ); ?>"
