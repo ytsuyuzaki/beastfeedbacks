@@ -200,8 +200,6 @@ class BeastFeedbacks_Admin_List {
 	/**
 	 * Verify admin filter nonce from request data.
 	 *
-	 * Memory context reminder: Raw nonce input should be unslashed without pre-sanitization before wp_verify_nonce().
-	 *
 	 * @return bool True if filter nonce or CSV export nonce is verified, false otherwise.
 	 */
 	public function is_filter_nonce_verified() {
