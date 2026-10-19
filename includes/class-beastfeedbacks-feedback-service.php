@@ -51,41 +51,10 @@ class BeastFeedbacks_Feedback_Service {
 	 *
 	 * @param array $post_data POSTデータ.
 	 * @return array
+	 * @deprecated Use BeastFeedbacks_Input_Sanitizer::get_instance()->extract_post_params() instead.
 	 */
 	public function extract_post_params( array $post_data ) {
-		$post_params = array();
-
-		// Security: Enforce maximum parameter limit to prevent resource exhaustion via post parameter flooding.
-		$max_params = (int) apply_filters( 'beastfeedbacks_max_post_params', 50 );
-
-		foreach ( array_keys( $post_data ) as $post_key ) {
-			if ( count( $post_params ) >= $max_params ) {
-				break;
-			}
-
-			if ( isset( self::IGNORE_KEYS[ $post_key ] ) ) {
-				continue;
-			}
-			if ( isset( $post_data[ $post_key ] ) ) {
-				// Security: Pre-truncate with a buffer to prevent DoS via huge keys.
-				// wp_unslash removes slashes which might have expanded the original string.
-				// We allocate a buffer (e.g. 200) to safely unslash before final strict truncation.
-				$sanitized_key = mb_substr( (string) $post_key, 0, 200 );
-				$unslashed_key = wp_unslash( $sanitized_key );
-				// Strip C0 control characters (except \t, \n, \r) before sanitize_text_field.
-				$no_control_key = preg_replace( '/[\x00-\x08\x0B\x0C\x0E-\x1F]/', '', $unslashed_key );
-				$sanitized_key  = sanitize_text_field( $no_control_key );
-				$sanitized_key  = mb_substr( $sanitized_key, 0, 100 );
-
-				if ( '' === $sanitized_key ) {
-					continue;
-				}
-				$post_value                    = $post_data[ $post_key ];
-				$post_params[ $sanitized_key ] = $this->sanitize_param_value( $post_value );
-			}
-		}
-
-		return $post_params;
+		return BeastFeedbacks_Input_Sanitizer::get_instance()->extract_post_params( $post_data, self::IGNORE_KEYS );
 	}
 
 	/**
@@ -95,51 +64,10 @@ class BeastFeedbacks_Feedback_Service {
 	 *
 	 * @param mixed $value The value to sanitize.
 	 * @return mixed Sanitized string or array.
+	 * @deprecated Use BeastFeedbacks_Input_Sanitizer::get_instance()->sanitize_param_value() instead.
 	 */
 	public function sanitize_param_value( $value ) {
-		if ( is_array( $value ) ) {
-			$sanitized_array = array();
-			$max_items       = 50;
-			$item_count      = 0;
-
-			foreach ( $value as $key => $item ) {
-				if ( $item_count >= $max_items ) {
-					break;
-				}
-
-				// Security: Reject complex array structures entirely to prevent deep parsing DoS.
-				if ( is_array( $item ) || is_object( $item ) ) {
-					return '';
-				}
-
-				// Security: Pre-truncate with a buffer to prevent DoS via huge keys.
-				$sanitized_item_key = mb_substr( (string) $key, 0, 200 );
-				$unslashed_key      = wp_unslash( $sanitized_item_key );
-				// Strip C0 control characters (except \t, \n, \r) before sanitize_text_field.
-				$no_control_key     = preg_replace( '/[\x00-\x08\x0B\x0C\x0E-\x1F]/', '', $unslashed_key );
-				$sanitized_item_key = sanitize_text_field( $no_control_key );
-				$sanitized_item_key = mb_substr( $sanitized_item_key, 0, 100 );
-
-				if ( '' === $sanitized_item_key ) {
-					continue;
-				}
-
-				$sanitized_array[ $sanitized_item_key ] = $this->sanitize_param_value( $item );
-				++$item_count;
-			}
-
-			return $sanitized_array;
-		}
-
-		if ( is_object( $value ) ) {
-			return '';
-		}
-
-		$unslashed_val = wp_unslash( (string) $value );
-		// Strip C0 control characters (except \t, \n, \r) previously handled by wp_kses().
-		$no_control_val = preg_replace( '/[\x00-\x08\x0B\x0C\x0E-\x1F]/', '', $unslashed_val );
-		$sanitized_val  = wp_specialchars_decode( sanitize_text_field( $no_control_val ), ENT_QUOTES );
-		return mb_substr( $sanitized_val, 0, 2000 );
+		return BeastFeedbacks_Input_Sanitizer::get_instance()->sanitize_param_value( $value );
 	}
 
 	/**
