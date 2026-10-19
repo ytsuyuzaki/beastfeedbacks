@@ -71,8 +71,11 @@ class BeastFeedbacks_Feedback_Service {
 				// wp_unslash removes slashes which might have expanded the original string.
 				// We allocate a buffer (e.g. 200) to safely unslash before final strict truncation.
 				$sanitized_key = mb_substr( (string) $post_key, 0, 200 );
-				$sanitized_key = sanitize_text_field( wp_unslash( $sanitized_key ) );
-				$sanitized_key = mb_substr( $sanitized_key, 0, 100 );
+				$unslashed_key = wp_unslash( $sanitized_key );
+				// Strip C0 control characters (except \t, \n, \r) before sanitize_text_field.
+				$no_control_key = preg_replace( '/[\x00-\x08\x0B\x0C\x0E-\x1F]/', '', $unslashed_key );
+				$sanitized_key  = sanitize_text_field( $no_control_key );
+				$sanitized_key  = mb_substr( $sanitized_key, 0, 100 );
 
 				if ( '' === $sanitized_key ) {
 					continue;

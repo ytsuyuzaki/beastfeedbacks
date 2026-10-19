@@ -73,6 +73,18 @@ class BeastFeedbacks_Feedback_Service_Extract_Post_Params_Test extends BeastFeed
 	}
 
 	/** @test */
+	public function extract_post_params_strips_c0_control_characters_from_top_level_keys(): void {
+		$raw_data = array(
+			"field\x07name\x1b" => 'test_value',
+		);
+
+		$result = \BeastFeedbacks_Feedback_Service::get_instance()->extract_post_params( $raw_data );
+
+		$this->assertArrayHasKey( 'fieldname', $result );
+		$this->assertSame( 'test_value', $result['fieldname'] );
+	}
+
+	/** @test */
 	public function extract_post_params_enforces_max_parameters_and_length_limits(): void {
 		$raw_data = array();
 
