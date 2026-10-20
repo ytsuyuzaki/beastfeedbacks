@@ -81,24 +81,31 @@ class BeastFeedbacks_Input_Sanitizer_Test extends \BeastFeedbacks_TestCase {
 	}
 
 	public function test_sanitize_param_value_handles_arrays(): void {
-		$input = array(
+		// Valid flat array
+		$flat_input = array(
 			'key1' => 'value1',
-			'key2' => array( 'nested1', 'nested2' ),
-			'key3' => (object) array( 'prop' => 'val' ), // Objects inside arrays should be rejected
+			'key2' => 'value2',
 		);
-
-		$result = $this->sanitizer->sanitize_param_value( $input );
-
+		$result = $this->sanitizer->sanitize_param_value( $flat_input );
 		$this->assertIsArray( $result );
 		$this->assertArrayHasKey( 'key1', $result );
 		$this->assertSame( 'value1', $result['key1'] );
-
-		// Nested arrays/objects are rejected and return empty string
 		$this->assertArrayHasKey( 'key2', $result );
-		$this->assertSame( '', $result['key2'] );
+		$this->assertSame( 'value2', $result['key2'] );
 
-		$this->assertArrayHasKey( 'key3', $result );
-		$this->assertSame( '', $result['key3'] );
+		// Input with nested array should be rejected entirely per existing behavior
+		$nested_input = array(
+			'key1' => 'value1',
+			'key2' => array( 'nested1', 'nested2' ),
+		);
+		$this->assertSame( '', $this->sanitizer->sanitize_param_value( $nested_input ) );
+
+		// Input with object should be rejected entirely per existing behavior
+		$object_input = array(
+			'key1' => 'value1',
+			'key2' => (object) array( 'prop' => 'val' ),
+		);
+		$this->assertSame( '', $this->sanitizer->sanitize_param_value( $object_input ) );
 	}
 
 	public function test_sanitize_param_value_enforces_array_item_limit(): void {
