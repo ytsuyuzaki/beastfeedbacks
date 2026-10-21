@@ -34,17 +34,5 @@ class BeastFeedbacks_Admin_List_Init_Test extends BeastFeedbacks_TestCase {
 
 		$this->assertTrue( has_filter( 'manage_beastfeedbacks_posts_columns', array( $admin_list, 'manage_posts_columns' ) ) !== false );
 		$this->assertTrue( has_action( 'manage_posts_custom_column', array( $admin_list, 'manage_posts_custom_column' ) ) !== false );
-
-		$this->assertTrue( has_action( 'restrict_manage_posts', array( $admin_list, 'add_type_filter' ) ) !== false );
-		$this->assertTrue( has_action( 'restrict_manage_posts', array( $admin_list, 'add_source_filter' ) ) !== false );
-
-		$this->assertTrue( has_action( 'pre_get_posts', array( $admin_list, 'type_filter_result' ) ) !== false );
-		$this->assertTrue( has_action( 'pre_get_posts', array( $admin_list, 'source_filter_result' ) ) !== false );
-		$this->assertTrue( has_filter( 'the_posts', array( $admin_list, 'prime_parent_post_caches' ) ) !== false );
-
-		$this->assertTrue( has_action( 'save_post_beastfeedbacks', array( $admin_list, 'clear_source_filter_cache' ) ) !== false );
-		$this->assertTrue( has_action( 'deleted_post', array( $admin_list, 'clear_source_filter_cache' ) ) !== false );
-		$this->assertTrue( has_action( 'trashed_post', array( $admin_list, 'clear_source_filter_cache' ) ) !== false );
-		$this->assertTrue( has_action( 'untrashed_post', array( $admin_list, 'clear_source_filter_cache' ) ) !== false );
 	}
 }

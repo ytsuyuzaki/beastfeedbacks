@@ -42,6 +42,7 @@ class BeastFeedbacks {
 		BeastFeedbacks_Utils::init();
 
 		if ( is_admin() ) {
+			BeastFeedbacks_Admin_List_Filter::get_instance()->init();
 			BeastFeedbacks_Admin::get_instance()->init();
 		}
 		BeastFeedbacks_Public::get_instance()->init();
@@ -62,6 +63,7 @@ class BeastFeedbacks {
 		require_once BEASTFEEDBACKS_DIR . 'includes/class-beastfeedbacks-data-extractor.php';
 		require_once BEASTFEEDBACKS_DIR . 'includes/class-beastfeedbacks-export.php';
 		require_once BEASTFEEDBACKS_DIR . 'includes/class-beastfeedbacks-admin.php';
+		require_once BEASTFEEDBACKS_DIR . 'includes/class-beastfeedbacks-admin-list-filter.php';
 		require_once BEASTFEEDBACKS_DIR . 'includes/class-beastfeedbacks-admin-list.php';
 		require_once BEASTFEEDBACKS_DIR . 'includes/class-beastfeedbacks-public.php';
 		require_once BEASTFEEDBACKS_DIR . 'includes/class-beastfeedbacks-block.php';
