@@ -29,7 +29,7 @@ class BeastFeedbacks_Data_Extractor_Get_Parent_Permalink_Data_Test extends Beast
 
 		$expected_url        = get_permalink( $post_id );
 		$expected_parsed_url = wp_parse_url( $expected_url );
-		$expected_path       = esc_html( isset( $expected_parsed_url['path'] ) ? $expected_parsed_url['path'] : '' );
+		$expected_path       = isset( $expected_parsed_url['path'] ) ? $expected_parsed_url['path'] : '';
 
 		$this->assertIsArray( $data );
 		$this->assertArrayHasKey( 'url', $data );
@@ -115,7 +115,7 @@ class BeastFeedbacks_Data_Extractor_Get_Parent_Permalink_Data_Test extends Beast
 
 		$expected_url        = get_permalink( $invalid_id );
 		$expected_parsed_url = wp_parse_url( $expected_url );
-		$expected_path       = esc_html( isset( $expected_parsed_url['path'] ) ? $expected_parsed_url['path'] : '' );
+		$expected_path       = isset( $expected_parsed_url['path'] ) ? $expected_parsed_url['path'] : '';
 
 		$this->assertIsArray( $data );
 		$this->assertArrayHasKey( 'url', $data );
