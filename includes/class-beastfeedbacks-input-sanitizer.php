@@ -134,7 +134,13 @@ class BeastFeedbacks_Input_Sanitizer {
 			return '';
 		}
 
-		$unslashed_val = wp_unslash( (string) $value );
+		$str_val = (string) $value;
+		// Performance optimization: Fast-path return for empty string values to avoid unnecessary wp_unslash, regex, and sanitize_text_field overhead.
+		if ( '' === $str_val ) {
+			return '';
+		}
+
+		$unslashed_val = wp_unslash( $str_val );
 		// Strip C0 control characters (except \t, \n, \r) previously handled by wp_kses().
 		$no_control_val = preg_replace( '/[\x00-\x08\x0B\x0C\x0E-\x1F]/', '', $unslashed_val );
 		$sanitized_val  = wp_specialchars_decode( sanitize_text_field( $no_control_val ), ENT_QUOTES );
