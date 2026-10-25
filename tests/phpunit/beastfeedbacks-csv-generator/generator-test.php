@@ -127,4 +127,46 @@ class BeastFeedbacks_CSV_Generator_Test extends BeastFeedbacks_TestCase {
 		$this->assertArrayHasKey( 'like', $data );
 		$this->assertSame( 'yes', $data['like'][ $post_id ] );
 	}
+
+	/** @test */
+	public function stream_to_handle_aborts_when_write_fails(): void {
+		$existing = get_posts(
+			array(
+				'post_type'      => 'beastfeedbacks',
+				'post_status'    => 'any',
+				'posts_per_page' => -1,
+			)
+		);
+		foreach ( $existing as $p ) {
+			wp_delete_post( $p->ID, true );
+		}
+
+		wp_insert_post(
+			array(
+				'post_type'    => 'beastfeedbacks',
+				'post_status'  => 'publish',
+				'post_content' => wp_slash( wp_json_encode( array( 'type' => 'like' ) ) ),
+				'post_date'    => '2025-01-01 10:00:00',
+			)
+		);
+
+		// Create a subclass override that uses a read-only temp stream to simulate write failure.
+		$failing_generator = new class extends \BeastFeedbacks_CSV_Generator {
+			public function __construct() {
+				// Allow instantiation.
+			}
+			protected function open_temp_stream() {
+				return fopen( 'php://temp', 'r' ); // Read-only stream causes fwrite to return 0 or false.
+			}
+		};
+
+		$output = fopen( 'php://temp', 'w+' );
+		$failing_generator->stream_to_handle( $output );
+
+		rewind( $output );
+		$csv_output = stream_get_contents( $output );
+		fclose( $output );
+
+		$this->assertSame( '', $csv_output );
+	}
 }
