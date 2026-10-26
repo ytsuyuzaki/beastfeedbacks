@@ -145,7 +145,7 @@ class BeastFeedbacks_Admin_List_Table_Renderer {
 		printf(
 			'<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>',
 			esc_url( $permalink_data['url'] ),
-			$permalink_data['path'] // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			esc_html( $permalink_data['path'] )
 		);
 	}
 
