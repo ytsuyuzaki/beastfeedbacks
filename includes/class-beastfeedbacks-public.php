@@ -57,7 +57,7 @@ class BeastFeedbacks_Public {
 
 		$service    = BeastFeedbacks_Feedback_Service::get_instance();
 		$ip_address = $service->get_ip_address();
-		if ( $service->is_rate_limited( $ip_address ) ) {
+		if ( BeastFeedbacks_Rate_Limiter::get_instance()->is_rate_limited( $ip_address ) ) {
 			wp_send_json_error( array( 'message' => __( 'Too many requests', 'beastfeedbacks' ) ), 429 );
 		}
 
