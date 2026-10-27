@@ -106,7 +106,6 @@
 		"@wp-playground/tools": {
 			"ajv": "^8.20.0"
 		},
-		"@wordpress/env": "$@wordpress/env",
 		"micromark-extension-math": {
 			"katex": "^0.18.2"
 		},
