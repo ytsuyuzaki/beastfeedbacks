@@ -32,6 +32,7 @@ class BeastFeedbacks_Admin {
 	 * CSVエクスポート用のアクション名.
 	 *
 	 * @var string
+	 * @deprecated Use BeastFeedbacks_Export::get_instance()->export_action_name instead.
 	 */
 
 	public $export_action_name = 'beastfeedbacks_export';
@@ -58,8 +59,6 @@ class BeastFeedbacks_Admin {
 		add_action( 'admin_menu', array( $this, 'add_menu_page' ) );
 		add_filter( 'bulk_actions-edit-' . $this->post_type, array( $this, 'admin_bulk_actions' ) );
 		add_filter( 'views_edit-' . $this->post_type, array( $this, 'admin_view_tabs' ) );
-
-		add_action( 'restrict_manage_posts', array( $this, 'add_export_button' ) );
 
 		BeastFeedbacks_Admin_List::get_instance()->init();
 		BeastFeedbacks_Export::get_instance()->init( $this->export_action_name );
@@ -190,31 +189,10 @@ class BeastFeedbacks_Admin {
 	 * Add export button for the response list screen.
 	 *
 	 * @return void
+	 * @deprecated Use BeastFeedbacks_Export::get_instance()->add_export_button() instead.
 	 */
 	public function add_export_button() {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			return;
-		}
-
-		$screen = get_current_screen();
-		if ( ! $screen || ! isset( $screen->id ) || 'edit-beastfeedbacks' !== $screen->id ) {
-			return;
-		}
-
-		$action = $this->export_action_name;
-		$nonce  = wp_create_nonce( 'beastfeedbacks_csv_export' );
-		$url    = admin_url( 'admin-ajax.php' );
-
-		?>
-		<button
-			type="button"
-			class="button button-primary beastfeedbacks-export-btn"
-			data-endpoint="<?php echo esc_attr( $url ); ?>"
-			data-action="<?php echo esc_attr( $action ); ?>"
-			data-nonce="<?php echo esc_attr( $nonce ); ?>">
-			<?php echo esc_html__( 'Export', 'beastfeedbacks' ); ?>
-		</button>
-		<?php
+		BeastFeedbacks_Export::get_instance()->add_export_button();
 	}
 
 	/**
