@@ -34,12 +34,52 @@ class BeastFeedbacks_Export {
 	}
 
 	/**
+	 * CSVエクスポート用のアクション名.
+	 *
+	 * @var string
+	 */
+	public $export_action_name = 'beastfeedbacks_export';
+
+	/**
 	 * Init
 	 *
 	 * @param string $action_name Action name for CSV export. Default 'beastfeedbacks_export'.
 	 */
 	public function init( $action_name = 'beastfeedbacks_export' ) {
+		$this->export_action_name = $action_name;
 		add_action( 'wp_ajax_' . $action_name, array( $this, 'download_csv' ) );
+		add_action( 'restrict_manage_posts', array( $this, 'add_export_button' ) );
+	}
+
+	/**
+	 * Add export button for the response list screen.
+	 *
+	 * @return void
+	 */
+	public function add_export_button() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		$screen = get_current_screen();
+		if ( ! $screen || ! isset( $screen->id ) || 'edit-beastfeedbacks' !== $screen->id ) {
+			return;
+		}
+
+		$action = $this->export_action_name;
+		$nonce  = wp_create_nonce( 'beastfeedbacks_csv_export' );
+		$url    = admin_url( 'admin-ajax.php' );
+
+		?>
+		<button
+			type="button"
+			class="button button-primary beastfeedbacks-export-btn"
+			data-endpoint="<?php echo esc_attr( $url ); ?>"
+			data-action="<?php echo esc_attr( $action ); ?>"
+			data-nonce="<?php echo esc_attr( $nonce ); ?>">
+			<?php echo esc_html__( 'Export', 'beastfeedbacks' ); ?>
+		</button>
+		<?php
 	}
 
 	/**

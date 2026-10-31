@@ -20,12 +20,17 @@ class BeastFeedbacks_Export_Init_Test extends BeastFeedbacks_TestCase {
 
 	/** @test */
 	public function init_registers_ajax_action_with_custom_name(): void {
-		$instance = \BeastFeedbacks_Export::get_instance();
+		$instance             = \BeastFeedbacks_Export::get_instance();
+		$original_action_name = $instance->export_action_name;
+
 		$instance->init( 'custom_export_action' );
 
 		$this->assertSame(
 			10,
 			has_action( 'wp_ajax_custom_export_action', array( $instance, 'download_csv' ) )
 		);
+
+		// Restore original name.
+		$instance->export_action_name = $original_action_name;
 	}
 }
