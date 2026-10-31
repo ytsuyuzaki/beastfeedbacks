@@ -8,6 +8,14 @@
 class BeastFeedbacks_Export_Add_Export_Button_Test extends BeastFeedbacks_TestCase {
 
 	/**
+	 * Set up test context.
+	 */
+	protected function set_up(): void {
+		parent::set_up();
+		\BeastFeedbacks_Export::get_instance()->export_action_name = 'beastfeedbacks_export';
+	}
+
+	/**
 	 * Tear down test context.
 	 */
 	protected function tear_down(): void {
