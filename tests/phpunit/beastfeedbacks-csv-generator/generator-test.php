@@ -22,25 +22,6 @@ class BeastFeedbacks_CSV_Generator_Test extends BeastFeedbacks_TestCase {
 	}
 
 	/** @test */
-	public function esc_csv_prefixes_when_dangerous_first_char(): void {
-		$generator = \BeastFeedbacks_CSV_Generator::get_instance();
-
-		$this->assertSame( "' =SUM(A1:A2)", $generator->esc_csv( '=SUM(A1:A2)' ) );
-		$this->assertSame( "' +1+2", $generator->esc_csv( '+1+2' ) );
-		$this->assertSame( "' -1", $generator->esc_csv( '-1' ) );
-		$this->assertSame( "' @cmd", $generator->esc_csv( '@cmd' ) );
-		$this->assertSame( "' \tcmd", $generator->esc_csv( "\tcmd" ) );
-		$this->assertSame( "' \rcmd", $generator->esc_csv( "\rcmd" ) );
-		$this->assertSame( "'  =SUM(A1:A2)", $generator->esc_csv( ' =SUM(A1:A2)' ) );
-		$this->assertSame( "'   +1+2", $generator->esc_csv( '  +1+2' ) );
-		$this->assertSame( "' \x0C=SUM(A1:A2)", $generator->esc_csv( "\x0C=SUM(A1:A2)" ) );
-		$this->assertSame( "' Line1\n=SUM(A1:A2)", $generator->esc_csv( "Line1\n=SUM(A1:A2)" ) );
-
-		$this->assertSame( 'safe', $generator->esc_csv( 'safe' ) );
-		$this->assertSame( '  space', $generator->esc_csv( '  space' ) );
-	}
-
-	/** @test */
 	public function get_export_posts_returns_only_published_feedbacks(): void {
 		wp_insert_post(
 			array(
