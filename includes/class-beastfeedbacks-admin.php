@@ -38,6 +38,12 @@ class BeastFeedbacks_Admin {
 	public $export_action_name = 'beastfeedbacks_export';
 
 	/**
+	 * Constructor
+	 */
+	private function __construct() {
+	}
+
+	/**
 	 * Instance
 	 *
 	 * @return self
@@ -53,114 +59,9 @@ class BeastFeedbacks_Admin {
 	 * Init
 	 */
 	public function init() {
-		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ) );
-
-		// フィードバックの管理ページの構築.
-		add_action( 'admin_menu', array( $this, 'add_menu_page' ) );
-		add_filter( 'bulk_actions-edit-' . $this->post_type, array( $this, 'admin_bulk_actions' ) );
-		add_filter( 'views_edit-' . $this->post_type, array( $this, 'admin_view_tabs' ) );
-
+		BeastFeedbacks_Admin_Menu::get_instance()->init();
 		BeastFeedbacks_Admin_List::get_instance()->init();
 		BeastFeedbacks_Export::get_instance()->init( $this->export_action_name );
-	}
-
-	/**
-	 * 静的ファイルのcssやjsを読み込む
-	 */
-	public function admin_enqueue_scripts() {
-		$screen = get_current_screen();
-		if ( 'edit-beastfeedbacks' !== $screen->id ) {
-			return;
-		}
-
-		wp_enqueue_script(
-			BEASTFEEDBACKS_DOMAIN,
-			BEASTFEEDBACKS_URL . 'public/js/beastfeedbacks-admin.js',
-			array(),
-			BEASTFEEDBACKS_VERSION,
-			true
-		);
-
-		wp_enqueue_style(
-			BEASTFEEDBACKS_DOMAIN,
-			BEASTFEEDBACKS_URL . 'public/css/beastfeedbacks-admin.css',
-			array(),
-			BEASTFEEDBACKS_VERSION
-		);
-	}
-
-
-	/**
-	 * メニューページの登録
-	 */
-	public function add_menu_page() {
-		add_menu_page(
-			'BeastFeedbacks',
-			'BeastFeedbacks',
-			'edit_pages',
-			'edit.php?post_type=' . $this->post_type,
-			'',
-			'dashicons-feedback'
-		);
-
-		register_post_type(
-			$this->post_type,
-			array(
-				'labels'                => array(
-					'name' => 'Beastfeedbacks',
-				),
-
-				'public'                => false,
-				'show_ui'               => true,
-				'show_in_menu'          => false,
-				'show_in_admin_bar'     => false,
-				'show_in_rest'          => false,
-
-				'rewrite'               => false,
-				'query_var'             => false,
-
-				'rest_controller_class' => '',
-
-				'map_meta_cap'          => true,
-				'capability_type'       => 'page',
-				'capabilities'          => array(
-					'create_posts' => 'do_not_allow',
-				),
-			)
-		);
-	}
-
-	/**
-	 * プルダウンの一括操作、編集を削除
-	 *
-	 * @param array $actions List of actions available.
-	 * @return array $actions
-	 */
-	public function admin_bulk_actions( $actions ) {
-		global $current_screen;
-		if ( 'edit-beastfeedbacks' !== $current_screen->id ) {
-			return $actions;
-		}
-
-		unset( $actions['edit'] );
-		return $actions;
-	}
-
-	/**
-	 * タブ表示の整形
-	 *
-	 * @param array $views List of post views.
-	 * @return array $views
-	 */
-	public function admin_view_tabs( $views ) {
-		global $current_screen;
-		if ( 'edit-beastfeedbacks' !== $current_screen->id ) {
-			return $views;
-		}
-
-		unset( $views['publish'] );
-
-		return $views;
 	}
 
 	/**
@@ -256,6 +157,46 @@ class BeastFeedbacks_Admin {
 	// --------------------------------------------------------------------------------
 	// Deprecated / Delegated Methods for Backward Compatibility
 	// --------------------------------------------------------------------------------
+
+	/**
+	 * 静的ファイルのcssやjsを読み込む
+	 *
+	 * @deprecated Use BeastFeedbacks_Admin_Menu::get_instance()->admin_enqueue_scripts() instead.
+	 */
+	public function admin_enqueue_scripts() {
+		BeastFeedbacks_Admin_Menu::get_instance()->admin_enqueue_scripts();
+	}
+
+	/**
+	 * メニューページの登録
+	 *
+	 * @deprecated Use BeastFeedbacks_Admin_Menu::get_instance()->add_menu_page() instead.
+	 */
+	public function add_menu_page() {
+		BeastFeedbacks_Admin_Menu::get_instance()->add_menu_page();
+	}
+
+	/**
+	 * プルダウンの一括操作、編集を削除
+	 *
+	 * @param array $actions List of actions available.
+	 * @return array $actions
+	 * @deprecated Use BeastFeedbacks_Admin_Menu::get_instance()->admin_bulk_actions() instead.
+	 */
+	public function admin_bulk_actions( $actions ) {
+		return BeastFeedbacks_Admin_Menu::get_instance()->admin_bulk_actions( $actions );
+	}
+
+	/**
+	 * タブ表示の整形
+	 *
+	 * @param array $views List of post views.
+	 * @return array $views
+	 * @deprecated Use BeastFeedbacks_Admin_Menu::get_instance()->admin_view_tabs() instead.
+	 */
+	public function admin_view_tabs( $views ) {
+		return BeastFeedbacks_Admin_Menu::get_instance()->admin_view_tabs( $views );
+	}
 
 	/**
 	 * 一覧で表示するカラム
