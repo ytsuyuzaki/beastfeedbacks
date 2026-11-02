@@ -14,7 +14,7 @@ class BeastFeedbacks_Admin_Init_Test extends BeastFeedbacks_TestCase {
 
 		$this->assertSame(
 			10,
-			has_action( 'admin_enqueue_scripts', array( $instance, 'admin_enqueue_scripts' ) )
+			has_action( 'admin_enqueue_scripts', array( \BeastFeedbacks_Admin_Menu::get_instance(), 'admin_enqueue_scripts' ) )
 		);
 	}
 

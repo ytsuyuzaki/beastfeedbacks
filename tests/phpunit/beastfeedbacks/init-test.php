@@ -22,7 +22,7 @@ class BeastFeedbacks_Init_Test extends BeastFeedbacks_TestCase {
 		\BeastFeedbacks::get_instance()->init();
 
 		$this->assertNotFalse(
-			has_action( 'admin_enqueue_scripts', array( \BeastFeedbacks_Admin::get_instance(), 'admin_enqueue_scripts' ) )
+			has_action( 'admin_enqueue_scripts', array( \BeastFeedbacks_Admin_Menu::get_instance(), 'admin_enqueue_scripts' ) )
 		);
 		$this->assertNotFalse(
 			has_action( 'wp_ajax_register_beastfeedbacks_form', array( \BeastFeedbacks_Public::get_instance(), 'register_beastfeedbacks_form' ) )
@@ -52,7 +52,7 @@ class BeastFeedbacks_Init_Test extends BeastFeedbacks_TestCase {
 		\BeastFeedbacks::get_instance()->init();
 
 		$this->assertFalse(
-			has_action( 'admin_enqueue_scripts', array( \BeastFeedbacks_Admin::get_instance(), 'admin_enqueue_scripts' ) )
+			has_action( 'admin_enqueue_scripts', array( \BeastFeedbacks_Admin_Menu::get_instance(), 'admin_enqueue_scripts' ) )
 		);
 		$this->assertNotFalse(
 			has_action( 'wp_ajax_register_beastfeedbacks_form', array( \BeastFeedbacks_Public::get_instance(), 'register_beastfeedbacks_form' ) )
