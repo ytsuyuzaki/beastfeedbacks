@@ -78,6 +78,10 @@ class BeastFeedbacks_Feedback_Formatter {
 		);
 
 		foreach ( $content_data['post_params'] as $key => $value ) {
+			if ( isset( $row_data[ $key ] ) ) {
+				continue;
+			}
+
 			if ( is_array( $value ) ) {
 				$row_data[ $key ] = implode( ',', $value );
 			} else {

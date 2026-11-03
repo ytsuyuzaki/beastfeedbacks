@@ -84,6 +84,54 @@ class BeastFeedbacks_Feedback_Formatter_Test extends BeastFeedbacks_TestCase {
 	}
 
 	/** @test */
+	public function format_post_data_does_not_overwrite_metadata_with_post_params(): void {
+		$parent_id = $this->create_post(
+			array(
+				'post_type'  => 'page',
+				'post_title' => 'Test Parent',
+				'post_name'  => 'test-parent',
+			)
+		);
+
+		$content = wp_json_encode(
+			array(
+				'type'        => 'survey',
+				'ip_address'  => '127.0.0.1',
+				'user_agent'  => 'TestBrowser/1.0',
+				'post_params' => array(
+					'date'       => 'User Date',
+					'source'     => 'User Source',
+					'type'       => 'User Type',
+					'ip_address' => 'User IP',
+					'user_agent' => 'User Agent',
+					'question1'  => 'Answer 1',
+				),
+			)
+		);
+
+		$post_id = $this->create_post(
+			array(
+				'post_type'    => 'beastfeedbacks',
+				'post_parent'  => $parent_id,
+				'post_content' => $content,
+				'post_date'    => '2025-01-01 12:00:00',
+			)
+		);
+
+		$post = get_post( $post_id );
+
+		$row_data = $this->formatter->format_post_data( $post );
+
+		$this->assertIsArray( $row_data );
+		$this->assertStringContainsString( 'test-parent', $row_data['source'] ); // Not overwritten
+		$this->assertSame( '2025-01-01 12:00:00', $row_data['date'] ); // Not overwritten
+		$this->assertSame( 'survey', $row_data['type'] ); // Not overwritten
+		$this->assertSame( '127.0.0.1', $row_data['ip_address'] ); // Not overwritten
+		$this->assertSame( 'TestBrowser/1.0', $row_data['user_agent'] ); // Not overwritten
+		$this->assertSame( 'Answer 1', $row_data['question1'] ); // Normal param included
+	}
+
+	/** @test */
 	public function format_post_data_handles_missing_parent_and_content_gracefully(): void {
 		$post_id = $this->create_post(
 			array(
