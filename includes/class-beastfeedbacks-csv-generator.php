@@ -49,7 +49,7 @@ class BeastFeedbacks_CSV_Generator {
 	private function process_csv_post_chunks( array $chunks, $temp_stream ) {
 		$fields     = array( 'source', 'date', 'type', 'ip_address', 'user_agent' );
 		$fields_map = array_fill_keys( $fields, true );
-		$extractor  = BeastFeedbacks_Data_Extractor::get_instance();
+		$formatter  = BeastFeedbacks_Feedback_Formatter::get_instance();
 
 		foreach ( $chunks as $chunk ) {
 			_prime_post_caches( $chunk, false, false );
@@ -61,31 +61,12 @@ class BeastFeedbacks_CSV_Generator {
 				}
 			}
 
-			$parent_ids = array_values( array_filter( array_map( 'intval', array_unique( wp_list_pluck( $posts, 'post_parent' ) ) ) ) );
-			if ( ! empty( $parent_ids ) ) {
-				_prime_post_caches( $parent_ids );
-			}
+			$formatter->prime_parent_caches( $posts );
 
 			foreach ( $posts as $post ) {
-				$source = '';
-				if ( $post->post_parent ) {
-					$permalink_data = $extractor->get_parent_permalink_data( $post->post_parent );
-					$source         = $permalink_data['path'];
-				}
+				$row_data = $formatter->format_post_data( $post );
 
-				$content_data = $extractor->extract_post_content_data( $post->post_content );
-
-				$row_data = array(
-					'source'     => $source,
-					'date'       => $post->post_date,
-					'type'       => $content_data['type'],
-					'ip_address' => $content_data['ip_address'],
-					'user_agent' => $content_data['user_agent'],
-				);
-
-				$row_data += $content_data['post_params'];
-
-				foreach ( $content_data['post_params'] as $key => $val ) {
+				foreach ( $row_data as $key => $val ) {
 					if ( ! isset( $fields_map[ $key ] ) ) {
 						$fields_map[ $key ] = true;
 						$fields[]           = $key;
@@ -230,36 +211,16 @@ class BeastFeedbacks_CSV_Generator {
 	 */
 	public function get_csv_data( array $posts ) {
 		$post_datas = array();
-		$extractor  = BeastFeedbacks_Data_Extractor::get_instance();
+		$formatter  = BeastFeedbacks_Feedback_Formatter::get_instance();
 
-		$parent_ids = array_values( array_filter( array_map( 'intval', array_unique( wp_list_pluck( $posts, 'post_parent' ) ) ) ) );
-		if ( ! empty( $parent_ids ) ) {
-			_prime_post_caches( $parent_ids );
-		}
+		$formatter->prime_parent_caches( $posts );
 
 		foreach ( $posts as $post ) {
-			$id = $post->ID;
+			$id       = $post->ID;
+			$row_data = $formatter->format_post_data( $post );
 
-			$source = '';
-			if ( $post->post_parent ) {
-				$permalink_data = $extractor->get_parent_permalink_data( $post->post_parent );
-				$source         = $permalink_data['path'];
-			}
-
-			$content_data = $extractor->extract_post_content_data( $post->post_content );
-
-			$post_datas['source'][ $id ]     = $source;
-			$post_datas['date'][ $id ]       = $post->post_date;
-			$post_datas['type'][ $id ]       = $content_data['type'];
-			$post_datas['ip_address'][ $id ] = $content_data['ip_address'];
-			$post_datas['user_agent'][ $id ] = $content_data['user_agent'];
-
-			foreach ( $content_data['post_params'] as $key => $value ) {
-				if ( is_array( $value ) ) {
-					$post_datas[ $key ][ $id ] = implode( ',', $value );
-				} else {
-					$post_datas[ $key ][ $id ] = $value;
-				}
+			foreach ( $row_data as $key => $value ) {
+				$post_datas[ $key ][ $id ] = $value;
 			}
 		}
 
