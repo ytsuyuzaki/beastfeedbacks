@@ -121,32 +121,7 @@ class BeastFeedbacks_Admin_List_Filter {
 
 		$selected_parent_id = $this->is_filter_nonce_verified() && isset( $_GET['beastfeedbacks_parent_id'] ) && is_scalar( $_GET['beastfeedbacks_parent_id'] ) ? absint( wp_unslash( $_GET['beastfeedbacks_parent_id'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
-		$cache_key   = 'source_filter_parent_ids';
-		$cache_group = 'beastfeedbacks';
-
-		$raw_parent_ids = wp_cache_get( $cache_key, $cache_group );
-
-		if ( false === $raw_parent_ids ) {
-			global $wpdb;
-
-			// Performance optimization: Direct $wpdb->get_col() prepared query bypasses WP_Query instantiation,
-			// query parsing, filter hook executions, and redundant internal post caching overhead.
-			// Grouping and ordering by MAX(post_date) DESC preserves option ordering based on recent feedback activity.
-			$results = $wpdb->get_col(
-				$wpdb->prepare(
-					"SELECT post_parent FROM {$wpdb->posts} WHERE post_type = %s AND post_status = 'publish' AND post_parent > 0 GROUP BY post_parent ORDER BY MAX(post_date) DESC, MAX(ID) DESC",
-					$this->post_type
-				)
-			);
-
-			$raw_parent_ids = ! empty( $results )
-				? array_values( array_unique( array_map( 'strval', $results ) ) )
-				: array();
-
-			wp_cache_set( $cache_key, $raw_parent_ids, $cache_group );
-		}
-
-		$parent_ids = ! empty( $raw_parent_ids ) ? array_values( array_filter( array_map( 'absint', $raw_parent_ids ) ) ) : array();
+		$parent_ids = BeastFeedbacks_Source_Repository::get_instance()->get_parent_ids();
 
 		if ( ! empty( $parent_ids ) ) {
 			_prime_post_caches( $parent_ids );
@@ -178,19 +153,10 @@ class BeastFeedbacks_Admin_List_Filter {
 	 * @param int          $post_id Post ID.
 	 * @param WP_Post|null $post    Post object.
 	 * @return void
+	 * @deprecated Use BeastFeedbacks_Source_Repository::get_instance()->clear_cache() instead.
 	 */
 	public function clear_source_filter_cache( $post_id = 0, $post = null ) {
-		if ( $post instanceof WP_Post ) {
-			if ( $post->post_type !== $this->post_type ) {
-				return;
-			}
-		} elseif ( $post_id ) {
-			if ( get_post_type( $post_id ) !== $this->post_type ) {
-				return;
-			}
-		}
-
-		wp_cache_delete( 'source_filter_parent_ids', 'beastfeedbacks' );
+		BeastFeedbacks_Source_Repository::get_instance()->clear_cache( $post_id, $post );
 	}
 
 	/**
