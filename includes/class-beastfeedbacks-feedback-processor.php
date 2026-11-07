@@ -47,7 +47,8 @@ class BeastFeedbacks_Feedback_Processor {
 	 */
 	public function process( array $post_data ) {
 		$service    = BeastFeedbacks_Feedback_Service::get_instance();
-		$ip_address = $service->get_ip_address();
+		$context    = BeastFeedbacks_Client_Context::get_instance();
+		$ip_address = $context->get_ip_address();
 
 		if ( BeastFeedbacks_Rate_Limiter::get_instance()->is_rate_limited( $ip_address ) ) {
 			return array(
@@ -88,7 +89,7 @@ class BeastFeedbacks_Feedback_Processor {
 			);
 		}
 
-		$user_agent  = $service->get_user_agent();
+		$user_agent  = $context->get_user_agent();
 		$time        = current_time( 'mysql' );
 		$title       = "{$ip_address} - {$time}";
 		$post_params = $service->extract_post_params( $post_data );
