@@ -4,7 +4,7 @@ Tags:              block, feedback, form
 Requires PHP:      8.1
 Requires at least: 6.8
 Tested up to:      7.1
-Stable tag:        0.1.5
+Stable tag:        0.1.6
 License:           GPL-2.0-or-later
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
 Donate link:       https://buy.stripe.com/dRm6oHc9Fcl196Q6Ik2B201
@@ -74,6 +74,11 @@ It is saved along with the page and date and time on which the survey was conduc
 Initial release.
 
 == Changelog ==
+
+= 0.1.6 =
+* Harden feedback validation, rate limiting, nonce handling, and CSV export escaping.
+* Fix feedback metadata formatting and improve form submission error handling.
+* Improve caching and CSV export performance, refactor internal services, and update dependencies.
 
 For the full changelog, see the
 [GitHub Releases page](https://github.com/ytsuyuzaki/beastfeedbacks/releases).
