@@ -70,6 +70,7 @@ class BeastFeedbacks {
 		require_once BEASTFEEDBACKS_DIR . 'includes/class-beastfeedbacks-export.php';
 		require_once BEASTFEEDBACKS_DIR . 'includes/class-beastfeedbacks-admin.php';
 		require_once BEASTFEEDBACKS_DIR . 'includes/class-beastfeedbacks-admin-menu.php';
+		require_once BEASTFEEDBACKS_DIR . 'includes/class-beastfeedbacks-source-repository.php';
 		require_once BEASTFEEDBACKS_DIR . 'includes/class-beastfeedbacks-admin-list-filter.php';
 		require_once BEASTFEEDBACKS_DIR . 'includes/class-beastfeedbacks-admin-list.php';
 		require_once BEASTFEEDBACKS_DIR . 'includes/class-beastfeedbacks-public.php';
