@@ -81,17 +81,17 @@ class BeastFeedbacks_CSV_Escaper {
 			"\n" => true,
 		);
 
-		$starts_with_trigger = function ( $str ) use ( $active_content_triggers ) {
-			$trimmed = ltrim( $str, " \v\0\x0C" );
-			return '' !== $trimmed && isset( $active_content_triggers[ mb_substr( $trimmed, 0, 1 ) ] );
-		};
+		// Performance optimization: Using direct byte offset $trimmed[0] avoids expensive mb_substr()
+		// overhead because all trigger characters are single-byte ASCII characters.
+		$trimmed        = ltrim( $string_field, " \v\0\x0C" );
+		$needs_escaping = ( '' !== $trimmed && isset( $active_content_triggers[ $trimmed[0] ] ) );
 
-		$needs_escaping = $starts_with_trigger( $string_field );
-
-		if ( ! $needs_escaping ) {
+		// Performance optimization: Avoid preg_split() overhead for strings without newlines.
+		if ( ! $needs_escaping && false !== strpbrk( $string_field, "\r\n" ) ) {
 			$lines = preg_split( '/(\r\n|\r|\n)/', $string_field );
 			foreach ( $lines as $line ) {
-				if ( $starts_with_trigger( $line ) ) {
+				$trimmed_line = ltrim( $line, " \v\0\x0C" );
+				if ( '' !== $trimmed_line && isset( $active_content_triggers[ $trimmed_line[0] ] ) ) {
 					$needs_escaping = true;
 					break;
 				}
