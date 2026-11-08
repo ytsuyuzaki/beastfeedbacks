@@ -25,3 +25,7 @@
 ## 2026-10-15 - Direct $wpdb->get_var Query for Count Aggregations
 **Learning:** Even with `fields => 'ids'` and `posts_per_page => 1`, using `WP_Query` solely to calculate `found_posts` in `BeastFeedbacks_Utils::get_like_count()` instantiates a heavy `WP_Query` object, parses arguments, executes multiple filter hooks, and runs two SQL queries (`SQL_CALC_FOUND_ROWS` and `SELECT FOUND_ROWS()`) on cache misses.
 **Action:** Replace `WP_Query` count operations with a direct `$wpdb->get_var()` prepared query using `SELECT COUNT(*) ...` to execute a single lightweight SQL query with zero PHP object overhead.
+
+## 2026-11-09 - Direct Offset Indexing and Newline Guard in CSV Escaping
+**Learning:** In `BeastFeedbacks_CSV_Escaper::esc_csv()`, instantiating an anonymous closure and calling `mb_substr()` on every trigger-containing string created unnecessary overhead, and unconditionally running `preg_split` for strings without newlines was wasteful. Because all formula triggers (`=+-@|%\t\r\n`) are single-byte ASCII characters, `$trimmed[0]` is safe, deterministic, and much faster than `mb_substr()`.
+**Action:** Use `$trimmed[0]` for single-byte character lookup on trimmed strings and guard `preg_split` multiline scanning with `false !== strpbrk($string_field, "\r\n")` to eliminate closure creation and unnecessary regex execution.
