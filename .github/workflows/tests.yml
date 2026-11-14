@@ -88,7 +88,8 @@ jobs:
     playwright:
         name: Install Playwright browsers
 
-        runs-on: ubuntu-latest
+        # Keep this on the same supported image as the test job below.
+        runs-on: ubuntu-24.04
         timeout-minutes: 5
 
         steps:
@@ -117,7 +118,7 @@ jobs:
               uses: actions/cache@v4
               with:
                   path: ~/.cache/ms-playwright
-                  key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+                  key: ubuntu-24.04-playwright-${{ hashFiles('package-lock.json') }}
 
             - name: Install Playwright browsers
               if: steps.playwright-cache.outputs.cache-hit != 'true'
@@ -126,7 +127,7 @@ jobs:
     test:
         name: PHP ${{ matrix.php }} / WP ${{ matrix.wp }}
 
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-24.04
         timeout-minutes: 10
 
         needs: [playwright]
@@ -186,7 +187,7 @@ jobs:
               uses: actions/cache/restore@v4
               with:
                   path: ~/.cache/ms-playwright
-                  key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+                  key: ubuntu-24.04-playwright-${{ hashFiles('package-lock.json') }}
 
             - name: Install Playwright browsers if cache missed
               if: steps.playwright-cache.outputs.cache-hit != 'true'
