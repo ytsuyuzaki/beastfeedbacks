@@ -105,6 +105,9 @@
 		"@wp-playground/cli": {
 			"ajv": "^8.20.0"
 		},
+		"@wp-playground/storage": {
+			"isomorphic-git": "1.38.6"
+		},
 		"@wp-playground/tools": {
 			"ajv": "^8.20.0"
 		},
